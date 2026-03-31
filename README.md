@@ -44,8 +44,16 @@ az webapp config set \
 
 ### 3) Aggiungi il secret su GitHub
 
+> Se in Azure Portal compare l’errore **“Basic authentication is disabled”** quando clicchi su
+> **Download publish profile**, abilita temporaneamente la basic auth per il deployment:
+>
+> - Portal: **Web App → Deployment Center → FTPS credentials** e abilita
+>   **SCM Basic Auth Publishing Credentials** (e, se necessario, **FTP Basic Auth Publishing Credentials**).
+>
+> Dopo il download del profilo puoi disabilitarla di nuovo per maggiore sicurezza.
+
 1. In Azure Portal apri la tua Web App.
-2. Vai su **Get publish profile** e scarica il file.
+2. Vai su **Download publish profile** e scarica il file.
 3. In GitHub: **Settings → Secrets and variables → Actions → New repository secret**.
 4. Nome secret: `AZURE_WEBAPP_PUBLISH_PROFILE`.
 5. Incolla il contenuto del profilo di pubblicazione.
