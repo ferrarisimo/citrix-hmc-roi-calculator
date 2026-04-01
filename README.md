@@ -64,6 +64,27 @@ Nel file `.github/workflows/azure-webapp.yml` sostituisci:
 
 - `AZURE_WEBAPP_NAME` con il nome reale della tua web app.
 
+### Troubleshooting: pagina bianca o download di `index.html`
+
+Se il deploy va a buon fine ma la Web App mostra pagina bianca o scarica `index.html`, verifica questi punti:
+
+1. **Startup command su Azure (Linux App Service)**
+
+```bash
+az webapp config set \
+  --resource-group rg-citrix-roi \
+  --name citrix-hmc-roi-webapp \
+  --startup-file "pm2 serve /home/site/wwwroot --no-daemon --spa"
+```
+
+2. **Deploy del contenuto `dist/` alla root di wwwroot**
+
+La pipeline è configurata per pubblicare esplicitamente `dist/` (non l'intero workspace del job) verso Azure Web App.
+
+3. **Verifica in DevTools (Network/Console)**
+
+Controlla che richieste come `/assets/*.js` e `/assets/*.css` rispondano con `200` e `content-type` corretto.
+
 ### 5) Deploy
 
 Fai push su `main`: la pipeline builda la webapp e pubblica `dist/` su Azure Web App.
