@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  AZURE_WEBAPP_NAME: 'CHANGE_ME_WEBAPP_NAME'
+  AZURE_WEBAPP_NAME: 'citrix-hmc-roi-webapp'
 
 jobs:
   build:
