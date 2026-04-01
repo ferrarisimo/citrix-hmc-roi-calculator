@@ -8,17 +8,17 @@ on:
 
 env:
   NODE_VERSION: '20'
-  AZURE_WEBAPP_NAME: 'CHANGE_ME_WEBAPP_NAME'
+  AZURE_WEBAPP_NAME: 'citrix-hmc-roi-webapp'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -46,6 +46,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: webapp
+          path: dist
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -53,4 +54,4 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: dist
