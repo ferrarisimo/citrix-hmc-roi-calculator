@@ -344,6 +344,7 @@ export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [lang, setLang] = useState('it');
   const [state, setState] = useState(DEFAULTS);
+  const t = TEXT[lang];
 
   const t = TXT[lang];
 
@@ -552,6 +553,23 @@ export default function App() {
                   </div>
                 </div>
                 <div className="max-w-4xl">
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <img src={logoArrowCitrix} alt="Arrow Citrix" className="h-10 w-auto md:h-12" />
+                    <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1 text-xs font-medium">
+                      <button
+                        onClick={() => setLang('it')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'it' ? 'bg-white/20' : ''}`}
+                      >
+                        🇮🇹 IT
+                      </button>
+                      <button
+                        onClick={() => setLang('en')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'en' ? 'bg-white/20' : ''}`}
+                      >
+                        🇬🇧 EN
+                      </button>
+                    </div>
+                  </div>
                   <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide">
                     {t.appBadge}
                   </div>
