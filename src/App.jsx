@@ -85,7 +85,7 @@ const TEXT = {
   },
 };
 
-const APP_VERSION = '2026.04.02-r3';
+const APP_VERSION = '2026.04.02-r4';
 
 const DEFAULTS = {
   profile: {
