@@ -22,9 +22,10 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import logoArrowCitrix from './assets/arrow-citrix-logo.svg';
 
-const eur = (value) =>
-  new Intl.NumberFormat('it-IT', {
+const eur = (value, lang = 'it') =>
+  new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'it-IT', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
@@ -34,6 +35,57 @@ const pct = (value, digits = 0) =>
   `${((Number.isFinite(value) ? value : 0) * 100).toFixed(digits)}%`;
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
+
+const TEXT = {
+  it: {
+    badge: 'Arrow | Citrix ROI Calculator',
+    title: 'Calcolatore ROI Citrix per clienti',
+    subtitle:
+      'Strumento professionale per confrontare costi attuali, scenario HMC, saving, ROI e payback in modo chiaro e immediato.',
+    reset: 'Reset scenario',
+    users: 'Utenti',
+    remoteUsers: 'Utenti remoti',
+    hmcUserMonth: 'HMC per utente/mese',
+    currentAnnual: 'Totale attuale annuo',
+    hmcAnnual: 'Totale HMC annuo',
+    grossAnnual: 'Saving lordo annuo',
+    netAnnual: 'Saving netto annuo',
+    annualRoi: 'ROI annuo',
+    payback: 'Payback',
+    months: 'mesi',
+    na: 'n/d',
+    netYears: 'Saving netto',
+    roiYears: 'ROI',
+    years: 'anni',
+    tabs: ['Dashboard', 'Scenario', 'Assunzioni costi', 'Dettaglio calcoli'],
+    thinClientCost: 'Costo 1 thin client (impostato a €0 con soluzione Scout eLux)',
+  },
+  en: {
+    badge: 'Arrow | Citrix ROI Calculator',
+    title: 'Citrix ROI Calculator for customer engagements',
+    subtitle:
+      'Professional tool to compare current costs, HMC scenario, savings, ROI, and payback with a clear and customer-ready view.',
+    reset: 'Reset scenario',
+    users: 'Users',
+    remoteUsers: 'Remote users',
+    hmcUserMonth: 'HMC per user/month',
+    currentAnnual: 'Current annual total',
+    hmcAnnual: 'HMC annual total',
+    grossAnnual: 'Gross annual savings',
+    netAnnual: 'Net annual savings',
+    annualRoi: 'Annual ROI',
+    payback: 'Payback',
+    months: 'months',
+    na: 'n/a',
+    netYears: 'Net savings',
+    roiYears: 'ROI',
+    years: 'years',
+    tabs: ['Dashboard', 'Scenario', 'Cost assumptions', 'Calculation details'],
+    thinClientCost: 'Thin client unit cost (€0 when using Scout eLux)',
+  },
+};
+
+const APP_VERSION = '2026.04.02-r2';
 
 const DEFAULTS = {
   profile: {
@@ -203,7 +255,9 @@ function Row({ label, value, strong = false }) {
 
 export default function App() {
   const [tab, setTab] = useState('dashboard');
+  const [lang, setLang] = useState('it');
   const [state, setState] = useState(DEFAULTS);
+  const copy = TEXT[lang] || TEXT.it;
 
   const setProfile = (key, value) =>
     setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
@@ -391,18 +445,31 @@ export default function App() {
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 px-8 py-8 text-white">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-4xl">
-                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide">
-                    Citrix ROI Value Simulator
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <img src={logoArrowCitrix} alt="Arrow Citrix" className="h-10 w-auto md:h-12" />
+                    <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1 text-xs font-medium">
+                      <button
+                        onClick={() => setLang('it')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'it' ? 'bg-white/20' : ''}`}
+                      >
+                        🇮🇹 IT
+                      </button>
+                      <button
+                        onClick={() => setLang('en')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'en' ? 'bg-white/20' : ''}`}
+                      >
+                        🇬🇧 EN
+                      </button>
+                    </div>
                   </div>
-                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                    Webapp professionale per mostrare il valore dell’adozione Citrix
-                  </h1>
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:text-base">
-                    Questa applicazione trasforma il foglio di calcolo ROI in uno strumento presales più
-                    leggibile, interattivo e adatto a demo executive. Il modello confronta scenario
-                    attuale, costo HMC, saving lordi, saving netti, ROI, payback e driver di valore per
-                    area funzionale.
-                  </p>
+                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium tracking-wide text-slate-200">
+                    Version {APP_VERSION}
+                  </div>
+                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide">
+                    {copy.badge}
+                  </div>
+                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{copy.title}</h1>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:text-base">{copy.subtitle}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -410,14 +477,14 @@ export default function App() {
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
                   >
                     <RefreshCcw className="h-4 w-4" />
-                    Reset scenario
+                    {copy.reset}
                   </button>
                 </div>
               </div>
             </div>
             <div className="grid gap-4 border-t border-slate-100 bg-slate-50 p-6 md:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs text-slate-500">Utenti</p>
+                <p className="text-xs text-slate-500">{copy.users}</p>
                 <p className="mt-1 text-2xl font-semibold">{model.totals.totalUsers}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -425,13 +492,13 @@ export default function App() {
                 <p className="mt-1 text-2xl font-semibold">{model.totals.totalCores}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs text-slate-500">Utenti remoti</p>
+                <p className="text-xs text-slate-500">{copy.remoteUsers}</p>
                 <p className="mt-1 text-2xl font-semibold">{model.totals.secureRemoteUsers}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs text-slate-500">HMC per utente/mese</p>
+                <p className="text-xs text-slate-500">{copy.hmcUserMonth}</p>
                 <p className="mt-1 text-2xl font-semibold">
-                  {eur(state.profile.hmcPricePerUserPerMonth)}
+                  {eur(state.profile.hmcPricePerUserPerMonth, lang)}
                 </p>
               </div>
             </div>
@@ -441,26 +508,26 @@ export default function App() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             icon={Calculator}
-            title="Totale Current annuo"
-            value={eur(model.totals.totalCurrent)}
+            title={copy.currentAnnual}
+            value={eur(model.totals.totalCurrent, lang)}
             hint="Costo annuo stimato dello scenario attuale."
           />
           <KpiCard
             icon={Shield}
-            title="Totale HMC annuo"
-            value={eur(model.totals.totalHmc)}
+            title={copy.hmcAnnual}
+            value={eur(model.totals.totalHmc, lang)}
             hint="Subscription HMC più costi residui mantenuti."
           />
           <KpiCard
             icon={TrendingUp}
-            title="Saving lordo annuo"
-            value={eur(model.totals.grossSavings)}
+            title={copy.grossAnnual}
+            value={eur(model.totals.grossSavings, lang)}
             hint="Valore economico prima del costo HMC."
           />
           <KpiCard
             icon={Clock3}
-            title="Net saving annuo"
-            value={eur(model.totals.netSavings)}
+            title={copy.netAnnual}
+            value={eur(model.totals.netSavings, lang)}
             hint="Saving lordo meno costo annuo HMC."
           />
         </div>
@@ -468,25 +535,25 @@ export default function App() {
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             icon={TrendingUp}
-            title="ROI annuo"
+            title={copy.annualRoi}
             value={pct(model.totals.roiAnnual, 1)}
             hint="Net saving / costo HMC."
           />
           <KpiCard
             icon={Clock3}
-            title="Payback"
-            value={model.totals.paybackMonths ? `${model.totals.paybackMonths.toFixed(1)} mesi` : 'n/d'}
+            title={copy.payback}
+            value={model.totals.paybackMonths ? `${model.totals.paybackMonths.toFixed(1)} ${copy.months}` : copy.na}
             hint="Tempo di recupero dell’investimento."
           />
           <KpiCard
             icon={Users}
-            title={`Saving netto ${state.profile.horizonYears} anni`}
-            value={eur(model.totals.horizonNetSaving)}
+            title={`${copy.netYears} ${state.profile.horizonYears} ${copy.years}`}
+            value={eur(model.totals.horizonNetSaving, lang)}
             hint="Valore cumulato sull’orizzonte selezionato."
           />
           <KpiCard
             icon={Server}
-            title={`ROI ${state.profile.horizonYears} anni`}
+            title={`${copy.roiYears} ${state.profile.horizonYears} ${copy.years}`}
             value={pct(model.totals.horizonRoi, 1)}
             hint="ROI medio sull’orizzonte selezionato."
           />
@@ -494,10 +561,10 @@ export default function App() {
 
         <div className="mt-8 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
           {[
-            ['dashboard', 'Dashboard'],
-            ['scenario', 'Scenario'],
-            ['costs', 'Cost assumptions'],
-            ['details', 'Dettaglio calcoli'],
+            ['dashboard', copy.tabs[0]],
+            ['scenario', copy.tabs[1]],
+            ['costs', copy.tabs[2]],
+            ['details', copy.tabs[3]],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -826,7 +893,7 @@ export default function App() {
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <Field label="Costo 1 PC" value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" />
                 <Field
-                  label="Costo 1 thin client"
+                  label={copy.thinClientCost}
                   value={state.cost.costOneThinClient}
                   onChange={(v) => setCost('costOneThinClient', v)}
                   prefix="€"
