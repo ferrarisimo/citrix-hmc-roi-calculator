@@ -24,13 +24,8 @@ import {
 } from 'recharts';
 import logoArrowCitrix from './assets/arrow-citrix-logo.svg';
 
-const LOCALES = {
-  it: 'it-IT',
-  en: 'en-US',
-};
-
 const eur = (value, lang = 'it') =>
-  new Intl.NumberFormat(LOCALES[lang], {
+  new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'it-IT', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
@@ -41,21 +36,16 @@ const pct = (value, digits = 0) =>
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
 
-const TXT = {
+const TEXT = {
   it: {
-    appBadge: 'Arrow | Citrix ROI Calculator',
-    appTitle: 'Calcolatore ROI Citrix per clienti',
-    appDesc:
-      'Strumento professionale per stimare il valore economico dell’adozione Citrix. Confronta scenario attuale e scenario target HMC con indicatori chiari per decisioni rapide.',
-    reset: 'Ripristina scenario',
+    badge: 'Arrow | Citrix ROI Calculator',
+    title: 'Calcolatore ROI Citrix per clienti',
+    subtitle:
+      'Strumento professionale per confrontare costi attuali, scenario HMC, saving, ROI e payback in modo chiaro e immediato.',
+    reset: 'Reset scenario',
     users: 'Utenti',
-    cores: 'Core cluster',
     remoteUsers: 'Utenti remoti',
     hmcUserMonth: 'HMC per utente/mese',
-    tabDashboard: 'Dashboard',
-    tabScenario: 'Scenario',
-    tabCosts: 'Assunzioni costi',
-    tabDetails: 'Dettaglio calcoli',
     currentAnnual: 'Totale attuale annuo',
     hmcAnnual: 'Totale HMC annuo',
     grossAnnual: 'Saving lordo annuo',
@@ -64,59 +54,21 @@ const TXT = {
     payback: 'Payback',
     months: 'mesi',
     na: 'n/d',
-    netSavingYears: 'Saving netto {years} anni',
-    roiYears: 'ROI {years} anni',
-    secCompareTitle: 'Confronto economico',
-    secCompareSub: 'Vista sintetica di costi attuali, costo HMC e saving.',
-    secDomainTitle: 'Breakdown saving per dominio',
-    secDomainSub: 'Distribuzione del saving lordo annuo.',
-    ofTotal: 'del totale',
-    valueLeversTitle: 'Leve di valore HMC',
-    valueLeversSub: 'Principali driver economici inclusi nel modello ROI.',
-    narrativeTitle: 'Messaggio executive',
-    narrativeSub: 'Messaggio consigliato per la presentazione del business case.',
-    narrativeBody:
-      'Citrix non è solo una voce licenze: è una piattaforma che consolida costi distribuiti su infrastruttura, accesso, sicurezza e operation con benefici misurabili.',
-    securityTitle: 'Messaggio security',
-    securitySub: 'Approccio prudente e credibile.',
-    securityBody:
-      'Il modello mantiene costi residui per un’analisi realistica, mostrando comunque una riduzione concreta del perimetro operativo e del costo totale.',
-    opsTitle: 'Messaggio operations',
-    opsSub: 'Riduzione effort IT e semplificazione operativa.',
-    opsBody:
-      'La combinazione tra refresh evitato, riduzione giornate sistemistiche e semplificazione accesso crea valore anche oltre il solo saving infrastrutturale.',
-    scenarioProfileTitle: 'Profilo scenario',
-    scenarioProfileSub: 'Parametri generali della simulazione.',
-    scenarioInputTitle: 'Input tecnici',
-    scenarioInputSub: 'Variabili operative utilizzate nel modello.',
-    scenarioEffortTitle: 'Effort operativo annuo',
-    scenarioEffortSub: 'Driver relativi all’efficienza IT.',
-    cloudTitle: 'Benchmark cloud opzionale',
-    cloudSub: 'Confronto con AVD e Windows 365.',
-    costsTitle: 'Assunzioni economiche',
-    costsSub: 'Valori economici principali del modello.',
-    residualTitle: 'Residui e benchmark',
-    residualSub: 'Parametri che modulano saving e costi residui.',
-    notesTitle: 'Nota di modellazione',
-    notesBody:
-      'I valori economici sono espressi in euro. Il modello è configurabile e pensato per sessioni con clienti in fase di analisi o prevendita.',
-    labelThinClientCost:
-      'Costo 1 thin client (impostato a €0 con soluzione Scout eLux)',
+    netYears: 'Saving netto',
+    roiYears: 'ROI',
+    years: 'anni',
+    tabs: ['Dashboard', 'Scenario', 'Assunzioni costi', 'Dettaglio calcoli'],
+    thinClientCost: 'Costo 1 thin client (impostato a €0 con soluzione Scout eLux)',
   },
   en: {
-    appBadge: 'Arrow | Citrix ROI Calculator',
-    appTitle: 'Citrix ROI Calculator for customer engagements',
-    appDesc:
-      'Professional tool to estimate the business value of Citrix adoption. It compares your current setup and HMC target model through clear decision-ready metrics.',
+    badge: 'Arrow | Citrix ROI Calculator',
+    title: 'Citrix ROI Calculator for customer engagements',
+    subtitle:
+      'Professional tool to compare current costs, HMC scenario, savings, ROI, and payback with a clear and customer-ready view.',
     reset: 'Reset scenario',
     users: 'Users',
-    cores: 'Cluster cores',
     remoteUsers: 'Remote users',
     hmcUserMonth: 'HMC per user/month',
-    tabDashboard: 'Dashboard',
-    tabScenario: 'Scenario',
-    tabCosts: 'Cost assumptions',
-    tabDetails: 'Calculation details',
     currentAnnual: 'Current annual total',
     hmcAnnual: 'HMC annual total',
     grossAnnual: 'Gross annual savings',
@@ -125,54 +77,15 @@ const TXT = {
     payback: 'Payback',
     months: 'months',
     na: 'n/a',
-    netSavingYears: 'Net savings {years} years',
-    roiYears: 'ROI {years} years',
-    secCompareTitle: 'Financial comparison',
-    secCompareSub: 'Summary view of current costs, HMC cost, and savings.',
-    secDomainTitle: 'Savings breakdown by domain',
-    secDomainSub: 'Distribution of gross annual savings.',
-    ofTotal: 'of total',
-    valueLeversTitle: 'HMC value levers',
-    valueLeversSub: 'Top economic drivers included in the ROI model.',
-    narrativeTitle: 'Executive message',
-    narrativeSub: 'Recommended positioning for business-case presentations.',
-    narrativeBody:
-      'Citrix is not just a licensing line item: it is a platform that consolidates costs across infrastructure, access, security, and operations with measurable outcomes.',
-    securityTitle: 'Security message',
-    securitySub: 'Pragmatic and credible positioning.',
-    securityBody:
-      'Residual costs are intentionally maintained for a realistic view while still demonstrating a clear reduction in operational scope and total cost.',
-    opsTitle: 'Operations message',
-    opsSub: 'IT effort reduction and operational simplification.',
-    opsBody:
-      'The combination of avoided refresh, fewer IT administration days, and streamlined access governance creates value beyond infrastructure-only savings.',
-    scenarioProfileTitle: 'Scenario profile',
-    scenarioProfileSub: 'General simulation parameters.',
-    scenarioInputTitle: 'Technical inputs',
-    scenarioInputSub: 'Operational variables used in the model.',
-    scenarioEffortTitle: 'Annual operational effort',
-    scenarioEffortSub: 'Efficiency-related IT drivers.',
-    cloudTitle: 'Optional cloud benchmark',
-    cloudSub: 'Comparison with AVD and Windows 365.',
-    costsTitle: 'Economic assumptions',
-    costsSub: 'Main financial values used by the model.',
-    residualTitle: 'Residuals and benchmark',
-    residualSub: 'Parameters that tune savings and residual costs.',
-    notesTitle: 'Modeling note',
-    notesBody:
-      'All financial values are expressed in euros. The model is configurable and designed for customer discovery and presales conversations.',
-    labelThinClientCost:
-      'Thin client unit cost (€0 when using Scout eLux solution)',
+    netYears: 'Net savings',
+    roiYears: 'ROI',
+    years: 'years',
+    tabs: ['Dashboard', 'Scenario', 'Cost assumptions', 'Calculation details'],
+    thinClientCost: 'Thin client unit cost (€0 when using Scout eLux)',
   },
 };
 
-const DOMAIN_LABELS = {
-  Infrastructure: { it: 'Infrastruttura', en: 'Infrastructure' },
-  Security: { it: 'Sicurezza', en: 'Security' },
-  Operations: { it: 'Operations', en: 'Operations' },
-  Endpoint: { it: 'Endpoint', en: 'Endpoint' },
-  Cloud: { it: 'Cloud', en: 'Cloud' },
-};
+const APP_VERSION = '2026.04.02-r2';
 
 const DEFAULTS = {
   profile: {
@@ -344,6 +257,7 @@ export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [lang, setLang] = useState('it');
   const [state, setState] = useState(DEFAULTS);
+  const t = TEXT[lang] || TEXT.it;
 
   const t = TXT[lang];
 
@@ -552,11 +466,31 @@ export default function App() {
                   </div>
                 </div>
                 <div className="max-w-4xl">
-                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide">
-                    {t.appBadge}
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <img src={logoArrowCitrix} alt="Arrow Citrix" className="h-10 w-auto md:h-12" />
+                    <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1 text-xs font-medium">
+                      <button
+                        onClick={() => setLang('it')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'it' ? 'bg-white/20' : ''}`}
+                      >
+                        🇮🇹 IT
+                      </button>
+                      <button
+                        onClick={() => setLang('en')}
+                        className={`rounded-xl px-2.5 py-1 ${lang === 'en' ? 'bg-white/20' : ''}`}
+                      >
+                        🇬🇧 EN
+                      </button>
+                    </div>
                   </div>
-                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t.appTitle}</h1>
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:text-base">{t.appDesc}</p>
+                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium tracking-wide text-slate-200">
+                    Version {APP_VERSION}
+                  </div>
+                  <div className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide">
+                    {t.badge}
+                  </div>
+                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t.title}</h1>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:text-base">{t.subtitle}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -584,44 +518,73 @@ export default function App() {
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-xs text-slate-500">{t.hmcUserMonth}</p>
-                <p className="mt-1 text-2xl font-semibold">{eur(state.profile.hmcPricePerUserPerMonth, lang)}</p>
+                <p className="mt-1 text-2xl font-semibold">
+                  {eur(state.profile.hmcPricePerUserPerMonth, lang)}
+                </p>
               </div>
             </div>
           </div>
         </motion.div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard icon={Calculator} title={t.currentAnnual} value={eur(model.totals.totalCurrent, lang)} />
-          <KpiCard icon={Shield} title={t.hmcAnnual} value={eur(model.totals.totalHmc, lang)} />
-          <KpiCard icon={TrendingUp} title={t.grossAnnual} value={eur(model.totals.grossSavings, lang)} />
-          <KpiCard icon={Clock3} title={t.netAnnual} value={eur(model.totals.netSavings, lang)} />
+          <KpiCard
+            icon={Calculator}
+            title={t.currentAnnual}
+            value={eur(model.totals.totalCurrent, lang)}
+            hint="Costo annuo stimato dello scenario attuale."
+          />
+          <KpiCard
+            icon={Shield}
+            title={t.hmcAnnual}
+            value={eur(model.totals.totalHmc, lang)}
+            hint="Subscription HMC più costi residui mantenuti."
+          />
+          <KpiCard
+            icon={TrendingUp}
+            title={t.grossAnnual}
+            value={eur(model.totals.grossSavings, lang)}
+            hint="Valore economico prima del costo HMC."
+          />
+          <KpiCard
+            icon={Clock3}
+            title={t.netAnnual}
+            value={eur(model.totals.netSavings, lang)}
+            hint="Saving lordo meno costo annuo HMC."
+          />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard icon={TrendingUp} title={t.annualRoi} value={pct(model.totals.roiAnnual, 1)} />
+          <KpiCard
+            icon={TrendingUp}
+            title={t.annualRoi}
+            value={pct(model.totals.roiAnnual, 1)}
+            hint="Net saving / costo HMC."
+          />
           <KpiCard
             icon={Clock3}
             title={t.payback}
             value={model.totals.paybackMonths ? `${model.totals.paybackMonths.toFixed(1)} ${t.months}` : t.na}
+            hint="Tempo di recupero dell’investimento."
           />
           <KpiCard
             icon={Users}
-            title={t.netSavingYears.replace('{years}', state.profile.horizonYears)}
+            title={`${t.netYears} ${state.profile.horizonYears} ${t.years}`}
             value={eur(model.totals.horizonNetSaving, lang)}
+            hint="Valore cumulato sull’orizzonte selezionato."
           />
           <KpiCard
             icon={Server}
-            title={t.roiYears.replace('{years}', state.profile.horizonYears)}
+            title={`${t.roiYears} ${state.profile.horizonYears} ${t.years}`}
             value={pct(model.totals.horizonRoi, 1)}
           />
         </div>
 
         <div className="mt-8 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
           {[
-            ['dashboard', t.tabDashboard],
-            ['scenario', t.tabScenario],
-            ['costs', t.tabCosts],
-            ['details', t.tabDetails],
+            ['dashboard', t.tabs[0]],
+            ['scenario', t.tabs[1]],
+            ['costs', t.tabs[2]],
+            ['details', t.tabs[3]],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -811,14 +774,91 @@ export default function App() {
             <SectionCard title={t.costsTitle} subtitle={t.costsSub} className="xl:col-span-2">
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <Field label="Costo 1 PC" value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" />
-                <Field label={t.labelThinClientCost} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" />
-                <Field label="Costo hypervisor / core / anno" value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" />
-                <Field label="Costo appliance VPN / ADC" value={state.cost.costVpnAdcAppliance} onChange={(v) => setCost('costVpnAdcAppliance', v)} prefix="€" />
-                <RangeField label="Manutenzione annuale appliance" value={state.cost.applianceMaintenanceAnnualPct} onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)} />
-                <Field label="Costo MFA / utente / mese" value={state.cost.costMfaUserMonth} onChange={(v) => setCost('costMfaUserMonth', v)} prefix="€" />
-                <Field label="Costo ZTNA / utente / mese" value={state.cost.costZtnaUserMonth} onChange={(v) => setCost('costZtnaUserMonth', v)} prefix="€" />
-                <Field label="Costo EDR / endpoint / mese" value={state.cost.costEdrEndpointMonth} onChange={(v) => setCost('costEdrEndpointMonth', v)} prefix="€" />
-                <Field label="Costo device posture / endpoint / mese" value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" />
+                <Field
+                  label={t.thinClientCost}
+                  value={state.cost.costOneThinClient}
+                  onChange={(v) => setCost('costOneThinClient', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo hypervisor / core / anno"
+                  value={state.cost.costHypervisorPerCoreYear}
+                  onChange={(v) => setCost('costHypervisorPerCoreYear', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo appliance VPN / ADC"
+                  value={state.cost.costVpnAdcAppliance}
+                  onChange={(v) => setCost('costVpnAdcAppliance', v)}
+                  prefix="€"
+                />
+                <RangeField
+                  label="Manutenzione annuale appliance"
+                  value={state.cost.applianceMaintenanceAnnualPct}
+                  onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)}
+                />
+                <Field
+                  label="Costo MFA / utente / mese"
+                  value={state.cost.costMfaUserMonth}
+                  onChange={(v) => setCost('costMfaUserMonth', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo ZTNA / utente / mese"
+                  value={state.cost.costZtnaUserMonth}
+                  onChange={(v) => setCost('costZtnaUserMonth', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo EDR / endpoint / mese"
+                  value={state.cost.costEdrEndpointMonth}
+                  onChange={(v) => setCost('costEdrEndpointMonth', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo device posture / endpoint / mese"
+                  value={state.cost.costDevicePostureEndpointMonth}
+                  onChange={(v) => setCost('costDevicePostureEndpointMonth', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo SOC / MSSP annuo"
+                  value={state.cost.costSocMsspAnnual}
+                  onChange={(v) => setCost('costSocMsspAnnual', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo remediation / endpoint / anno"
+                  value={state.cost.costRemediationPerEndpointYear}
+                  onChange={(v) => setCost('costRemediationPerEndpointYear', v)}
+                  prefix="€"
+                />
+                <Field
+                  label="Costo giornata sistemistica"
+                  value={state.cost.costSysadminDay}
+                  onChange={(v) => setCost('costSysadminDay', v)}
+                  prefix="€"
+                />
+                <RangeField
+                  label="Riduzione effort endpoint"
+                  value={state.cost.reductionEffortEndpointPct}
+                  onChange={(v) => setCost('reductionEffortEndpointPct', v)}
+                />
+                <RangeField
+                  label="Riduzione effort image / VDI"
+                  value={state.cost.reductionEffortImagePct}
+                  onChange={(v) => setCost('reductionEffortImagePct', v)}
+                />
+                <RangeField
+                  label="Riduzione effort support"
+                  value={state.cost.reductionEffortSupportPct}
+                  onChange={(v) => setCost('reductionEffortSupportPct', v)}
+                />
+                <RangeField
+                  label="Riduzione effort access"
+                  value={state.cost.reductionEffortAccessPct}
+                  onChange={(v) => setCost('reductionEffortAccessPct', v)}
+                />
               </div>
             </SectionCard>
 
