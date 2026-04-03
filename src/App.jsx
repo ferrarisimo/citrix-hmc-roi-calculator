@@ -22,7 +22,6 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import logoArrowCitrix from './assets/arrow-citrix-logo.svg';
 
 const eur = (value, lang = 'it') =>
   new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'it-IT', {
@@ -445,8 +444,7 @@ export default function App() {
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 px-8 py-8 text-white">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-4xl">
-                  <div className="mb-4 flex items-start justify-between gap-4">
-                    <img src={logoArrowCitrix} alt="Arrow Citrix" className="h-10 w-auto md:h-12" />
+                  <div className="mb-4 flex items-start justify-end gap-4">
                     <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1 text-xs font-medium">
                       <button
                         onClick={() => setLang('it')}
