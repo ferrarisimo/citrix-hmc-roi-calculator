@@ -257,6 +257,7 @@ export default function App() {
   const [lang, setLang] = useState('it');
   const [state, setState] = useState(DEFAULTS);
   const copy = TEXT[lang] || TEXT.it;
+  const t = (itText, enText) => (lang === 'en' ? enText : itText);
 
   const setProfile = (key, value) =>
     setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
@@ -448,15 +449,17 @@ export default function App() {
                     <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1 text-xs font-medium">
                       <button
                         onClick={() => setLang('it')}
-                        className={`rounded-xl px-2.5 py-1 ${lang === 'it' ? 'bg-white/20' : ''}`}
+                        className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 ${lang === 'it' ? 'bg-white/20' : ''}`}
                       >
-                        🇮🇹 IT
+                        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ee-1f1f9.svg" alt="Italian flag" className="h-3.5 w-3.5" />
+                        IT
                       </button>
                       <button
                         onClick={() => setLang('en')}
-                        className={`rounded-xl px-2.5 py-1 ${lang === 'en' ? 'bg-white/20' : ''}`}
+                        className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 ${lang === 'en' ? 'bg-white/20' : ''}`}
                       >
-                        🇬🇧 EN
+                        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ec-1f1e7.svg" alt="English flag" className="h-3.5 w-3.5" />
+                        EN
                       </button>
                     </div>
                   </div>
@@ -486,7 +489,7 @@ export default function App() {
                 <p className="mt-1 text-2xl font-semibold">{model.totals.totalUsers}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs text-slate-500">Core cluster</p>
+                <p className="text-xs text-slate-500">{t('Core cluster', 'Cluster cores')}</p>
                 <p className="mt-1 text-2xl font-semibold">{model.totals.totalCores}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -508,25 +511,25 @@ export default function App() {
             icon={Calculator}
             title={copy.currentAnnual}
             value={eur(model.totals.totalCurrent, lang)}
-            hint="Costo annuo stimato dello scenario attuale."
+            hint={t('Costo annuo stimato dello scenario attuale.', 'Estimated annual cost of the current scenario.')}
           />
           <KpiCard
             icon={Shield}
             title={copy.hmcAnnual}
             value={eur(model.totals.totalHmc, lang)}
-            hint="Subscription HMC più costi residui mantenuti."
+            hint={t('Subscription HMC più costi residui mantenuti.', 'HMC subscription plus retained residual costs.')}
           />
           <KpiCard
             icon={TrendingUp}
             title={copy.grossAnnual}
             value={eur(model.totals.grossSavings, lang)}
-            hint="Valore economico prima del costo HMC."
+            hint={t('Valore economico prima del costo HMC.', 'Economic value before HMC cost.')}
           />
           <KpiCard
             icon={Clock3}
             title={copy.netAnnual}
             value={eur(model.totals.netSavings, lang)}
-            hint="Saving lordo meno costo annuo HMC."
+            hint={t('Saving lordo meno costo annuo HMC.', 'Gross savings minus annual HMC cost.')}
           />
         </div>
 
@@ -535,25 +538,25 @@ export default function App() {
             icon={TrendingUp}
             title={copy.annualRoi}
             value={pct(model.totals.roiAnnual, 1)}
-            hint="Net saving / costo HMC."
+            hint={t('Net saving / costo HMC.', 'Net savings / HMC cost.')}
           />
           <KpiCard
             icon={Clock3}
             title={copy.payback}
             value={model.totals.paybackMonths ? `${model.totals.paybackMonths.toFixed(1)} ${copy.months}` : copy.na}
-            hint="Tempo di recupero dell’investimento."
+            hint={t('Tempo di recupero dell’investimento.', 'Investment payback period.')}
           />
           <KpiCard
             icon={Users}
             title={`${copy.netYears} ${state.profile.horizonYears} ${copy.years}`}
             value={eur(model.totals.horizonNetSaving, lang)}
-            hint="Valore cumulato sull’orizzonte selezionato."
+            hint={t('Valore cumulato sull’orizzonte selezionato.', 'Cumulative value over the selected horizon.')}
           />
           <KpiCard
             icon={Server}
             title={`${copy.roiYears} ${state.profile.horizonYears} ${copy.years}`}
             value={pct(model.totals.horizonRoi, 1)}
-            hint="ROI medio sull’orizzonte selezionato."
+            hint={t('ROI medio sull’orizzonte selezionato.', 'Average ROI over the selected horizon.')}
           />
         </div>
 
@@ -580,8 +583,8 @@ export default function App() {
           <div className="mt-6 space-y-6">
             <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
               <SectionCard
-                title="Confronto economico"
-                subtitle="Vista sintetica di costo attuale, costo HMC e saving."
+                title={t('Confronto economico', 'Economic comparison')}
+                subtitle={t('Vista sintetica di costo attuale, costo HMC e saving.', 'Summary view of current cost, HMC cost, and savings.')}
               >
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
@@ -593,7 +596,7 @@ export default function App() {
                         tickLine={false}
                         axisLine={false}
                       />
-                      <Tooltip formatter={(value) => eur(value)} />
+                      <Tooltip formatter={(value) => eur(value, lang)} />
                       <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#2563eb" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -601,8 +604,8 @@ export default function App() {
               </SectionCard>
 
               <SectionCard
-                title="Breakdown saving per dominio"
-                subtitle="Distribuzione del saving lordo annuo."
+                title={t('Breakdown saving per dominio', 'Savings breakdown by domain')}
+                subtitle={t('Distribuzione del saving lordo annuo.', 'Distribution of gross annual savings.')}
               >
                 <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr]">
                   <div className="h-72">
@@ -620,7 +623,7 @@ export default function App() {
                             <Cell key={item.name} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => eur(value)} />
+                        <Tooltip formatter={(value) => eur(value, lang)} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -638,11 +641,11 @@ export default function App() {
                           <div>
                             <p className="font-medium text-slate-900">{item.name}</p>
                             <p className="text-xs text-slate-500">
-                              {pct(item.value / Math.max(model.totals.grossSavings, 1), 1)} del totale
+                              {pct(item.value / Math.max(model.totals.grossSavings, 1), 1)} {t('del totale', 'of total')}
                             </p>
                           </div>
                         </div>
-                        <span className="font-semibold">{eur(item.value)}</span>
+                        <span className="font-semibold">{eur(item.value, lang)}</span>
                       </div>
                     ))}
                   </div>
@@ -651,8 +654,8 @@ export default function App() {
             </div>
 
             <SectionCard
-              title="Leve di valore HMC"
-              subtitle="Classifica dei principali driver economici inclusi nel modello ROI."
+              title={t('Leve di valore HMC', 'HMC value levers')}
+              subtitle={t('Classifica dei principali driver economici inclusi nel modello ROI.', 'Ranking of the main economic drivers included in the ROI model.')}
             >
               <div className="h-[520px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -664,7 +667,7 @@ export default function App() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" tickFormatter={(v) => `€${Math.round(v / 1000)}k`} />
                     <YAxis type="category" dataKey="name" width={190} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(value) => eur(value)} />
+                    <Tooltip formatter={(value) => eur(value, lang)} />
                     <Bar dataKey="value" fill="#0f172a" radius={[0, 10, 10, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -673,29 +676,33 @@ export default function App() {
 
             <div className="grid gap-4 lg:grid-cols-3">
               <SectionCard
-                title="Executive narrative"
-                subtitle="Messaggio consigliato per la presentazione del business case."
+                title={t('Executive narrative', 'Executive narrative')}
+                subtitle={t('Messaggio consigliato per la presentazione del business case.', 'Recommended message for business-case presentation.')}
               >
                 <p className="text-sm leading-7 text-slate-600">
-                  Il modello evidenzia che Citrix può essere presentata non come una sola voce licenze,
-                  ma come una piattaforma di consolidamento che assorbe costi distribuiti tra hypervisor,
-                  accesso, security e operation.
+                  {t(
+                    'Il modello evidenzia che Citrix può essere presentata non come una sola voce licenze, ma come una piattaforma di consolidamento che assorbe costi distribuiti tra hypervisor, accesso, security e operation.',
+                    'The model highlights that Citrix can be positioned not as a single licensing line item, but as a consolidation platform that absorbs costs spread across hypervisor, access, security, and operations.'
+                  )}
                 </p>
               </SectionCard>
-              <SectionCard title="Messaggio security" subtitle="Posizionamento prudente ma credibile.">
+              <SectionCard title={t('Messaggio security', 'Security message')} subtitle={t('Posizionamento prudente ma credibile.', 'Prudent yet credible positioning.')}>
                 <p className="text-sm leading-7 text-slate-600">
-                  I residui mantengono un approccio realistico: parte dei controlli di sicurezza rimane,
-                  ma il perimetro operativo e il costo complessivo si riducono in modo misurabile.
+                  {t(
+                    'I residui mantengono un approccio realistico: parte dei controlli di sicurezza rimane, ma il perimetro operativo e il costo complessivo si riducono in modo misurabile.',
+                    'Residual values keep the model realistic: part of the security controls remains, while operational scope and overall cost are measurably reduced.'
+                  )}
                 </p>
               </SectionCard>
               <SectionCard
-                title="Messaggio operations"
-                subtitle="Riduzione effort IT e semplificazione gestione."
+                title={t('Messaggio operations', 'Operations message')}
+                subtitle={t('Riduzione effort IT e semplificazione gestione.', 'Reduced IT effort and simplified management.')}
               >
                 <p className="text-sm leading-7 text-slate-600">
-                  L’unione tra avoided refresh, riduzione giornate sistemistiche e razionalizzazione
-                  dell’accesso crea una narrativa forte anche in contesti dove il saving infrastrutturale
-                  da solo non basta.
+                  {t(
+                    'L’unione tra avoided refresh, riduzione giornate sistemistiche e razionalizzazione dell’accesso crea una narrativa forte anche in contesti dove il saving infrastrutturale da solo non basta.',
+                    'The combination of avoided refresh, reduced sysadmin days, and streamlined access creates a strong narrative even in contexts where infrastructure savings alone are not enough.'
+                  )}
                 </p>
               </SectionCard>
             </div>
@@ -705,8 +712,8 @@ export default function App() {
         {tab === 'scenario' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <SectionCard
-              title="Profilo scenario"
-              subtitle="Parametri generali della simulazione."
+              title={t('Profilo scenario', 'Scenario profile')}
+              subtitle={t('Parametri generali della simulazione.', 'General simulation parameters.')}
               className="xl:col-span-1"
             >
               <div className="space-y-5">
@@ -717,7 +724,7 @@ export default function App() {
                   options={[
                     { value: 'SMB', label: 'SMB' },
                     { value: 'Enterprise', label: 'Enterprise' },
-                    { value: 'Sanita-PA', label: 'Sanità / PA' },
+                    { value: 'Sanita-PA', label: t('Sanità / PA', 'Healthcare / Public Sector') },
                     { value: 'Finance', label: 'Finance' },
                     { value: 'Manufacturing', label: 'Manufacturing' },
                   ]}
@@ -746,12 +753,12 @@ export default function App() {
                   ]}
                 />
                 <SelectField
-                  label="Orizzonte temporale"
+                  label={t('Orizzonte temporale', 'Time horizon')}
                   value={String(state.profile.horizonYears)}
                   onChange={(v) => setProfile('horizonYears', Number(v))}
                   options={[
-                    { value: '3', label: '3 anni' },
-                    { value: '5', label: '5 anni' },
+                    { value: '3', label: t('3 anni', '3 years') },
+                    { value: '5', label: t('5 anni', '5 years') },
                   ]}
                 />
                 <Field
@@ -764,13 +771,13 @@ export default function App() {
             </SectionCard>
 
             <SectionCard
-              title="Input tecnici"
-              subtitle="Variabili operative utilizzate nel modello."
+              title={t('Input tecnici', 'Technical inputs')}
+              subtitle={t('Variabili operative utilizzate nel modello.', 'Operational variables used in the model.')}
               className="xl:col-span-2"
             >
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <Field
-                  label="Numero utenti"
+                  label={t('Numero utenti', 'Number of users')}
                   value={state.tech.numberUsers}
                   onChange={(v) => setTech('numberUsers', v)}
                 />
@@ -784,80 +791,80 @@ export default function App() {
                   value={state.tech.pctByodUsers}
                   onChange={(v) => setTech('pctByodUsers', v)}
                 />
-                <Field label="Numero PC" value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} />
+                <Field label={t('Numero PC', 'Number of PCs')} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} />
                 <Field
-                  label="Numero thin client"
+                  label={t('Numero thin client', 'Number of thin clients')}
                   value={state.tech.numberThinClient}
                   onChange={(v) => setTech('numberThinClient', v)}
                 />
                 <Field
-                  label="Età media PC"
+                  label={t('Età media PC', 'Average PC age')}
                   value={state.tech.avgPcAgeYears}
                   onChange={(v) => setTech('avgPcAgeYears', v)}
-                  suffix="anni"
+                  suffix={t('anni', 'years')}
                 />
                 <Field
                   label="Lifecycle PC target"
                   value={state.tech.lifecyclePcTargetYears}
                   onChange={(v) => setTech('lifecyclePcTargetYears', v)}
-                  suffix="anni"
+                  suffix={t('anni', 'years')}
                 />
                 <RangeField
-                  label="% PC sostituibili / estendibili"
+                  label={t('% PC sostituibili / estendibili', '% PCs replaceable / extendable')}
                   value={state.tech.pctPcReplaceableWithThinClient}
                   onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)}
                 />
                 <Field
-                  label="Numero appliance VPN / ADC"
+                  label={t('Numero appliance VPN / ADC', 'Number of VPN / ADC appliances')}
                   value={state.tech.numberVpnAdcAppliances}
                   onChange={(v) => setTech('numberVpnAdcAppliances', v)}
                 />
                 <Field
-                  label="Numero host"
+                  label={t('Numero host', 'Number of hosts')}
                   value={state.tech.numberHosts}
                   onChange={(v) => setTech('numberHosts', v)}
                 />
                 <Field
-                  label="Core per host"
+                  label={t('Core per host', 'Cores per host')}
                   value={state.tech.coresPerHost}
                   onChange={(v) => setTech('coresPerHost', v)}
                 />
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Derivato</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">{t('Derivato', 'Derived')}</p>
                   <p className="mt-1 text-2xl font-semibold">{model.totals.totalCores}</p>
-                  <p className="mt-2 text-sm text-slate-500">Core complessivi del cluster corrente.</p>
+                  <p className="mt-2 text-sm text-slate-500">{t('Core complessivi del cluster corrente.', 'Total cores in the current cluster.')}</p>
                 </div>
               </div>
             </SectionCard>
 
             <SectionCard
-              title="Effort operativo annuo"
-              subtitle="Driver relativi all’efficienza IT."
+              title={t('Effort operativo annuo', 'Annual operational effort')}
+              subtitle={t('Driver relativi all’efficienza IT.', 'Drivers related to IT efficiency.')}
               className="xl:col-span-2"
             >
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 <Field
-                  label="Giorni IT endpoint management"
+                  label={t('Giorni IT endpoint management', 'IT days for endpoint management')}
                   value={state.tech.itDaysEndpointMgmt}
                   onChange={(v) => setTech('itDaysEndpointMgmt', v)}
                 />
                 <Field
-                  label="Giorni IT image / VDI management"
+                  label={t('Giorni IT image / VDI management', 'IT days for image / VDI management')}
                   value={state.tech.itDaysImageVdiMgmt}
                   onChange={(v) => setTech('itDaysImageVdiMgmt', v)}
                 />
                 <Field
-                  label="Giorni IT support"
+                  label={t('Giorni IT support', 'IT support days')}
                   value={state.tech.itDaysSupport}
                   onChange={(v) => setTech('itDaysSupport', v)}
                 />
                 <Field
-                  label="Giorni IT access management"
+                  label={t('Giorni IT access management', 'IT days for access management')}
                   value={state.tech.itDaysAccessMgmt}
                   onChange={(v) => setTech('itDaysAccessMgmt', v)}
                 />
                 <Field
-                  label="Giorni IT security operations"
+                  label={t('Giorni IT security operations', 'IT days for security operations')}
                   value={state.tech.itDaysSecurityOps}
                   onChange={(v) => setTech('itDaysSecurityOps', v)}
                 />
@@ -865,14 +872,14 @@ export default function App() {
             </SectionCard>
 
             <SectionCard
-              title="Cloud benchmark opzionale"
-              subtitle="Driver utile per confronti con AVD e Windows 365."
+              title={t('Cloud benchmark opzionale', 'Optional cloud benchmark')}
+              subtitle={t('Driver utile per confronti con AVD e Windows 365.', 'Useful driver for comparisons with AVD and Windows 365.')}
               className="xl:col-span-1"
             >
               <div className="space-y-5">
-                <Field label="Utenti AVD" value={state.tech.usersAvd} onChange={(v) => setTech('usersAvd', v)} />
+                <Field label={t('Utenti AVD', 'AVD users')} value={state.tech.usersAvd} onChange={(v) => setTech('usersAvd', v)} />
                 <Field
-                  label="Utenti Windows 365"
+                  label={t('Utenti Windows 365', 'Windows 365 users')}
                   value={state.tech.usersWindows365}
                   onChange={(v) => setTech('usersWindows365', v)}
                 />
@@ -884,12 +891,12 @@ export default function App() {
         {tab === 'costs' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <SectionCard
-              title="Assunzioni economiche"
-              subtitle="Valori economici principali del modello."
+              title={t('Assunzioni economiche', 'Cost assumptions')}
+              subtitle={t('Valori economici principali del modello.', 'Main economic values of the model.')}
               className="xl:col-span-2"
             >
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label="Costo 1 PC" value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" />
+                <Field label={t('Costo 1 PC', 'Single PC cost')} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" />
                 <Field
                   label={copy.thinClientCost}
                   value={state.cost.costOneThinClient}
@@ -897,81 +904,81 @@ export default function App() {
                   prefix="€"
                 />
                 <Field
-                  label="Costo hypervisor / core / anno"
+                  label={t('Costo hypervisor / core / anno', 'Hypervisor cost / core / year')}
                   value={state.cost.costHypervisorPerCoreYear}
                   onChange={(v) => setCost('costHypervisorPerCoreYear', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo appliance VPN / ADC"
+                  label={t('Costo appliance VPN / ADC', 'VPN / ADC appliance cost')}
                   value={state.cost.costVpnAdcAppliance}
                   onChange={(v) => setCost('costVpnAdcAppliance', v)}
                   prefix="€"
                 />
                 <RangeField
-                  label="Manutenzione annuale appliance"
+                  label={t('Manutenzione annuale appliance', 'Annual appliance maintenance')}
                   value={state.cost.applianceMaintenanceAnnualPct}
                   onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)}
                 />
                 <Field
-                  label="Costo MFA / utente / mese"
+                  label={t('Costo MFA / utente / mese', 'MFA cost / user / month')}
                   value={state.cost.costMfaUserMonth}
                   onChange={(v) => setCost('costMfaUserMonth', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo ZTNA / utente / mese"
+                  label={t('Costo ZTNA / utente / mese', 'ZTNA cost / user / month')}
                   value={state.cost.costZtnaUserMonth}
                   onChange={(v) => setCost('costZtnaUserMonth', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo EDR / endpoint / mese"
+                  label={t('Costo EDR / endpoint / mese', 'EDR cost / endpoint / month')}
                   value={state.cost.costEdrEndpointMonth}
                   onChange={(v) => setCost('costEdrEndpointMonth', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo device posture / endpoint / mese"
+                  label={t('Costo device posture / endpoint / mese', 'Device posture cost / endpoint / month')}
                   value={state.cost.costDevicePostureEndpointMonth}
                   onChange={(v) => setCost('costDevicePostureEndpointMonth', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo SOC / MSSP annuo"
+                  label={t('Costo SOC / MSSP annuo', 'Annual SOC / MSSP cost')}
                   value={state.cost.costSocMsspAnnual}
                   onChange={(v) => setCost('costSocMsspAnnual', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo remediation / endpoint / anno"
+                  label={t('Costo remediation / endpoint / anno', 'Remediation cost / endpoint / year')}
                   value={state.cost.costRemediationPerEndpointYear}
                   onChange={(v) => setCost('costRemediationPerEndpointYear', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo giornata sistemistica"
+                  label={t('Costo giornata sistemistica', 'System administration day cost')}
                   value={state.cost.costSysadminDay}
                   onChange={(v) => setCost('costSysadminDay', v)}
                   prefix="€"
                 />
                 <RangeField
-                  label="Riduzione effort endpoint"
+                  label={t('Riduzione effort endpoint', 'Endpoint effort reduction')}
                   value={state.cost.reductionEffortEndpointPct}
                   onChange={(v) => setCost('reductionEffortEndpointPct', v)}
                 />
                 <RangeField
-                  label="Riduzione effort image / VDI"
+                  label={t('Riduzione effort image / VDI', 'Image / VDI effort reduction')}
                   value={state.cost.reductionEffortImagePct}
                   onChange={(v) => setCost('reductionEffortImagePct', v)}
                 />
                 <RangeField
-                  label="Riduzione effort support"
+                  label={t('Riduzione effort support', 'Support effort reduction')}
                   value={state.cost.reductionEffortSupportPct}
                   onChange={(v) => setCost('reductionEffortSupportPct', v)}
                 />
                 <RangeField
-                  label="Riduzione effort access"
+                  label={t('Riduzione effort access', 'Access effort reduction')}
                   value={state.cost.reductionEffortAccessPct}
                   onChange={(v) => setCost('reductionEffortAccessPct', v)}
                 />
@@ -979,8 +986,8 @@ export default function App() {
             </SectionCard>
 
             <SectionCard
-              title="Residui e benchmark"
-              subtitle="Parametri che modulano saving e costi residui."
+              title={t('Residui e benchmark', 'Residuals and benchmarks')}
+              subtitle={t('Parametri che modulano saving e costi residui.', 'Parameters that modulate savings and residual costs.')}
               className="xl:col-span-1"
             >
               <div className="space-y-5">
@@ -1000,19 +1007,19 @@ export default function App() {
                   onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)}
                 />
                 <Field
-                  label="Costo AVD / utente / mese"
+                  label={t('Costo AVD / utente / mese', 'AVD cost / user / month')}
                   value={state.cost.costAvdPerUserMonth}
                   onChange={(v) => setCost('costAvdPerUserMonth', v)}
                   prefix="€"
                 />
                 <Field
-                  label="Costo Windows 365 / utente / mese"
+                  label={t('Costo Windows 365 / utente / mese', 'Windows 365 cost / user / month')}
                   value={state.cost.costWindows365PerUserMonth}
                   onChange={(v) => setCost('costWindows365PerUserMonth', v)}
                   prefix="€"
                 />
                 <RangeField
-                  label="Premium uplift cloud evitato"
+                  label={t('Premium uplift cloud evitato', 'Avoided cloud premium uplift')}
                   value={state.cost.premiumUpliftCitrixCloudAvoidedPct}
                   onChange={(v) => setCost('premiumUpliftCitrixCloudAvoidedPct', v)}
                 />
@@ -1035,52 +1042,52 @@ export default function App() {
 
         {tab === 'details' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
-            <SectionCard title="Current cost model" subtitle="Dettaglio annuo dello scenario attuale.">
+            <SectionCard title={t('Current cost model', 'Current cost model')} subtitle={t('Dettaglio annuo dello scenario attuale.', 'Annual detail of the current scenario.')}>
               <div className="space-y-3 text-sm">
-                <Row label="Endpoint" value={eur(model.current.currentEndpoint)} />
-                <Row label="Hypervisor" value={eur(model.current.currentHypervisor)} />
-                <Row label="Access" value={eur(model.current.currentAccess)} />
-                <Row label="Security - MFA" value={eur(model.current.currentMfa)} />
-                <Row label="Security - ZTNA" value={eur(model.current.currentZtna)} />
-                <Row label="Security - EDR/XDR" value={eur(model.current.currentEdr)} />
-                <Row label="Security - Device Posture" value={eur(model.current.currentDevicePosture)} />
-                <Row label="Security - SOC/MSSP" value={eur(model.current.currentSocMssp)} />
-                <Row label="Security - Remediation" value={eur(model.current.currentRemediation)} />
-                <Row label="Operations - Endpoint" value={eur(model.current.currentOpsEndpoint)} />
-                <Row label="Operations - Image/VDI" value={eur(model.current.currentOpsImage)} />
-                <Row label="Operations - Support" value={eur(model.current.currentOpsSupport)} />
-                <Row label="Operations - Access" value={eur(model.current.currentOpsAccess)} />
-                <Row label="Operations - Security Ops" value={eur(model.current.currentOpsSecurity)} />
-                <Row label="Totale current" value={eur(model.totals.totalCurrent)} strong />
+                <Row label="Endpoint" value={eur(model.current.currentEndpoint, lang)} />
+                <Row label="Hypervisor" value={eur(model.current.currentHypervisor, lang)} />
+                <Row label="Access" value={eur(model.current.currentAccess, lang)} />
+                <Row label="Security - MFA" value={eur(model.current.currentMfa, lang)} />
+                <Row label="Security - ZTNA" value={eur(model.current.currentZtna, lang)} />
+                <Row label="Security - EDR/XDR" value={eur(model.current.currentEdr, lang)} />
+                <Row label="Security - Device Posture" value={eur(model.current.currentDevicePosture, lang)} />
+                <Row label="Security - SOC/MSSP" value={eur(model.current.currentSocMssp, lang)} />
+                <Row label="Security - Remediation" value={eur(model.current.currentRemediation, lang)} />
+                <Row label="Operations - Endpoint" value={eur(model.current.currentOpsEndpoint, lang)} />
+                <Row label="Operations - Image/VDI" value={eur(model.current.currentOpsImage, lang)} />
+                <Row label="Operations - Support" value={eur(model.current.currentOpsSupport, lang)} />
+                <Row label="Operations - Access" value={eur(model.current.currentOpsAccess, lang)} />
+                <Row label="Operations - Security Ops" value={eur(model.current.currentOpsSecurity, lang)} />
+                <Row label={t('Totale current', 'Total current')} value={eur(model.totals.totalCurrent, lang)} strong />
               </div>
             </SectionCard>
 
-            <SectionCard title="HMC cost model" subtitle="Dettaglio annuo dello scenario target HMC.">
+            <SectionCard title={t('HMC cost model', 'HMC cost model')} subtitle={t('Dettaglio annuo dello scenario target HMC.', 'Annual detail of the HMC target scenario.')}>
               <div className="space-y-3 text-sm">
-                <Row label="HMC Subscription" value={eur(model.hmc.hmcSubscription)} />
-                <Row label="Residual Endpoint Cost" value={eur(model.hmc.residualEndpointCost)} />
-                <Row label="Residual EDR/XDR" value={eur(model.hmc.residualEdr)} />
-                <Row label="Residual Device Posture" value={eur(model.hmc.residualDevicePosture)} />
+                <Row label="HMC Subscription" value={eur(model.hmc.hmcSubscription, lang)} />
+                <Row label="Residual Endpoint Cost" value={eur(model.hmc.residualEndpointCost, lang)} />
+                <Row label="Residual EDR/XDR" value={eur(model.hmc.residualEdr, lang)} />
+                <Row label="Residual Device Posture" value={eur(model.hmc.residualDevicePosture, lang)} />
                 <Row
                   label="Residual Security Services"
-                  value={eur(model.hmc.residualSecurityServices)}
+                  value={eur(model.hmc.residualSecurityServices, lang)}
                 />
-                <Row label="Residual Hardware / Infra" value={eur(state.residuals.residualHardwareInfra)} />
-                <Row label="Residual Services" value={eur(state.residuals.residualServices)} />
-                <Row label="Totale HMC" value={eur(model.totals.totalHmc)} strong />
+                <Row label="Residual Hardware / Infra" value={eur(state.residuals.residualHardwareInfra, lang)} />
+                <Row label="Residual Services" value={eur(state.residuals.residualServices, lang)} />
+                <Row label={t('Totale HMC', 'Total HMC')} value={eur(model.totals.totalHmc, lang)} strong />
               </div>
             </SectionCard>
 
             <SectionCard
-              title="Saving breakdown"
-              subtitle="Le singole voci che compongono il saving lordo."
+              title={t('Saving breakdown', 'Savings breakdown')}
+              subtitle={t('Le singole voci che compongono il saving lordo.', 'Individual items that compose gross savings.')}
             >
               <div className="space-y-3 text-sm">
                 {model.featureRows.map((item) => (
-                  <Row key={item.name} label={item.name} value={eur(item.value)} />
+                  <Row key={item.name} label={item.name} value={eur(item.value, lang)} />
                 ))}
-                <Row label="Saving lordo" value={eur(model.totals.grossSavings)} strong />
-                <Row label="Net saving" value={eur(model.totals.netSavings)} strong />
+                <Row label={t('Saving lordo', 'Gross savings')} value={eur(model.totals.grossSavings, lang)} strong />
+                <Row label="Net saving" value={eur(model.totals.netSavings, lang)} strong />
               </div>
             </SectionCard>
           </div>
@@ -1092,11 +1099,9 @@ export default function App() {
               <Settings2 className="h-5 w-5 text-slate-700" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-950">Nota di modellazione</h3>
+              <h3 className="text-lg font-semibold text-slate-950">{t('Nota di modellazione', 'Modeling note')}</h3>
               <p className="mt-2 max-w-5xl text-sm leading-7 text-slate-600">
-                Questa versione è ora completa e autonoma in un singolo file React. Non dipende da
-                componenti esterni come shadcn/ui e usa controlli HTML standard, Tailwind, Recharts,
-                Framer Motion e Lucide.
+                {t('Questa versione è ora completa e autonoma in un singolo file React. Non dipende da componenti esterni come shadcn/ui e usa controlli HTML standard, Tailwind, Recharts, Framer Motion e Lucide.', 'This version is now complete and self-contained in a single React file. It does not depend on external components such as shadcn/ui and uses standard HTML controls, Tailwind, Recharts, Framer Motion, and Lucide.')}
               </p>
             </div>
           </div>
