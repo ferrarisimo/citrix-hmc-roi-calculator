@@ -8,11 +8,6 @@ import {
   RefreshCcw,
   TrendingUp,
   Clock3,
-  SlidersHorizontal,
-  Printer,
-  ChevronDown,
-  ChevronUp,
-  BookOpenText,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -1162,47 +1157,6 @@ export default function App() {
             </SectionCard>
           </div>
         )}
-
-        <div className="mt-6 print:hidden">
-          <button
-            onClick={() => setShowLegend((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          >
-            <BookOpenText className="h-4 w-4" />
-            {copy.assumptions}
-            {showLegend ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          {showLegend && (
-            <div className="mt-3 rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-              <ul className="space-y-2 leading-7">
-                <li>{t('Current annual total: somma di endpoint, hypervisor, accesso, security e operation nello scenario attuale.', 'Current annual total: sum of endpoint, hypervisor, access, security, and operations in the current scenario.')}</li>
-                <li>{t('HMC annual total: subscription HMC + costi residui mantenuti nel target.', 'HMC annual total: HMC subscription + residual costs retained in target state.')}</li>
-                <li>{t('Gross annual savings: somma delle leve economiche abilitate da HMC.', 'Gross annual savings: sum of economic value levers enabled by HMC.')}</li>
-                <li>{t('Net annual savings: gross savings meno costo HMC annuo.', 'Net annual savings: gross savings minus annual HMC cost.')}</li>
-                <li>{t('ROI annuo: net savings / costo HMC annuo.', 'Annual ROI: net savings / annual HMC cost.')}</li>
-                <li>{t('Costo per utente: totale annuo / numero utenti, utile per leggere scenari con ROI temporaneamente negativo.', 'Per-user cost: annual total / number of users, useful when ROI is temporarily negative.')}</li>
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-8 hidden rounded-3xl border border-slate-200 bg-white p-6 text-slate-800 print:block">
-          <h2 className="text-xl font-semibold">{t('Riassunto stampabile', 'Printable summary')}</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            {t('Usa Stampa/Salva PDF dal browser per esportare questa sintesi.', 'Use browser Print/Save PDF to export this summary.')}
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <Row label={copy.currentAnnual} value={eur(model.totals.totalCurrent, lang)} />
-            <Row label={copy.hmcAnnual} value={eur(model.totals.totalHmc, lang)} />
-            <Row label={copy.grossAnnual} value={eur(model.totals.grossSavings, lang)} />
-            <Row label={copy.netAnnual} value={eur(model.totals.netSavings, lang)} />
-            <Row label={copy.annualRoi} value={pct(model.totals.roiAnnual, 1)} />
-            <Row label={copy.currentPerUser} value={eur(model.totals.currentCostPerUserYear, lang)} />
-            <Row label={copy.hmcPerUser} value={eur(model.totals.hmcCostPerUserYear, lang)} />
-            <Row label={copy.deltaPerUser} value={eur(model.totals.deltaCostPerUserYear, lang)} />
-          </div>
-          <p className="mt-4 text-sm leading-6">{roiNarrative}</p>
-        </div>
 
       </div>
     </div>
