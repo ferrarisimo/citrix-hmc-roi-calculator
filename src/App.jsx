@@ -8,7 +8,6 @@ import {
   RefreshCcw,
   TrendingUp,
   Clock3,
-  Settings2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -674,38 +673,6 @@ export default function App() {
               </div>
             </SectionCard>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <SectionCard
-                title={t('Executive narrative', 'Executive narrative')}
-                subtitle={t('Messaggio consigliato per la presentazione del business case.', 'Recommended message for business-case presentation.')}
-              >
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'Il modello evidenzia che Citrix può essere presentata non come una sola voce licenze, ma come una piattaforma di consolidamento che assorbe costi distribuiti tra hypervisor, accesso, security e operation.',
-                    'The model highlights that Citrix can be positioned not as a single licensing line item, but as a consolidation platform that absorbs costs spread across hypervisor, access, security, and operations.'
-                  )}
-                </p>
-              </SectionCard>
-              <SectionCard title={t('Messaggio security', 'Security message')} subtitle={t('Posizionamento prudente ma credibile.', 'Prudent yet credible positioning.')}>
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'I residui mantengono un approccio realistico: parte dei controlli di sicurezza rimane, ma il perimetro operativo e il costo complessivo si riducono in modo misurabile.',
-                    'Residual values keep the model realistic: part of the security controls remains, while operational scope and overall cost are measurably reduced.'
-                  )}
-                </p>
-              </SectionCard>
-              <SectionCard
-                title={t('Messaggio operations', 'Operations message')}
-                subtitle={t('Riduzione effort IT e semplificazione gestione.', 'Reduced IT effort and simplified management.')}
-              >
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'L’unione tra avoided refresh, riduzione giornate sistemistiche e razionalizzazione dell’accesso crea una narrativa forte anche in contesti dove il saving infrastrutturale da solo non basta.',
-                    'The combination of avoided refresh, reduced sysadmin days, and streamlined access creates a strong narrative even in contexts where infrastructure savings alone are not enough.'
-                  )}
-                </p>
-              </SectionCard>
-            </div>
           </div>
         )}
 
@@ -1093,19 +1060,6 @@ export default function App() {
           </div>
         )}
 
-        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-slate-100 p-3">
-              <Settings2 className="h-5 w-5 text-slate-700" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950">{t('Nota di modellazione', 'Modeling note')}</h3>
-              <p className="mt-2 max-w-5xl text-sm leading-7 text-slate-600">
-                {t('Questa versione è ora completa e autonoma in un singolo file React. Non dipende da componenti esterni come shadcn/ui e usa controlli HTML standard, Tailwind, Recharts, Framer Motion e Lucide.', 'This version is now complete and self-contained in a single React file. It does not depend on external components such as shadcn/ui and uses standard HTML controls, Tailwind, Recharts, Framer Motion, and Lucide.')}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
