@@ -8,7 +8,11 @@ import {
   RefreshCcw,
   TrendingUp,
   Clock3,
-  Settings2,
+  SlidersHorizontal,
+  Printer,
+  ChevronDown,
+  ChevronUp,
+  BookOpenText,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -51,6 +55,9 @@ const TEXT = {
     netAnnual: 'Saving netto annuo',
     annualRoi: 'ROI annuo',
     payback: 'Payback',
+    currentPerUser: 'Costo attuale per utente/anno',
+    hmcPerUser: 'Costo HMC per utente/anno',
+    deltaPerUser: 'Delta per utente/anno',
     months: 'mesi',
     na: 'n/d',
     netYears: 'Saving netto',
@@ -58,6 +65,11 @@ const TEXT = {
     years: 'anni',
     tabs: ['Dashboard', 'Scenario', 'Assunzioni costi', 'Dettaglio calcoli'],
     thinClientCost: 'Costo 1 thin client (impostato a €0 con soluzione Scout eLux)',
+    advancedParams: 'Parametri avanzati',
+    showAdvanced: 'Mostra personalizzazione',
+    hideAdvanced: 'Nascondi personalizzazione',
+    assumptions: 'Legenda calcoli e assunzioni',
+    printSummary: 'Stampa / Salva PDF',
   },
   en: {
     badge: 'Arrow | Citrix ROI Calculator',
@@ -74,6 +86,9 @@ const TEXT = {
     netAnnual: 'Net annual savings',
     annualRoi: 'Annual ROI',
     payback: 'Payback',
+    currentPerUser: 'Current cost per user/year',
+    hmcPerUser: 'HMC cost per user/year',
+    deltaPerUser: 'Delta per user/year',
     months: 'months',
     na: 'n/a',
     netYears: 'Net savings',
@@ -81,6 +96,11 @@ const TEXT = {
     years: 'years',
     tabs: ['Dashboard', 'Scenario', 'Cost assumptions', 'Calculation details'],
     thinClientCost: 'Thin client unit cost (€0 when using Scout eLux)',
+    advancedParams: 'Advanced parameters',
+    showAdvanced: 'Show customization',
+    hideAdvanced: 'Hide customization',
+    assumptions: 'Calculation legend and assumptions',
+    printSummary: 'Print / Save PDF',
   },
 };
 
@@ -255,6 +275,8 @@ function Row({ label, value, strong = false }) {
 export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [lang, setLang] = useState('it');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [state, setState] = useState(DEFAULTS);
   const copy = TEXT[lang] || TEXT.it;
   const t = (itText, enText) => (lang === 'en' ? enText : itText);
@@ -358,6 +380,9 @@ export default function App() {
     const horizonNetSaving = netSavings * profile.horizonYears;
     const horizonRoi =
       totalHmc > 0 ? horizonNetSaving / (totalHmc * profile.horizonYears) : 0;
+    const currentCostPerUserYear = totalUsers > 0 ? totalCurrent / totalUsers : 0;
+    const hmcCostPerUserYear = totalUsers > 0 ? totalHmc / totalUsers : 0;
+    const deltaCostPerUserYear = currentCostPerUserYear - hmcCostPerUserYear;
 
     const featureRows = Object.entries(savings)
       .map(([name, value]) => ({ name, value }))
@@ -407,6 +432,9 @@ export default function App() {
         paybackMonths,
         horizonNetSaving,
         horizonRoi,
+        currentCostPerUserYear,
+        hmcCostPerUserYear,
+        deltaCostPerUserYear,
       },
       current: {
         currentEndpoint,
@@ -436,6 +464,22 @@ export default function App() {
       comparison,
     };
   }, [state]);
+
+  const roiNarrative =
+    model.totals.roiAnnual >= 0
+      ? t(
+          'Il ROI è positivo: il modello mostra saving netto annuo e costo per utente sotto controllo. Questo rende la proposta immediatamente sostenibile.',
+          'ROI is positive: the model shows annual net savings and controlled per-user cost, making the proposal immediately sustainable.'
+        )
+      : t(
+          'Il ROI è attualmente negativo, ma il costo per utente resta contenuto. Anche una singola funzionalità aggiuntiva a basso costo (security o operations) può ribaltare rapidamente la percezione del valore.',
+          'ROI is currently negative, but per-user cost remains contained. Even one low-cost additional capability (security or operations) can quickly improve perceived value.'
+        );
+
+  const perUserDeltaTone =
+    model.totals.deltaCostPerUserYear >= 0
+      ? t('Riduzione costo per utente', 'Per-user cost reduction')
+      : t('Incremento costo per utente', 'Per-user cost increase');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -473,6 +517,13 @@ export default function App() {
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:text-base">{copy.subtitle}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => window.print()}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
+                  >
+                    <Printer className="h-4 w-4" />
+                    {copy.printSummary}
+                  </button>
                   <button
                     onClick={resetAll}
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
@@ -560,24 +611,75 @@ export default function App() {
           />
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
-          {[
-            ['dashboard', copy.tabs[0]],
-            ['scenario', copy.tabs[1]],
-            ['costs', copy.tabs[2]],
-            ['details', copy.tabs[3]],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setTab(value)}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
-                tab === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <KpiCard
+            icon={Users}
+            title={copy.currentPerUser}
+            value={eur(model.totals.currentCostPerUserYear, lang)}
+            hint={t('Totale current diviso utenti.', 'Current total divided by users.')}
+          />
+          <KpiCard
+            icon={Users}
+            title={copy.hmcPerUser}
+            value={eur(model.totals.hmcCostPerUserYear, lang)}
+            hint={t('Totale HMC diviso utenti.', 'HMC total divided by users.')}
+          />
+          <KpiCard
+            icon={TrendingUp}
+            title={copy.deltaPerUser}
+            value={eur(model.totals.deltaCostPerUserYear, lang)}
+            hint={perUserDeltaTone}
+          />
         </div>
+
+        <SectionCard
+          className="mt-4"
+          title={t('Messaggio economico sintetico', 'Executive economic message')}
+          subtitle={t('Lettura consigliata di saving, ROI e costo per utente.', 'Recommended reading of savings, ROI, and per-user cost.')}
+        >
+          <p className="text-sm leading-7 text-slate-700">{roiNarrative}</p>
+        </SectionCard>
+
+        <div className="mt-8 print:hidden">
+          <button
+            onClick={() =>
+              setShowAdvanced((v) => {
+                if (v) {
+                  setTab('dashboard');
+                }
+                return !v;
+              })
+            }
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {showAdvanced ? copy.hideAdvanced : copy.showAdvanced}
+            {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+        </div>
+
+        {showAdvanced && (
+          <div className="mt-4">
+            <div className="flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
+              {[
+                ['dashboard', copy.tabs[0]],
+                ['scenario', copy.tabs[1]],
+                ['costs', copy.tabs[2]],
+                ['details', copy.tabs[3]],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setTab(value)}
+                  className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
+                    tab === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {tab === 'dashboard' && (
           <div className="mt-6 space-y-6">
@@ -674,42 +776,10 @@ export default function App() {
               </div>
             </SectionCard>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <SectionCard
-                title={t('Executive narrative', 'Executive narrative')}
-                subtitle={t('Messaggio consigliato per la presentazione del business case.', 'Recommended message for business-case presentation.')}
-              >
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'Il modello evidenzia che Citrix può essere presentata non come una sola voce licenze, ma come una piattaforma di consolidamento che assorbe costi distribuiti tra hypervisor, accesso, security e operation.',
-                    'The model highlights that Citrix can be positioned not as a single licensing line item, but as a consolidation platform that absorbs costs spread across hypervisor, access, security, and operations.'
-                  )}
-                </p>
-              </SectionCard>
-              <SectionCard title={t('Messaggio security', 'Security message')} subtitle={t('Posizionamento prudente ma credibile.', 'Prudent yet credible positioning.')}>
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'I residui mantengono un approccio realistico: parte dei controlli di sicurezza rimane, ma il perimetro operativo e il costo complessivo si riducono in modo misurabile.',
-                    'Residual values keep the model realistic: part of the security controls remains, while operational scope and overall cost are measurably reduced.'
-                  )}
-                </p>
-              </SectionCard>
-              <SectionCard
-                title={t('Messaggio operations', 'Operations message')}
-                subtitle={t('Riduzione effort IT e semplificazione gestione.', 'Reduced IT effort and simplified management.')}
-              >
-                <p className="text-sm leading-7 text-slate-600">
-                  {t(
-                    'L’unione tra avoided refresh, riduzione giornate sistemistiche e razionalizzazione dell’accesso crea una narrativa forte anche in contesti dove il saving infrastrutturale da solo non basta.',
-                    'The combination of avoided refresh, reduced sysadmin days, and streamlined access creates a strong narrative even in contexts where infrastructure savings alone are not enough.'
-                  )}
-                </p>
-              </SectionCard>
-            </div>
           </div>
         )}
 
-        {tab === 'scenario' && (
+        {showAdvanced && tab === 'scenario' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <SectionCard
               title={t('Profilo scenario', 'Scenario profile')}
@@ -888,7 +958,7 @@ export default function App() {
           </div>
         )}
 
-        {tab === 'costs' && (
+        {showAdvanced && tab === 'costs' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <SectionCard
               title={t('Assunzioni economiche', 'Cost assumptions')}
@@ -1040,7 +1110,7 @@ export default function App() {
           </div>
         )}
 
-        {tab === 'details' && (
+        {showAdvanced && tab === 'details' && (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
             <SectionCard title={t('Current cost model', 'Current cost model')} subtitle={t('Dettaglio annuo dello scenario attuale.', 'Annual detail of the current scenario.')}>
               <div className="space-y-3 text-sm">
@@ -1093,19 +1163,47 @@ export default function App() {
           </div>
         )}
 
-        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-slate-100 p-3">
-              <Settings2 className="h-5 w-5 text-slate-700" />
+        <div className="mt-6 print:hidden">
+          <button
+            onClick={() => setShowLegend((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            <BookOpenText className="h-4 w-4" />
+            {copy.assumptions}
+            {showLegend ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          {showLegend && (
+            <div className="mt-3 rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
+              <ul className="space-y-2 leading-7">
+                <li>{t('Current annual total: somma di endpoint, hypervisor, accesso, security e operation nello scenario attuale.', 'Current annual total: sum of endpoint, hypervisor, access, security, and operations in the current scenario.')}</li>
+                <li>{t('HMC annual total: subscription HMC + costi residui mantenuti nel target.', 'HMC annual total: HMC subscription + residual costs retained in target state.')}</li>
+                <li>{t('Gross annual savings: somma delle leve economiche abilitate da HMC.', 'Gross annual savings: sum of economic value levers enabled by HMC.')}</li>
+                <li>{t('Net annual savings: gross savings meno costo HMC annuo.', 'Net annual savings: gross savings minus annual HMC cost.')}</li>
+                <li>{t('ROI annuo: net savings / costo HMC annuo.', 'Annual ROI: net savings / annual HMC cost.')}</li>
+                <li>{t('Costo per utente: totale annuo / numero utenti, utile per leggere scenari con ROI temporaneamente negativo.', 'Per-user cost: annual total / number of users, useful when ROI is temporarily negative.')}</li>
+              </ul>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950">{t('Nota di modellazione', 'Modeling note')}</h3>
-              <p className="mt-2 max-w-5xl text-sm leading-7 text-slate-600">
-                {t('Questa versione è ora completa e autonoma in un singolo file React. Non dipende da componenti esterni come shadcn/ui e usa controlli HTML standard, Tailwind, Recharts, Framer Motion e Lucide.', 'This version is now complete and self-contained in a single React file. It does not depend on external components such as shadcn/ui and uses standard HTML controls, Tailwind, Recharts, Framer Motion, and Lucide.')}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
+
+        <div className="mt-8 hidden rounded-3xl border border-slate-200 bg-white p-6 text-slate-800 print:block">
+          <h2 className="text-xl font-semibold">{t('Riassunto stampabile', 'Printable summary')}</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            {t('Usa Stampa/Salva PDF dal browser per esportare questa sintesi.', 'Use browser Print/Save PDF to export this summary.')}
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <Row label={copy.currentAnnual} value={eur(model.totals.totalCurrent, lang)} />
+            <Row label={copy.hmcAnnual} value={eur(model.totals.totalHmc, lang)} />
+            <Row label={copy.grossAnnual} value={eur(model.totals.grossSavings, lang)} />
+            <Row label={copy.netAnnual} value={eur(model.totals.netSavings, lang)} />
+            <Row label={copy.annualRoi} value={pct(model.totals.roiAnnual, 1)} />
+            <Row label={copy.currentPerUser} value={eur(model.totals.currentCostPerUserYear, lang)} />
+            <Row label={copy.hmcPerUser} value={eur(model.totals.hmcCostPerUserYear, lang)} />
+            <Row label={copy.deltaPerUser} value={eur(model.totals.deltaCostPerUserYear, lang)} />
+          </div>
+          <p className="mt-4 text-sm leading-6">{roiNarrative}</p>
+        </div>
+
       </div>
     </div>
   );
