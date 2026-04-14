@@ -1,14 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Calculator,
-  Shield,
-  Server,
-  Users,
-  RefreshCcw,
-  TrendingUp,
-  Clock3,
-} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -33,6 +25,19 @@ const pct = (value, digits = 0) =>
   `${((Number.isFinite(value) ? value : 0) * 100).toFixed(digits)}%`;
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
+const DEFAULT_ICON_NAME = 'Calculator';
+
+function SafeIcon({ name, fallback = DEFAULT_ICON_NAME, ...props }) {
+  const PrimaryIcon = LucideIcons[name];
+  const FallbackIcon = LucideIcons[fallback] || LucideIcons[DEFAULT_ICON_NAME];
+  const IconToRender = typeof PrimaryIcon === 'function' ? PrimaryIcon : FallbackIcon;
+
+  if (typeof IconToRender !== 'function') {
+    return null;
+  }
+
+  return <IconToRender {...props} />;
+}
 
 const TEXT = {
   it: {
@@ -172,7 +177,7 @@ function SectionCard({ title, subtitle, children, className = '' }) {
   );
 }
 
-function KpiCard({ icon: Icon, title, value, hint }) {
+function KpiCard({ iconName, title, value, hint }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
@@ -182,7 +187,7 @@ function KpiCard({ icon: Icon, title, value, hint }) {
           {hint ? <p className="mt-2 text-xs leading-5 text-slate-500">{hint}</p> : null}
         </div>
         <div className="rounded-2xl bg-slate-100 p-3">
-          <Icon className="h-5 w-5 text-slate-700" />
+          <SafeIcon name={iconName} className="h-5 w-5 text-slate-700" />
         </div>
       </div>
     </div>
@@ -516,14 +521,14 @@ export default function App() {
                     onClick={() => window.print()}
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
                   >
-                    <Printer className="h-4 w-4" />
+                    <SafeIcon name="Printer" className="h-4 w-4" />
                     {copy.printSummary}
                   </button>
                   <button
                     onClick={resetAll}
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
                   >
-                    <RefreshCcw className="h-4 w-4" />
+                    <SafeIcon name="RefreshCcw" className="h-4 w-4" />
                     {copy.reset}
                   </button>
                 </div>
@@ -554,25 +559,25 @@ export default function App() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            icon={Calculator}
+            iconName="Calculator"
             title={copy.currentAnnual}
             value={eur(model.totals.totalCurrent, lang)}
             hint={t('Costo annuo stimato dello scenario attuale.', 'Estimated annual cost of the current scenario.')}
           />
           <KpiCard
-            icon={Shield}
+            iconName="Shield"
             title={copy.hmcAnnual}
             value={eur(model.totals.totalHmc, lang)}
             hint={t('Subscription HMC più costi residui mantenuti.', 'HMC subscription plus retained residual costs.')}
           />
           <KpiCard
-            icon={TrendingUp}
+            iconName="TrendingUp"
             title={copy.grossAnnual}
             value={eur(model.totals.grossSavings, lang)}
             hint={t('Valore economico prima del costo HMC.', 'Economic value before HMC cost.')}
           />
           <KpiCard
-            icon={Clock3}
+            iconName="Clock3"
             title={copy.netAnnual}
             value={eur(model.totals.netSavings, lang)}
             hint={t('Saving lordo meno costo annuo HMC.', 'Gross savings minus annual HMC cost.')}
@@ -581,25 +586,25 @@ export default function App() {
 
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            icon={TrendingUp}
+            iconName="TrendingUp"
             title={copy.annualRoi}
             value={pct(model.totals.roiAnnual, 1)}
             hint={t('Net saving / costo HMC.', 'Net savings / HMC cost.')}
           />
           <KpiCard
-            icon={Clock3}
+            iconName="Clock3"
             title={copy.payback}
             value={model.totals.paybackMonths ? `${model.totals.paybackMonths.toFixed(1)} ${copy.months}` : copy.na}
             hint={t('Tempo di recupero dell’investimento.', 'Investment payback period.')}
           />
           <KpiCard
-            icon={Users}
+            iconName="Users"
             title={`${copy.netYears} ${state.profile.horizonYears} ${copy.years}`}
             value={eur(model.totals.horizonNetSaving, lang)}
             hint={t('Valore cumulato sull’orizzonte selezionato.', 'Cumulative value over the selected horizon.')}
           />
           <KpiCard
-            icon={Server}
+            iconName="Server"
             title={`${copy.roiYears} ${state.profile.horizonYears} ${copy.years}`}
             value={pct(model.totals.horizonRoi, 1)}
             hint={t('ROI medio sull’orizzonte selezionato.', 'Average ROI over the selected horizon.')}
@@ -608,19 +613,19 @@ export default function App() {
 
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <KpiCard
-            icon={Users}
+            iconName="Users"
             title={copy.currentPerUser}
             value={eur(model.totals.currentCostPerUserYear, lang)}
             hint={t('Totale current diviso utenti.', 'Current total divided by users.')}
           />
           <KpiCard
-            icon={Users}
+            iconName="Users"
             title={copy.hmcPerUser}
             value={eur(model.totals.hmcCostPerUserYear, lang)}
             hint={t('Totale HMC diviso utenti.', 'HMC total divided by users.')}
           />
           <KpiCard
-            icon={TrendingUp}
+            iconName="TrendingUp"
             title={copy.deltaPerUser}
             value={eur(model.totals.deltaCostPerUserYear, lang)}
             hint={perUserDeltaTone}
@@ -647,9 +652,13 @@ export default function App() {
             }
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            <SlidersHorizontal className="h-4 w-4" />
+            <SafeIcon name="SlidersHorizontal" className="h-4 w-4" />
             {showAdvanced ? copy.hideAdvanced : copy.showAdvanced}
-            {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {showAdvanced ? (
+              <SafeIcon name="ChevronUp" className="h-4 w-4" />
+            ) : (
+              <SafeIcon name="ChevronDown" className="h-4 w-4" />
+            )}
           </button>
         </div>
 
