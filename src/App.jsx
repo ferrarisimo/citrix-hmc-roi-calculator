@@ -26,9 +26,9 @@ const pct = (value, digits = 0) => `${(Number.isFinite(value) ? value : 0).toFix
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
 
-function SafeIcon({ name, fallback = DEFAULT_ICON_NAME, ...props }) {
+function SafeIcon({ name, ...props }) {
   const PrimaryIcon = LucideIcons[name];
-  const FallbackIcon = LucideIcons[fallback] || LucideIcons[DEFAULT_ICON_NAME];
+  const FallbackIcon = LucideIcons[DEFAULT_ICON_NAME];
   const IconToRender = typeof PrimaryIcon === 'function' ? PrimaryIcon : FallbackIcon;
   if (typeof IconToRender !== 'function') return null;
   return <IconToRender {...props} />;
