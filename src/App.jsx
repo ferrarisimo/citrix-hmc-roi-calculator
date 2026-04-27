@@ -26,9 +26,12 @@ const pct = (value, digits = 0) => `${(Number.isFinite(value) ? value : 0).toFix
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
 
-function SafeIcon({ name, ...props }) {
-  const Icon = LucideIcons[name] || LucideIcons.Calculator;
-  return <Icon {...props} />;
+function SafeIcon({ name, fallback = DEFAULT_ICON_NAME, ...props }) {
+  const PrimaryIcon = LucideIcons[name];
+  const FallbackIcon = LucideIcons[fallback] || LucideIcons[DEFAULT_ICON_NAME];
+  const IconToRender = typeof PrimaryIcon === 'function' ? PrimaryIcon : FallbackIcon;
+  if (typeof IconToRender !== 'function') return null;
+  return <IconToRender {...props} />;
 }
 
 const TEXT = {
@@ -130,15 +133,7 @@ const DEFAULTS = {
 };
 
 function SectionCard({ title, subtitle, children, className = '' }) {
-  return (
-    <div className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${className}`}>
-      <div className="border-b border-slate-100 px-6 py-5">
-        <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-        {subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
+  return <div className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${className}`}><div className="border-b border-slate-100 px-6 py-5"><h3 className="text-lg font-semibold text-slate-950">{title}</h3>{subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}</div><div className="p-6">{children}</div></div>;
 }
 
 function Help({ text }) {
