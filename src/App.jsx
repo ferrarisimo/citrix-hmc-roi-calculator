@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -25,14 +24,6 @@ const eur = (value, lang = 'it', digits = 0) =>
 const pct = (value, digits = 0) => `${(Number.isFinite(value) ? value : 0).toFixed(digits)}%`;
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
-
-function SafeIcon({ name, ...props }) {
-  const PrimaryIcon = LucideIcons[name];
-  const FallbackIcon = LucideIcons[DEFAULT_ICON_NAME];
-  const IconToRender = typeof PrimaryIcon === 'function' ? PrimaryIcon : FallbackIcon;
-  if (typeof IconToRender !== 'function') return null;
-  return <IconToRender {...props} />;
-}
 
 const TEXT = {
   it: {
@@ -138,8 +129,8 @@ function SectionCard({ title, subtitle, children, className = '' }) {
 
 function Help({ text }) {
   return (
-    <span title={text} className="inline-flex cursor-help text-slate-400">
-      <SafeIcon name="Info" className="h-4 w-4" />
+    <span title={text} className="inline-flex cursor-help text-xs font-semibold text-slate-500">
+      ⓘ
     </span>
   );
 }
@@ -359,15 +350,12 @@ export default function App() {
               <p className="mt-3 max-w-4xl rounded-xl border border-white/20 bg-white/10 p-3 text-sm">{copy.customizationIntro}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={() => setShowCustomization((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-400">
-                  <SafeIcon name="SlidersHorizontal" className="h-4 w-4" />
                   {showCustomization ? copy.hideScenario : copy.editScenario}
                 </button>
                 <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
-                  <SafeIcon name="Printer" className="h-4 w-4" />
                   {copy.print}
                 </button>
                 <button onClick={() => setState(DEFAULTS)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
-                  <SafeIcon name="RefreshCcw" className="h-4 w-4" />
                   {copy.reset}
                 </button>
               </div>
