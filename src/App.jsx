@@ -34,7 +34,7 @@ const TEXT = {
       'I valori della dashboard sono modificabili: usa il pulsante qui sotto per accedere solo alle aree di personalizzazione dati (Scenario e Assunzioni costi).',
     editScenario: 'Modifica parametri scenario',
     hideScenario: 'Chiudi parametri scenario',
-    tabs: ['Scenario', 'Assunzioni costi'],
+    tabs: ['Parametri', 'Assunzioni costi'],
     reset: 'Reset scenario',
     print: 'Stampa / Salva PDF',
     notReached: 'Non raggiunto',
@@ -56,7 +56,7 @@ const TEXT = {
       'Dashboard values are editable: use the button below to open data customization only (Scenario and Cost assumptions).',
     editScenario: 'Edit scenario parameters',
     hideScenario: 'Hide scenario parameters',
-    tabs: ['Scenario', 'Cost assumptions'],
+    tabs: ['Parameters', 'Cost assumptions'],
     reset: 'Reset scenario',
     print: 'Print / Save PDF',
     notReached: 'Not reached',
@@ -187,7 +187,7 @@ export default function App() {
   const [state, setState] = useState(DEFAULTS);
   const [lang, setLang] = useState('it');
   const [showCustomization, setShowCustomization] = useState(false);
-  const [customTab, setCustomTab] = useState('scenario');
+  const [customTab, setCustomTab] = useState('params');
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const copy = TEXT[lang];
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
@@ -244,19 +244,41 @@ export default function App() {
       residualServices: residuals.residualServices,
     };
 
-    const keys = Object.keys(asIs);
-    const tableRows = keys.map((key) => ({
+    const annualKeys = Object.keys(asIs);
+    const annualRows = annualKeys.map((key) => ({
       key,
       asIs: asIs[key],
       hmc: hmc[key],
       delta: asIs[key] - hmc[key],
     }));
 
+    const totalAsIsAnnual = annualRows.reduce((sum, row) => sum + row.asIs, 0);
+    const totalHmcAnnual = annualRows.reduce((sum, row) => sum + row.hmc, 0);
+    const annualDelta = totalAsIsAnnual - totalHmcAnnual;
+    const projectYears = Math.min(5, Math.max(1, Number(profile.horizonYears) || 1));
+    const migrationCostOneTime = profile.initialMigrationCost;
+
+    const tableRows = annualRows
+      .map((row) => ({
+        ...row,
+        asIs: row.asIs * projectYears,
+        hmc: row.hmc * projectYears,
+        delta: (row.asIs - row.hmc) * projectYears,
+      }))
+      .concat([
+        {
+          key: 'migrationProject',
+          asIs: 0,
+          hmc: migrationCostOneTime,
+          delta: -migrationCostOneTime,
+        },
+      ]);
+
     const totalAsIs = tableRows.reduce((sum, row) => sum + row.asIs, 0);
     const totalHmc = tableRows.reduce((sum, row) => sum + row.hmc, 0);
-    const annualDelta = totalAsIs - totalHmc;
-    const grossAvoided = totalAsIs - (totalHmc - hmc.hmcSubscription);
-    const roiAnnual = totalHmc > 0 ? annualDelta / totalHmc : null;
+    const projectDelta = totalAsIs - totalHmc;
+    const grossAvoided = totalAsIs - (totalHmc - (hmc.hmcSubscription * projectYears) + migrationCostOneTime);
+    const roiAnnual = totalHmc > 0 ? projectDelta / totalHmc : null;
 
     const paybackYears =
       state.profile.initialMigrationCost > 0 && annualDelta > 0
@@ -287,9 +309,9 @@ export default function App() {
       );
 
     const chartRows = [
-      { name: 'Current Annual TCO', value: totalAsIs },
-      { name: 'HMC Annual TCO', value: totalHmc },
-      { name: 'Annual TCO Delta', value: annualDelta },
+      { name: 'Current Project TCO', value: totalAsIs },
+      { name: 'HMC Project TCO', value: totalHmc },
+      { name: 'Project TCO Delta', value: projectDelta },
     ];
 
     const byDomain = [
@@ -304,9 +326,14 @@ export default function App() {
       users,
       remoteUsers,
       totalCores,
+      projectYears,
       totalAsIs,
       totalHmc,
+      totalAsIsAnnual,
+      totalHmcAnnual,
       annualDelta,
+      projectDelta,
+      migrationCostOneTime,
       grossAvoided,
       roiAnnual,
       paybackYears,
@@ -326,14 +353,30 @@ export default function App() {
     ztna: t('Security - ZTNA', 'Security - ZTNA'),
     edr: t('Security - EDR/XDR', 'Security - EDR/XDR'),
     posture: t('Security - Device posture', 'Security - Device posture'),
-    securityServices: t('Security services (SOC, remediation, SecOps)', 'Security services (SOC, remediation, SecOps)'),
-    opsEndpoint: t('Operations - Endpoint effort', 'Operations - Endpoint effort'),
-    opsImage: t('Operations - Image/VDI effort', 'Operations - Image/VDI effort'),
-    opsSupport: t('Operations - Support effort', 'Operations - Support effort'),
-    opsAccess: t('Operations - Access effort', 'Operations - Access effort'),
+    securityServices: t(
+      `Security services (SOC, remediation, SecOps ${state.tech.itDaysSecurityOps} giorni/anno)`,
+      `Security services (SOC, remediation, SecOps ${state.tech.itDaysSecurityOps} days/year)`
+    ),
+    opsEndpoint: t(
+      `Operations - Endpoint effort (${state.tech.itDaysEndpointMgmt} giorni/anno)`,
+      `Operations - Endpoint effort (${state.tech.itDaysEndpointMgmt} days/year)`
+    ),
+    opsImage: t(
+      `Operations - Image/VDI effort (${state.tech.itDaysImageVdiMgmt} giorni/anno)`,
+      `Operations - Image/VDI effort (${state.tech.itDaysImageVdiMgmt} days/year)`
+    ),
+    opsSupport: t(
+      `Operations - Support effort (${state.tech.itDaysSupport} giorni/anno)`,
+      `Operations - Support effort (${state.tech.itDaysSupport} days/year)`
+    ),
+    opsAccess: t(
+      `Operations - Access effort (${state.tech.itDaysAccessMgmt} giorni/anno)`,
+      `Operations - Access effort (${state.tech.itDaysAccessMgmt} days/year)`
+    ),
     hmcSubscription: t('HMC subscription', 'HMC subscription'),
     residualHw: t('Residual hardware / infra', 'Residual hardware / infra'),
     residualServices: t('Residual services', 'Residual services'),
+    migrationProject: t('Costo progetto iniziale (solo primo anno)', 'Initial project cost (year 1 only)'),
   };
 
   const hmcInfo = {
@@ -442,6 +485,13 @@ export default function App() {
         'Reduced through automation and SaaS.'
       ),
     },
+    migrationProject: {
+      feature: 'Servizi professionali migrazione HMC',
+      description: t(
+        'Assessment, setup, migrazione e formazione; costo una tantum al primo anno.',
+        'Assessment, setup, migration and training; one-time cost in year one.'
+      ),
+    },
   };
 
   return (
@@ -476,7 +526,7 @@ export default function App() {
           <div className="mb-6">
             <div className="mb-3 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
               {[
-                ['scenario', copy.tabs[0]],
+                ['params', copy.tabs[0]],
                 ['costs', copy.tabs[1]],
               ].map(([value, label]) => (
                 <button
@@ -489,26 +539,77 @@ export default function App() {
               ))}
             </div>
 
-            {customTab === 'scenario' && (
-              <SectionCard
-                title={t('Scenario (personalizzazione dati)', 'Scenario (data customization)')}
-                subtitle={t('Questa sezione modifica solo i parametri di scenario.', 'This section changes scenario inputs only.')}
-              >
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  <Field label={t('Numero utenti', 'Number of users')} value={state.tech.numberUsers} onChange={(v) => setTech('numberUsers', v)} suffix={t('utenti', 'users')} help={t('Volume utenti perimetro progetto.', 'User volume in project scope.')} />
-                  <RangeField label="% Remote / Hybrid users" value={state.tech.pctRemoteHybridUsers} onChange={(v) => setTech('pctRemoteHybridUsers', v)} />
-                  <RangeField label="% BYOD users" value={state.tech.pctByodUsers} onChange={(v) => setTech('pctByodUsers', v)} />
-                  <Field label={t('Numero PC', 'Number of PCs')} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} suffix="PC" />
-                  <Field label={t('Numero thin client', 'Number of thin clients')} value={state.tech.numberThinClient} onChange={(v) => setTech('numberThinClient', v)} suffix={t('unità', 'units')} />
-                  <Field label={t('Età media PC', 'Average PC age')} value={state.tech.avgPcAgeYears} onChange={(v) => setTech('avgPcAgeYears', v)} suffix={t('anni', 'years')} />
-                  <Field label="Lifecycle PC target" value={state.tech.lifecyclePcTargetYears} onChange={(v) => setTech('lifecyclePcTargetYears', v)} suffix={t('anni', 'years')} />
-                  <RangeField label={t('% PC sostituibili / estendibili', '% PCs replaceable / extendable')} value={state.tech.pctPcReplaceableWithThinClient} onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)} />
-                  <Field label={t('Numero appliance VPN / ADC', 'Number of VPN / ADC appliances')} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={t('appliance', 'appliances')} />
-                  <Field label={t('Numero host hypervisor', 'Hypervisor host count')} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={t('host', 'hosts')} />
-                  <Field label={t('Core CPU per host', 'CPU cores per host')} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={t('core', 'cores')} />
-                  <Field label={t('Costo progetto iniziale', 'Initial project cost')} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={t('una tantum', 'one-time')} />
-                </div>
-              </SectionCard>
+            {customTab === 'params' && (
+              <div className="space-y-4">
+                <SectionCard
+                  title={t('1) Profilo progetto', '1) Project profile')}
+                  subtitle={t('Impostazioni base del progetto ROI.', 'Base settings for ROI project.')}
+                >
+                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-700">{t('Anni di progetto', 'Project years')}</span>
+                      <select
+                        value={state.profile.horizonYears}
+                        onChange={(e) => setProfile('horizonYears', Number(e.target.value))}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
+                      >
+                        {[1, 2, 3, 4, 5].map((year) => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </SectionCard>
+
+                <SectionCard
+                  title={t('2) Scenario infrastruttura', '2) Infrastructure scenario')}
+                  subtitle={t('Volumi utenti, endpoint e piattaforma.', 'Users, endpoint, and platform volumes.')}
+                >
+                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    <Field label={t('Numero utenti', 'Number of users')} value={state.tech.numberUsers} onChange={(v) => setTech('numberUsers', v)} suffix={t('utenti', 'users')} />
+                    <RangeField label="% Remote / Hybrid users" value={state.tech.pctRemoteHybridUsers} onChange={(v) => setTech('pctRemoteHybridUsers', v)} />
+                    <RangeField label="% BYOD users" value={state.tech.pctByodUsers} onChange={(v) => setTech('pctByodUsers', v)} />
+                    <Field label={t('Numero PC', 'Number of PCs')} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} suffix="PC" />
+                    <Field label={t('Numero thin client', 'Number of thin clients')} value={state.tech.numberThinClient} onChange={(v) => setTech('numberThinClient', v)} suffix={t('unità', 'units')} />
+                    <Field label={t('Età media PC', 'Average PC age')} value={state.tech.avgPcAgeYears} onChange={(v) => setTech('avgPcAgeYears', v)} suffix={t('anni', 'years')} />
+                    <Field label="Lifecycle PC target" value={state.tech.lifecyclePcTargetYears} onChange={(v) => setTech('lifecyclePcTargetYears', v)} suffix={t('anni', 'years')} />
+                    <RangeField label={t('% PC sostituibili / estendibili', '% PCs replaceable / extendable')} value={state.tech.pctPcReplaceableWithThinClient} onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)} />
+                    <Field label={t('Numero appliance VPN / ADC', 'Number of VPN / ADC appliances')} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={t('appliance', 'appliances')} />
+                    <Field label={t('Numero host hypervisor', 'Hypervisor host count')} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={t('host', 'hosts')} />
+                    <Field label={t('Core CPU per host', 'CPU cores per host')} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={t('core', 'cores')} />
+                  </div>
+                </SectionCard>
+
+                <SectionCard
+                  title={t('3) Servizi', '3) Services')}
+                  subtitle={t('Giornate IT, costi servizio e residui post-migrazione.', 'IT days, service costs, and post-migration residual settings.')}
+                >
+                  <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">{t('Parametro progetto', 'Project parameter')}</p>
+                    <div className="mt-2 text-sm font-bold text-emerald-900">
+                      {t('Costo progetto iniziale', 'Initial project cost')}
+                    </div>
+                    <div className="mt-3 max-w-xs">
+                      <Field label={t('Costo progetto iniziale', 'Initial project cost')} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={t('solo anno 1', 'year 1 only')} />
+                    </div>
+                  </div>
+                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    <Field label={t('Giorni IT/anno endpoint management', 'IT days/year endpoint management')} value={state.tech.itDaysEndpointMgmt} onChange={(v) => setTech('itDaysEndpointMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
+                    <Field label={t('Giorni IT/anno image/VDI management', 'IT days/year image/VDI management')} value={state.tech.itDaysImageVdiMgmt} onChange={(v) => setTech('itDaysImageVdiMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
+                    <Field label={t('Giorni IT/anno support', 'IT days/year support')} value={state.tech.itDaysSupport} onChange={(v) => setTech('itDaysSupport', v)} suffix={t('giorni/anno', 'days/year')} />
+                    <Field label={t('Giorni IT/anno access management', 'IT days/year access management')} value={state.tech.itDaysAccessMgmt} onChange={(v) => setTech('itDaysAccessMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
+                    <Field label={t('Giorni IT/anno security operations', 'IT days/year security operations')} value={state.tech.itDaysSecurityOps} onChange={(v) => setTech('itDaysSecurityOps', v)} suffix={t('giorni/anno', 'days/year')} />
+                    <Field label={t('Costo giornata sistemistica', 'Sysadmin day cost')} value={state.cost.costSysadminDay} onChange={(v) => setCost('costSysadminDay', v)} prefix="€" suffix="/giorno" />
+                    <RangeField label={t('Riduzione effort endpoint', 'Endpoint effort reduction')} value={state.cost.reductionEffortEndpointPct} onChange={(v) => setCost('reductionEffortEndpointPct', v)} />
+                    <RangeField label={t('Riduzione effort image / VDI', 'Image / VDI effort reduction')} value={state.cost.reductionEffortImagePct} onChange={(v) => setCost('reductionEffortImagePct', v)} />
+                    <RangeField label={t('Riduzione effort support', 'Support effort reduction')} value={state.cost.reductionEffortSupportPct} onChange={(v) => setCost('reductionEffortSupportPct', v)} />
+                    <RangeField label={t('Riduzione effort access', 'Access effort reduction')} value={state.cost.reductionEffortAccessPct} onChange={(v) => setCost('reductionEffortAccessPct', v)} />
+                    <RangeField label="Residual EDR ratio with HMC" value={state.cost.residualEdrRatioWithHmc} onChange={(v) => setCost('residualEdrRatioWithHmc', v)} />
+                    <RangeField label="Residual device posture ratio with HMC" value={state.cost.residualDevicePostureRatioWithHmc} onChange={(v) => setCost('residualDevicePostureRatioWithHmc', v)} />
+                    <RangeField label="Residual security services ratio with HMC" value={state.cost.residualSecurityServicesRatioWithHmc} onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)} />
+                  </div>
+                </SectionCard>
+              </div>
             )}
 
             {customTab === 'costs' && (
@@ -538,14 +639,6 @@ export default function App() {
                   <Field label={t('Costo device posture / endpoint / mese', 'Device posture / endpoint / month')} value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" step="0.1" suffix="/endpoint/mese" />
                   <Field label={t('Costo SOC / MSSP annuo', 'SOC / MSSP annual cost')} value={state.cost.costSocMsspAnnual} onChange={(v) => setCost('costSocMsspAnnual', v)} prefix="€" suffix="/anno" />
                   <Field label={t('Costo remediation / endpoint / anno', 'Remediation / endpoint / year')} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix="/endpoint/anno" />
-                  <Field label={t('Costo giornata sistemistica', 'Sysadmin day cost')} value={state.cost.costSysadminDay} onChange={(v) => setCost('costSysadminDay', v)} prefix="€" suffix="/giorno" />
-                  <RangeField label={t('Riduzione effort endpoint', 'Endpoint effort reduction')} value={state.cost.reductionEffortEndpointPct} onChange={(v) => setCost('reductionEffortEndpointPct', v)} />
-                  <RangeField label={t('Riduzione effort image / VDI', 'Image / VDI effort reduction')} value={state.cost.reductionEffortImagePct} onChange={(v) => setCost('reductionEffortImagePct', v)} />
-                  <RangeField label={t('Riduzione effort support', 'Support effort reduction')} value={state.cost.reductionEffortSupportPct} onChange={(v) => setCost('reductionEffortSupportPct', v)} />
-                  <RangeField label={t('Riduzione effort access', 'Access effort reduction')} value={state.cost.reductionEffortAccessPct} onChange={(v) => setCost('reductionEffortAccessPct', v)} />
-                  <RangeField label="Residual EDR ratio with HMC" value={state.cost.residualEdrRatioWithHmc} onChange={(v) => setCost('residualEdrRatioWithHmc', v)} />
-                  <RangeField label="Residual device posture ratio with HMC" value={state.cost.residualDevicePostureRatioWithHmc} onChange={(v) => setCost('residualDevicePostureRatioWithHmc', v)} />
-                  <RangeField label="Residual security services ratio with HMC" value={state.cost.residualSecurityServicesRatioWithHmc} onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)} />
                   <Field label="Residual hardware / infra" value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix="/anno" />
                   <Field label="Residual services" value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix="/anno" />
                 </div>
@@ -567,15 +660,15 @@ export default function App() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Kpi title={copy.currentAnnual} value={eur(model.totalAsIs, lang)} hint={t('Costo annuo scenario attuale.', 'Current annual scenario cost.')} />
-          <Kpi title={copy.hmcAnnual} value={eur(model.totalHmc, lang)} hint={t('Costo annuo scenario target HMC.', 'HMC target annual cost.')} />
-          <Kpi title={copy.annualDelta} value={eur(model.annualDelta, lang)} hint={t('Current Annual TCO - HMC Annual TCO.', 'Current Annual TCO - HMC Annual TCO.')} />
-          <Kpi title={copy.grossAvoided} value={eur(model.grossAvoided, lang)} hint={t('Costi evitati lordi pre-subscription HMC.', 'Gross avoided cost before HMC subscription.')} />
-          <Kpi title={copy.netAnnual} value={eur(model.annualDelta, lang)} hint={t('Saving netto annuale da confronto TCO.', 'Net annual saving from TCO comparison.')} />
+          <Kpi title={`${copy.currentAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalAsIs, lang)} hint={t('Costo totale sul periodo di progetto.', 'Total cost over selected project years.')} />
+          <Kpi title={`${copy.hmcAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalHmc, lang)} hint={t('Include costo progetto iniziale nel primo anno.', 'Includes initial project cost in year one.')} />
+          <Kpi title={`${copy.annualDelta} (${model.projectYears} ${copy.years})`} value={eur(model.projectDelta, lang)} hint={t('Delta TCO sull’orizzonte progetto.', 'TCO delta over project horizon.')} />
+          <Kpi title={copy.grossAvoided} value={eur(model.grossAvoided, lang)} hint={t('Costi evitati lordi sul periodo.', 'Gross avoided costs over the period.')} />
+          <Kpi title={copy.netAnnual} value={eur(model.projectDelta, lang)} hint={t('Saving netto totale progetto.', 'Total net savings for project horizon.')} />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Kpi title={copy.annualRoi} value={model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)} hint="Annual TCO Delta / HMC Annual TCO" />
+          <Kpi title={copy.annualRoi} value={model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)} hint={t('Project TCO Delta / HMC Project TCO', 'Project TCO Delta / HMC Project TCO')} />
           <Kpi
             title={copy.payback}
             value={model.paybackStatus === 'ok' ? `${model.paybackYears.toFixed(2)} ${copy.years}` : model.paybackStatus === 'not_reached' ? copy.notReached : copy.notApplicable}
@@ -677,10 +770,10 @@ export default function App() {
                   </tr>
                 ))}
                 <tr className="border-t-2 border-slate-300 font-semibold">
-                  <td className="py-2 pr-4">{t('Totale annuo', 'Annual total')}</td>
+                  <td className="py-2 pr-4">{t(`Totale progetto (${model.projectYears} anni)`, `Project total (${model.projectYears} years)`)}</td>
                   <td className="py-2 pr-4">{eur(model.totalAsIs, lang)}</td>
                   <td className="py-2 pr-4">{eur(model.totalHmc, lang)}</td>
-                  <td className={`py-2 ${model.annualDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{eur(model.annualDelta, lang)}</td>
+                  <td className={`py-2 ${model.projectDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{eur(model.projectDelta, lang)}</td>
                 </tr>
               </tbody>
             </table>
