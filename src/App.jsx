@@ -37,15 +37,15 @@ const TEXT = {
     tabs: ['Parametri', 'Assunzioni costi'],
     reset: 'Reset scenario',
     print: 'Stampa / Salva PDF',
-    notReached: 'Non raggiunto',
-    notApplicable: 'Non applicabile',
-    currentAnnual: 'Current annual TCO',
-    hmcAnnual: 'HMC annual TCO',
-    annualDelta: 'Annual TCO delta',
+    currentAnnual: 'TCO attuale progetto',
+    hmcAnnual: 'TCO HMC progetto',
+    annualDelta: 'Delta TCO progetto',
     grossAvoided: 'Gross avoided cost',
-    netAnnual: 'Net annual saving',
-    annualRoi: 'ROI annuale',
-    payback: 'Payback',
+    netAnnual: 'Risparmio netto progetto',
+    annualRoi: 'ROI progetto',
+    asIsPerUserYear: 'As-Is €/utente/anno',
+    hmcPerUserYear: 'HMC €/utente/anno',
+    deltaPerUserYear: 'Delta €/utente/anno',
     years: 'anni',
   },
   en: {
@@ -59,15 +59,15 @@ const TEXT = {
     tabs: ['Parameters', 'Cost assumptions'],
     reset: 'Reset scenario',
     print: 'Print / Save PDF',
-    notReached: 'Not reached',
-    notApplicable: 'Not applicable',
-    currentAnnual: 'Current annual TCO',
-    hmcAnnual: 'HMC annual TCO',
-    annualDelta: 'Annual TCO delta',
+    currentAnnual: 'Current project TCO',
+    hmcAnnual: 'HMC project TCO',
+    annualDelta: 'Project TCO delta',
     grossAvoided: 'Gross avoided cost',
-    netAnnual: 'Net annual saving',
-    annualRoi: 'Annual ROI',
-    payback: 'Payback',
+    netAnnual: 'Net project saving',
+    annualRoi: 'Project ROI',
+    asIsPerUserYear: 'As-Is €/user/year',
+    hmcPerUserYear: 'HMC €/user/year',
+    deltaPerUserYear: 'Delta €/user/year',
     years: 'years',
   },
 };
@@ -75,7 +75,7 @@ const TEXT = {
 const DEFAULTS = {
   profile: {
     horizonYears: 3,
-    hmcPricePerUserPerMonth: 25,
+    hmcPricePerUserPerMonth: 35,
     initialMigrationCost: 60000,
   },
   tech: {
@@ -280,16 +280,9 @@ export default function App() {
     const grossAvoided = totalAsIs - (totalHmc - (hmc.hmcSubscription * projectYears) + migrationCostOneTime);
     const roiAnnual = totalHmc > 0 ? projectDelta / totalHmc : null;
 
-    const paybackYears =
-      state.profile.initialMigrationCost > 0 && annualDelta > 0
-        ? state.profile.initialMigrationCost / annualDelta
-        : null;
-    const paybackStatus =
-      state.profile.initialMigrationCost <= 0
-        ? 'not_applicable'
-        : annualDelta <= 0
-          ? 'not_reached'
-          : 'ok';
+    const asIsCostPerUserPerYear = users > 0 ? totalAsIsAnnual / users : 0;
+    const hmcCostPerUserPerYear = users > 0 ? totalHmcAnnual / users : 0;
+    const perUserPerYearDelta = asIsCostPerUserPerYear - hmcCostPerUserPerYear;
 
     const warnings = [];
     if (tech.numberUsers <= 0) warnings.push(t('Numero utenti deve essere > 0.', 'Number of users must be > 0.'));
@@ -336,8 +329,9 @@ export default function App() {
       migrationCostOneTime,
       grossAvoided,
       roiAnnual,
-      paybackYears,
-      paybackStatus,
+      asIsCostPerUserPerYear,
+      hmcCostPerUserPerYear,
+      perUserPerYearDelta,
       warnings,
       chartRows,
       byDomain,
@@ -584,15 +578,6 @@ export default function App() {
                   title={t('3) Servizi', '3) Services')}
                   subtitle={t('Giornate IT, costi servizio e residui post-migrazione.', 'IT days, service costs, and post-migration residual settings.')}
                 >
-                  <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">{t('Parametro progetto', 'Project parameter')}</p>
-                    <div className="mt-2 text-sm font-bold text-emerald-900">
-                      {t('Costo progetto iniziale', 'Initial project cost')}
-                    </div>
-                    <div className="mt-3 max-w-xs">
-                      <Field label={t('Costo progetto iniziale', 'Initial project cost')} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={t('solo anno 1', 'year 1 only')} />
-                    </div>
-                  </div>
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     <Field label={t('Giorni IT/anno endpoint management', 'IT days/year endpoint management')} value={state.tech.itDaysEndpointMgmt} onChange={(v) => setTech('itDaysEndpointMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
                     <Field label={t('Giorni IT/anno image/VDI management', 'IT days/year image/VDI management')} value={state.tech.itDaysImageVdiMgmt} onChange={(v) => setTech('itDaysImageVdiMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
@@ -624,6 +609,12 @@ export default function App() {
                   </div>
                   <div className="mt-3 max-w-xs">
                     <Field label={t('HMC price per user / month', 'HMC price per user / month')} value={state.profile.hmcPricePerUserPerMonth} onChange={(v) => setProfile('hmcPricePerUserPerMonth', v)} prefix="€" step="0.1" suffix="/utente/mese" />
+                  </div>
+                  <div className="mt-4 text-sm font-bold text-blue-900">
+                    {t('Costo progetto iniziale', 'Initial project cost')}
+                  </div>
+                  <div className="mt-3 max-w-xs">
+                    <Field label={t('Costo progetto iniziale', 'Initial project cost')} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={t('solo anno 1', 'year 1 only')} />
                   </div>
                 </div>
 
@@ -660,23 +651,27 @@ export default function App() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Kpi title={`${copy.currentAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalAsIs, lang)} hint={t('Costo totale sul periodo di progetto.', 'Total cost over selected project years.')} />
-          <Kpi title={`${copy.hmcAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalHmc, lang)} hint={t('Include costo progetto iniziale nel primo anno.', 'Includes initial project cost in year one.')} />
-          <Kpi title={`${copy.annualDelta} (${model.projectYears} ${copy.years})`} value={eur(model.projectDelta, lang)} hint={t('Delta TCO sull’orizzonte progetto.', 'TCO delta over project horizon.')} />
+          <Kpi title={`${copy.currentAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalAsIs, lang)} hint={t('Costo totale attuale sull’intero periodo selezionato.', 'Total current cost over the selected project period.')} />
+          <Kpi title={`${copy.hmcAnnual} (${model.projectYears} ${copy.years})`} value={eur(model.totalHmc, lang)} hint={t('Costo totale HMC sull’intero periodo selezionato, incluso il costo progetto iniziale al primo anno.', 'Total HMC cost over the selected project period, including the initial project cost in year one.')} />
+          <Kpi title={`${copy.annualDelta} (${model.projectYears} ${copy.years})`} value={eur(model.projectDelta, lang)} hint={t('Differenza tra TCO attuale e TCO HMC sull’intero periodo selezionato.', 'Difference between current TCO and HMC TCO over the selected project period.')} />
           <Kpi title={copy.grossAvoided} value={eur(model.grossAvoided, lang)} hint={t('Costi evitati lordi sul periodo.', 'Gross avoided costs over the period.')} />
-          <Kpi title={copy.netAnnual} value={eur(model.projectDelta, lang)} hint={t('Saving netto totale progetto.', 'Total net savings for project horizon.')} />
+          <Kpi title={copy.netAnnual} value={eur(model.projectDelta, lang)} hint={t('Risparmio netto complessivo sull’orizzonte progetto.', 'Total net saving over the project horizon.')} />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Kpi title={copy.annualRoi} value={model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)} hint={t('Project TCO Delta / HMC Project TCO', 'Project TCO Delta / HMC Project TCO')} />
-          <Kpi
-            title={copy.payback}
-            value={model.paybackStatus === 'ok' ? `${model.paybackYears.toFixed(2)} ${copy.years}` : model.paybackStatus === 'not_reached' ? copy.notReached : copy.notApplicable}
-            hint={t('Initial migration cost / Annual TCO Delta (se > 0).', 'Initial migration cost / Annual TCO Delta (if > 0).')}
-          />
+          <Kpi title={copy.annualRoi} value={model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)} hint={t('Delta TCO progetto / TCO HMC progetto.', 'Project TCO delta / HMC project TCO.')} />
+          <Kpi title={copy.asIsPerUserYear} value={eur(model.asIsCostPerUserPerYear, lang, 0)} hint={t('Costo annuo per utente nello scenario attuale.', 'Annual cost per user in the current scenario.')} />
+          <Kpi title={copy.hmcPerUserYear} value={eur(model.hmcCostPerUserPerYear, lang, 0)} hint={t('Costo annuo per utente nello scenario HMC.', 'Annual cost per user in the HMC scenario.')} />
+          <Kpi title={copy.deltaPerUserYear} value={eur(model.perUserPerYearDelta, lang, 0)} hint={t('Differenza annua per utente tra scenario attuale e HMC.', 'Annual per-user difference between current and HMC scenario.')} />
           <Kpi title={t('Utenti', 'Users')} value={String(model.users)} hint={t('Volume utenti scenario.', 'Scenario user volume.')} />
           <Kpi title={t('Utenti remoti', 'Remote users')} value={String(Math.round(model.remoteUsers))} hint={t('Derivato da % remote/hybrid.', 'Derived from % remote/hybrid.')} />
-          <Kpi title={t('Core cluster', 'Cluster cores')} value={String(model.totalCores)} hint={t('Host × core per host.', 'Host × cores per host.')} />
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+          {t(
+            'I KPI di TCO, delta, saving e ROI sono calcolati sull’intero periodo selezionato. I KPI €/utente/anno sono invece normalizzati su base annuale.',
+            'TCO, delta, saving and ROI KPIs are calculated over the selected project period. €/user/year KPIs are normalized on an annual basis.'
+          )}
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
@@ -731,8 +726,8 @@ export default function App() {
 
         <SectionCard
           className="mt-6"
-          title={t('Dettaglio calcoli - tabella comparativa', 'Calculation details - comparative table')}
-          subtitle={t('As Is vs HMC vs Differenza per area funzionale HMC.', 'As Is vs HMC vs Difference by HMC functional area.')}
+          title={t('Dettaglio calcoli - confronto sul periodo', 'Calculation details - project period comparison')}
+          subtitle={t('Valori As-Is, HMC e Differenza calcolati sull’intero orizzonte progetto selezionato.', 'As-Is, HMC and Difference values calculated over the full selected project horizon.')}
         >
           {hoveredRowKey && hmcInfo[hoveredRowKey] ? (
             <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
