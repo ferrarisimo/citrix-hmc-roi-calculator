@@ -188,6 +188,7 @@ export default function App() {
   const [lang, setLang] = useState('it');
   const [showCustomization, setShowCustomization] = useState(false);
   const [customTab, setCustomTab] = useState('scenario');
+  const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const copy = TEXT[lang];
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
@@ -333,6 +334,114 @@ export default function App() {
     hmcSubscription: t('HMC subscription', 'HMC subscription'),
     residualHw: t('Residual hardware / infra', 'Residual hardware / infra'),
     residualServices: t('Residual services', 'Residual services'),
+  };
+
+  const hmcInfo = {
+    endpoint: {
+      feature: 'Endpoint Management, eLux, Workspace',
+      description: t(
+        'Centralizza gestione endpoint e riduce costi hardware e lifecycle.',
+        'Centralizes endpoint management and reduces hardware and lifecycle cost.'
+      ),
+    },
+    hypervisor: {
+      feature: 'XenServer Premium (10.000 socket)',
+      description: t(
+        'Hypervisor incluso elimina costi licenze e abilita HA, vMotion, GPU.',
+        'Included hypervisor removes license costs and enables HA, vMotion, GPU.'
+      ),
+    },
+    access: {
+      feature: 'NetScaler (LB, Gateway, WAF)',
+      description: t(
+        'Accesso sicuro, bilanciamento e pubblicazione webapp con WAF e sicurezza integrata.',
+        'Secure access, load balancing, and web app publishing with integrated WAF security.'
+      ),
+    },
+    mfa: {
+      feature: 'Adaptive Authentication',
+      description: t(
+        'MFA adattivo contestuale senza soluzioni aggiuntive.',
+        'Contextual adaptive MFA without additional solutions.'
+      ),
+    },
+    ztna: {
+      feature: 'Secure Private Access + Gateway Service',
+      description: t(
+        'Accesso Zero Trust senza VPN tradizionale.',
+        'Zero Trust access without traditional VPN.'
+      ),
+    },
+    edr: {
+      feature: 'Citrix Monitor, uberAgent ESA + integrazione SIEM',
+      description: t(
+        'Telemetria e security analytics avanzati end-to-end.',
+        'Advanced end-to-end telemetry and security analytics.'
+      ),
+    },
+    posture: {
+      feature: 'deviceTRUST',
+      description: t(
+        'Controllo accesso basato su contesto e stato dispositivo in tempo reale.',
+        'Access control based on context and real-time device posture.'
+      ),
+    },
+    securityServices: {
+      feature: 'App Protection, Session Recording, Citrix Policy',
+      description: t(
+        'Protezione sessioni e auditing centralizzato.',
+        'Centralized session protection and auditing.'
+      ),
+    },
+    opsEndpoint: {
+      feature: 'Endpoint Mgmt, eLux, automazione',
+      description: t(
+        'Riduce effort operativo gestione dispositivi.',
+        'Reduces operational effort for device management.'
+      ),
+    },
+    opsImage: {
+      feature: 'PVS, MCS, App Layering',
+      description: t(
+        'Automazione immagini e provisioning VDI.',
+        'Automated image lifecycle and VDI provisioning.'
+      ),
+    },
+    opsSupport: {
+      feature: 'Director, NetScaler Console, uberAgent UXM, Scout',
+      description: t(
+        'Monitoraggio e troubleshooting proattivo.',
+        'Proactive monitoring and troubleshooting.'
+      ),
+    },
+    opsAccess: {
+      feature: 'Gateway Service + NetScaler',
+      description: t(
+        'Accesso unificato e semplificato utenti.',
+        'Unified and simplified user access.'
+      ),
+    },
+    hmcSubscription: {
+      feature: 'Tutto il bundle HMC',
+      description: t(
+        'Consolidamento licenze in piattaforma unica.',
+        'License consolidation into a single platform.'
+      ),
+    },
+    residualHw: {
+      feature: '-',
+      description: t(
+        'Coperto da modelli cloud/hybrid.',
+        'Covered by cloud/hybrid operating models.'
+      ),
+    },
+    residualServices: {
+      feature: '-',
+      description: t(
+        'Ridotti grazie automazione e SaaS.',
+        'Reduced through automation and SaaS.'
+      ),
+    },
   };
 
   return (
@@ -532,6 +641,17 @@ export default function App() {
           title={t('Dettaglio calcoli - tabella comparativa', 'Calculation details - comparative table')}
           subtitle={t('As Is vs HMC vs Differenza per area funzionale HMC.', 'As Is vs HMC vs Difference by HMC functional area.')}
         >
+          {hoveredRowKey && hmcInfo[hoveredRowKey] ? (
+            <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
+              <p className="font-semibold text-blue-900">
+                {t('Funzionalità HMC', 'HMC feature')}: {hmcInfo[hoveredRowKey].feature}
+              </p>
+              <p className="mt-1 text-blue-800">
+                {t('Descrizione', 'Description')}: {hmcInfo[hoveredRowKey].description}
+              </p>
+            </div>
+          ) : null}
+
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
@@ -544,7 +664,12 @@ export default function App() {
               </thead>
               <tbody>
                 {model.tableRows.map((row) => (
-                  <tr key={row.key} className="border-b border-slate-100">
+                  <tr
+                    key={row.key}
+                    className={`border-b border-slate-100 transition ${hoveredRowKey === row.key ? 'bg-blue-50' : ''}`}
+                    onMouseEnter={() => setHoveredRowKey(row.key)}
+                    onMouseLeave={() => setHoveredRowKey(null)}
+                  >
                     <td className="py-2 pr-4">{rowLabels[row.key]}</td>
                     <td className="py-2 pr-4">{eur(row.asIs, lang)}</td>
                     <td className="py-2 pr-4">{eur(row.hmc, lang)}</td>
