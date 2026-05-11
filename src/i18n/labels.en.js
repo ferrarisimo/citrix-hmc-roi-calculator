@@ -63,7 +63,6 @@ export default {
   helpResidualPosture:'Residual share of device posture cost that remains with HMC.',
   helpResidualSecurity:'Residual share of security services cost that remains with HMC.',
 
-<<<<<<< codex/optimize-app-for-transparency-and-add-disclaimer-az8hur
 
   helpNewPcCost:'Unit purchase cost of a new PC.',
   helpNewThinCost:'Unit purchase cost of a new thin client.',
@@ -79,6 +78,4 @@ export default {
   helpResidualHardware:'Hardware/infrastructure cost that still remains in HMC scenario.',
   helpResidualServices:'Services cost that still remains in HMC scenario.',
 
-=======
->>>>>>> develop
 };
