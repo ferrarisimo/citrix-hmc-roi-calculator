@@ -12,6 +12,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { LABELS, detectBrowserLanguage } from './i18n/labels';
 
 const eur = (value, lang = 'it', digits = 0) =>
   new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'it-IT', {
@@ -24,53 +25,6 @@ const eur = (value, lang = 'it', digits = 0) =>
 const pct = (value, digits = 0) => `${(Number.isFinite(value) ? value : 0).toFixed(digits)}%`;
 
 const COLORS = ['#2563eb', '#0f172a', '#16a34a', '#7c3aed', '#ea580c', '#0891b2', '#dc2626'];
-
-const TEXT = {
-  it: {
-    title: 'Citrix HMC ROI Simulator / ROI Calculator',
-    subtitle:
-      'Confronto trasparente tra TCO attuale e scenario HMC, con KPI, warning e dettaglio calcoli pronto per cliente/partner.',
-    customizationIntro:
-      'I valori della dashboard sono modificabili: usa il pulsante qui sotto per accedere solo alle aree di personalizzazione dati (Scenario e Assunzioni costi).',
-    editScenario: 'Modifica parametri scenario',
-    hideScenario: 'Chiudi parametri scenario',
-    tabs: ['Parametri', 'Assunzioni costi'],
-    reset: 'Reset scenario',
-    print: 'Stampa / Salva PDF',
-    currentAnnual: 'TCO attuale progetto',
-    hmcAnnual: 'TCO HMC progetto',
-    annualDelta: 'Delta TCO progetto',
-    grossAvoided: 'Gross avoided cost',
-    netAnnual: 'Risparmio netto progetto',
-    annualRoi: 'ROI progetto',
-    asIsPerUserYear: 'As-Is €/utente/anno',
-    hmcPerUserYear: 'HMC €/utente/anno',
-    deltaPerUserYear: 'Delta €/utente/anno',
-    years: 'anni',
-  },
-  en: {
-    title: 'Citrix HMC ROI Simulator / ROI Calculator',
-    subtitle:
-      'Transparent comparison between current TCO and HMC scenario with KPI, warnings, and calculation details ready for customer/partner use.',
-    customizationIntro:
-      'Dashboard values are editable: use the button below to open data customization only (Scenario and Cost assumptions).',
-    editScenario: 'Edit scenario parameters',
-    hideScenario: 'Hide scenario parameters',
-    tabs: ['Parameters', 'Cost assumptions'],
-    reset: 'Reset scenario',
-    print: 'Print / Save PDF',
-    currentAnnual: 'Current project TCO',
-    hmcAnnual: 'HMC project TCO',
-    annualDelta: 'Project TCO delta',
-    grossAvoided: 'Gross avoided cost',
-    netAnnual: 'Net project saving',
-    annualRoi: 'Project ROI',
-    asIsPerUserYear: 'As-Is €/user/year',
-    hmcPerUserYear: 'HMC €/user/year',
-    deltaPerUserYear: 'Delta €/user/year',
-    years: 'years',
-  },
-};
 
 const DEFAULTS = {
   profile: {
@@ -185,11 +139,12 @@ function Kpi({ title, value, hint }) {
 
 export default function App() {
   const [state, setState] = useState(DEFAULTS);
-  const [lang, setLang] = useState('it');
+  const [lang, setLang] = useState(detectBrowserLanguage());
   const [showCustomization, setShowCustomization] = useState(false);
   const [customTab, setCustomTab] = useState('params');
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
-  const copy = TEXT[lang];
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const copy = LABELS[lang];
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
   const setProfile = (key, value) => setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
@@ -285,34 +240,28 @@ export default function App() {
     const perUserPerYearDelta = asIsCostPerUserPerYear - hmcCostPerUserPerYear;
 
     const warnings = [];
-    if (tech.numberUsers <= 0) warnings.push(t('Numero utenti deve essere > 0.', 'Number of users must be > 0.'));
+    if (tech.numberUsers <= 0) warnings.push(copy.validationUsersPositive);
     if (tech.numberPc > tech.numberUsers * 1.4)
       warnings.push(
-        t(
-          'Numero PC molto alto rispetto agli utenti (warning non bloccante).',
-          'PC count appears very high compared to users (non-blocking warning).'
-        )
+        copy.validationPcHigh
       );
     if (tech.pctByodUsers + tech.pctPcReplaceableWithThinClient > 130)
       warnings.push(
-        t(
-          'BYOD + % PC sostituibili/estendibili può essere incoerente.',
-          'BYOD + % replaceable/extendable PCs may be inconsistent.'
-        )
+        copy.validationByodIncoherent
       );
 
     const chartRows = [
-      { name: 'Current Project TCO', value: totalAsIs },
-      { name: 'HMC Project TCO', value: totalHmc },
-      { name: 'Project TCO Delta', value: projectDelta },
+      { name: copy.chartCurrent, value: totalAsIs },
+      { name: copy.chartHmc, value: totalHmc },
+      { name: copy.chartDelta, value: projectDelta },
     ];
 
     const byDomain = [
-      { name: 'Endpoint', value: asIs.endpoint - hmc.endpoint },
-      { name: 'Hypervisor', value: asIs.hypervisor - hmc.hypervisor },
-      { name: 'Access / NetScaler', value: asIs.access - hmc.access },
-      { name: 'Security', value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
-      { name: 'Operations', value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
+      { name: copy.domainEndpoint, value: asIs.endpoint - hmc.endpoint },
+      { name: copy.domainHypervisor, value: asIs.hypervisor - hmc.hypervisor },
+      { name: copy.domainAccess, value: asIs.access - hmc.access },
+      { name: copy.domainSecurity, value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
+      { name: copy.domainOperations, value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
     ].filter((item) => item.value > 0);
 
     return {
@@ -511,10 +460,23 @@ export default function App() {
                 <button onClick={() => setState(DEFAULTS)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.reset}
                 </button>
+                <button onClick={() => setShowDisclaimer((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
+                  {copy.disclaimerButton}
+                </button>
               </div>
             </div>
           </div>
         </motion.div>
+
+        {showDisclaimer && (
+          <SectionCard
+            className="mb-6"
+            title={copy.disclaimerTitle}
+            subtitle={copy.disclaimerSubtitle}
+          >
+            <p className="text-sm leading-6 text-slate-700">{copy.disclaimerBody}</p>
+          </SectionCard>
+        )}
 
         {showCustomization && (
           <div className="mb-6">
@@ -536,12 +498,12 @@ export default function App() {
             {customTab === 'params' && (
               <div className="space-y-4">
                 <SectionCard
-                  title={t('1) Profilo progetto', '1) Project profile')}
-                  subtitle={t('Impostazioni base del progetto ROI.', 'Base settings for ROI project.')}
+                  title={copy.section1Title}
+                  subtitle={copy.section1Subtitle}
                 >
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     <label className="block space-y-2">
-                      <span className="text-sm font-medium text-slate-700">{t('Anni di progetto', 'Project years')}</span>
+                      <span className="text-sm font-medium text-slate-700">{copy.projectYears} <Help text={copy.helpProjectYears} /></span>
                       <select
                         value={state.profile.horizonYears}
                         onChange={(e) => setProfile('horizonYears', Number(e.target.value))}
@@ -556,42 +518,42 @@ export default function App() {
                 </SectionCard>
 
                 <SectionCard
-                  title={t('2) Scenario infrastruttura', '2) Infrastructure scenario')}
-                  subtitle={t('Volumi utenti, endpoint e piattaforma.', 'Users, endpoint, and platform volumes.')}
+                  title={copy.section2Title}
+                  subtitle={copy.section2Subtitle}
                 >
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    <Field label={t('Numero utenti', 'Number of users')} value={state.tech.numberUsers} onChange={(v) => setTech('numberUsers', v)} suffix={t('utenti', 'users')} />
-                    <RangeField label="% Remote / Hybrid users" value={state.tech.pctRemoteHybridUsers} onChange={(v) => setTech('pctRemoteHybridUsers', v)} />
-                    <RangeField label="% BYOD users" value={state.tech.pctByodUsers} onChange={(v) => setTech('pctByodUsers', v)} />
-                    <Field label={t('Numero PC', 'Number of PCs')} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} suffix="PC" />
-                    <Field label={t('Numero thin client', 'Number of thin clients')} value={state.tech.numberThinClient} onChange={(v) => setTech('numberThinClient', v)} suffix={t('unità', 'units')} />
-                    <Field label={t('Età media PC', 'Average PC age')} value={state.tech.avgPcAgeYears} onChange={(v) => setTech('avgPcAgeYears', v)} suffix={t('anni', 'years')} />
-                    <Field label="Lifecycle PC target" value={state.tech.lifecyclePcTargetYears} onChange={(v) => setTech('lifecyclePcTargetYears', v)} suffix={t('anni', 'years')} />
-                    <RangeField label={t('% PC sostituibili / estendibili', '% PCs replaceable / extendable')} value={state.tech.pctPcReplaceableWithThinClient} onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)} />
-                    <Field label={t('Numero appliance VPN / ADC', 'Number of VPN / ADC appliances')} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={t('appliance', 'appliances')} />
-                    <Field label={t('Numero host hypervisor', 'Hypervisor host count')} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={t('host', 'hosts')} />
-                    <Field label={t('Core CPU per host', 'CPU cores per host')} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={t('core', 'cores')} />
+                    <Field label={copy.users} help={copy.helpUsers} value={state.tech.numberUsers} onChange={(v) => setTech('numberUsers', v)} suffix={copy.usersSuffix} />
+                    <RangeField label={copy.remote} help={copy.helpRemote} value={state.tech.pctRemoteHybridUsers} onChange={(v) => setTech('pctRemoteHybridUsers', v)} />
+                    <RangeField label={copy.byod} help={copy.helpByod} value={state.tech.pctByodUsers} onChange={(v) => setTech('pctByodUsers', v)} />
+                    <Field label={copy.pcCount} help={copy.helpPcCount} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} suffix="PC" />
+                    <Field label={copy.thinClients} help={copy.helpThinClients} value={state.tech.numberThinClient} onChange={(v) => setTech('numberThinClient', v)} suffix={copy.units} />
+                    <Field label={copy.avgPcAge} help={copy.helpAvgPcAge} value={state.tech.avgPcAgeYears} onChange={(v) => setTech('avgPcAgeYears', v)} suffix={copy.yearsSuffix} />
+                    <Field label={copy.lifecycle} help={copy.helpLifecycle} value={state.tech.lifecyclePcTargetYears} onChange={(v) => setTech('lifecyclePcTargetYears', v)} suffix={copy.yearsSuffix} />
+                    <RangeField label={copy.replaceable} help={copy.helpReplaceable} value={state.tech.pctPcReplaceableWithThinClient} onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)} />
+                    <Field label={copy.vpnAdc} help={copy.helpVpnAdc} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={copy.appliances} />
+                    <Field label={copy.hosts} help={copy.helpHosts} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={copy.host} />
+                    <Field label={copy.cores} help={copy.helpCores} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={copy.core} />
                   </div>
                 </SectionCard>
 
                 <SectionCard
-                  title={t('3) Servizi', '3) Services')}
-                  subtitle={t('Giornate IT, costi servizio e residui post-migrazione.', 'IT days, service costs, and post-migration residual settings.')}
+                  title={copy.section3Title}
+                  subtitle={copy.section3Subtitle}
                 >
                   <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    <Field label={t('Giorni IT/anno endpoint management', 'IT days/year endpoint management')} value={state.tech.itDaysEndpointMgmt} onChange={(v) => setTech('itDaysEndpointMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
-                    <Field label={t('Giorni IT/anno image/VDI management', 'IT days/year image/VDI management')} value={state.tech.itDaysImageVdiMgmt} onChange={(v) => setTech('itDaysImageVdiMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
-                    <Field label={t('Giorni IT/anno support', 'IT days/year support')} value={state.tech.itDaysSupport} onChange={(v) => setTech('itDaysSupport', v)} suffix={t('giorni/anno', 'days/year')} />
-                    <Field label={t('Giorni IT/anno access management', 'IT days/year access management')} value={state.tech.itDaysAccessMgmt} onChange={(v) => setTech('itDaysAccessMgmt', v)} suffix={t('giorni/anno', 'days/year')} />
-                    <Field label={t('Giorni IT/anno security operations', 'IT days/year security operations')} value={state.tech.itDaysSecurityOps} onChange={(v) => setTech('itDaysSecurityOps', v)} suffix={t('giorni/anno', 'days/year')} />
-                    <Field label={t('Costo giornata sistemistica', 'Sysadmin day cost')} value={state.cost.costSysadminDay} onChange={(v) => setCost('costSysadminDay', v)} prefix="€" suffix="/giorno" />
-                    <RangeField label={t('Riduzione effort endpoint', 'Endpoint effort reduction')} value={state.cost.reductionEffortEndpointPct} onChange={(v) => setCost('reductionEffortEndpointPct', v)} />
-                    <RangeField label={t('Riduzione effort image / VDI', 'Image / VDI effort reduction')} value={state.cost.reductionEffortImagePct} onChange={(v) => setCost('reductionEffortImagePct', v)} />
-                    <RangeField label={t('Riduzione effort support', 'Support effort reduction')} value={state.cost.reductionEffortSupportPct} onChange={(v) => setCost('reductionEffortSupportPct', v)} />
-                    <RangeField label={t('Riduzione effort access', 'Access effort reduction')} value={state.cost.reductionEffortAccessPct} onChange={(v) => setCost('reductionEffortAccessPct', v)} />
-                    <RangeField label="Residual EDR ratio with HMC" value={state.cost.residualEdrRatioWithHmc} onChange={(v) => setCost('residualEdrRatioWithHmc', v)} />
-                    <RangeField label="Residual device posture ratio with HMC" value={state.cost.residualDevicePostureRatioWithHmc} onChange={(v) => setCost('residualDevicePostureRatioWithHmc', v)} />
-                    <RangeField label="Residual security services ratio with HMC" value={state.cost.residualSecurityServicesRatioWithHmc} onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)} />
+                    <Field label={copy.itDaysEndpoint} help={copy.helpItDaysEndpoint} value={state.tech.itDaysEndpointMgmt} onChange={(v) => setTech('itDaysEndpointMgmt', v)} suffix={copy.daysYear} />
+                    <Field label={copy.itDaysImage} help={copy.helpItDaysImage} value={state.tech.itDaysImageVdiMgmt} onChange={(v) => setTech('itDaysImageVdiMgmt', v)} suffix={copy.daysYear} />
+                    <Field label={copy.itDaysSupport} help={copy.helpItDaysSupport} value={state.tech.itDaysSupport} onChange={(v) => setTech('itDaysSupport', v)} suffix={copy.daysYear} />
+                    <Field label={copy.itDaysAccess} help={copy.helpItDaysAccess} value={state.tech.itDaysAccessMgmt} onChange={(v) => setTech('itDaysAccessMgmt', v)} suffix={copy.daysYear} />
+                    <Field label={copy.itDaysSecurity} help={copy.helpItDaysSecurity} value={state.tech.itDaysSecurityOps} onChange={(v) => setTech('itDaysSecurityOps', v)} suffix={copy.daysYear} />
+                    <Field label={copy.sysadminDayCost} help={copy.helpSysadminDayCost} value={state.cost.costSysadminDay} onChange={(v) => setCost('costSysadminDay', v)} prefix="€" suffix={copy.perDay} />
+                    <RangeField label={copy.reductionEndpoint} help={copy.helpReductionEndpoint} value={state.cost.reductionEffortEndpointPct} onChange={(v) => setCost('reductionEffortEndpointPct', v)} />
+                    <RangeField label={copy.reductionImage} help={copy.helpReductionImage} value={state.cost.reductionEffortImagePct} onChange={(v) => setCost('reductionEffortImagePct', v)} />
+                    <RangeField label={copy.reductionSupport} help={copy.helpReductionSupport} value={state.cost.reductionEffortSupportPct} onChange={(v) => setCost('reductionEffortSupportPct', v)} />
+                    <RangeField label={copy.reductionAccess} help={copy.helpReductionAccess} value={state.cost.reductionEffortAccessPct} onChange={(v) => setCost('reductionEffortAccessPct', v)} />
+                    <RangeField label={copy.residualEdr} help={copy.helpResidualEdr} value={state.cost.residualEdrRatioWithHmc} onChange={(v) => setCost('residualEdrRatioWithHmc', v)} />
+                    <RangeField label={copy.residualPosture} help={copy.helpResidualPosture} value={state.cost.residualDevicePostureRatioWithHmc} onChange={(v) => setCost('residualDevicePostureRatioWithHmc', v)} />
+                    <RangeField label={copy.residualSecurity} help={copy.helpResidualSecurity} value={state.cost.residualSecurityServicesRatioWithHmc} onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)} />
                   </div>
                 </SectionCard>
               </div>
@@ -599,39 +561,39 @@ export default function App() {
 
             {customTab === 'costs' && (
               <SectionCard
-                title={t('Assunzioni costi', 'Cost assumptions')}
-                subtitle={t('Valori economici da personalizzare.', 'Economic values to customize.')}
+                title={copy.costAssumptions}
+                subtitle={copy.economicValues}
               >
                 <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{t('Parametro principale', 'Primary parameter')}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{copy.primaryParameter}</p>
                   <div className="mt-2 text-sm font-bold text-blue-900">
-                    {t('Costo HMC per utente / mese', 'HMC cost per user / month')}
+                    {copy.hmcCostUserMonth}
                   </div>
                   <div className="mt-3 max-w-xs">
-                    <Field label={t('HMC price per user / month', 'HMC price per user / month')} value={state.profile.hmcPricePerUserPerMonth} onChange={(v) => setProfile('hmcPricePerUserPerMonth', v)} prefix="€" step="0.1" suffix="/utente/mese" />
+                    <Field label={copy.hmcPriceUserMonth} value={state.profile.hmcPricePerUserPerMonth} onChange={(v) => setProfile('hmcPricePerUserPerMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
                   </div>
                   <div className="mt-4 text-sm font-bold text-blue-900">
-                    {t('Costo progetto iniziale', 'Initial project cost')}
+                    {copy.initialProjectCost}
                   </div>
                   <div className="mt-3 max-w-xs">
-                    <Field label={t('Costo progetto iniziale', 'Initial project cost')} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={t('solo anno 1', 'year 1 only')} />
+                    <Field label={copy.initialProjectCost} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={copy.year1Only} />
                   </div>
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  <Field label={t('Costo nuovo PC', 'New PC cost')} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" suffix={t('/unità', '/unit')} />
-                  <Field label={t('Costo nuovo thin client', 'New thin client cost')} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" suffix={t('/unità', '/unit')} help={t('Impostare €0 se si usa Unicon eLux.', 'Set to €0 when using Unicon eLux.')} />
-                  <Field label={t('Costo hypervisor / core / anno', 'Hypervisor cost / core / year')} value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" suffix="/core/anno" />
-                  <Field label={t('Costo appliance VPN / ADC', 'VPN / ADC appliance cost')} value={state.cost.costVpnAdcAppliance} onChange={(v) => setCost('costVpnAdcAppliance', v)} prefix="€" suffix={t('/appliance', '/appliance')} />
-                  <RangeField label={t('Manutenzione appliance', 'Appliance maintenance')} value={state.cost.applianceMaintenanceAnnualPct} onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)} />
-                  <Field label={t('Costo MFA / utente / mese', 'MFA cost / user / month')} value={state.cost.costMfaUserMonth} onChange={(v) => setCost('costMfaUserMonth', v)} prefix="€" step="0.1" suffix="/utente/mese" />
-                  <Field label={t('Costo ZTNA / utente / mese', 'ZTNA cost / user / month')} value={state.cost.costZtnaUserMonth} onChange={(v) => setCost('costZtnaUserMonth', v)} prefix="€" step="0.1" suffix="/utente/mese" />
-                  <Field label={t('Costo EDR / endpoint / mese', 'EDR cost / endpoint / month')} value={state.cost.costEdrEndpointMonth} onChange={(v) => setCost('costEdrEndpointMonth', v)} prefix="€" step="0.1" suffix="/endpoint/mese" />
-                  <Field label={t('Costo device posture / endpoint / mese', 'Device posture / endpoint / month')} value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" step="0.1" suffix="/endpoint/mese" />
-                  <Field label={t('Costo SOC / MSSP annuo', 'SOC / MSSP annual cost')} value={state.cost.costSocMsspAnnual} onChange={(v) => setCost('costSocMsspAnnual', v)} prefix="€" suffix="/anno" />
-                  <Field label={t('Costo remediation / endpoint / anno', 'Remediation / endpoint / year')} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix="/endpoint/anno" />
-                  <Field label="Residual hardware / infra" value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix="/anno" />
-                  <Field label="Residual services" value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix="/anno" />
+                  <Field label={copy.newPcCost} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" suffix={copy.perUnit} />
+                  <Field label={copy.newThinCost} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" suffix={copy.perUnit} help={copy.thinHelp} />
+                  <Field label={copy.hypervisorCostCoreYear} value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" suffix={copy.perCoreYear} />
+                  <Field label={copy.vpnApplianceCost} value={state.cost.costVpnAdcAppliance} onChange={(v) => setCost('costVpnAdcAppliance', v)} prefix="€" suffix={copy.perAppliance} />
+                  <RangeField label={copy.applianceMaintenance} value={state.cost.applianceMaintenanceAnnualPct} onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)} />
+                  <Field label={copy.mfaCost} value={state.cost.costMfaUserMonth} onChange={(v) => setCost('costMfaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
+                  <Field label={copy.ztnaCost} value={state.cost.costZtnaUserMonth} onChange={(v) => setCost('costZtnaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
+                  <Field label={copy.edrCost} value={state.cost.costEdrEndpointMonth} onChange={(v) => setCost('costEdrEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
+                  <Field label={copy.postureCost} value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
+                  <Field label={copy.socCost} value={state.cost.costSocMsspAnnual} onChange={(v) => setCost('costSocMsspAnnual', v)} prefix="€" suffix={copy.perYear} />
+                  <Field label={copy.remediationCost} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix={copy.perEndpointYear} />
+                  <Field label={copy.residualHardware} value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix={copy.perYear} />
+                  <Field label={copy.residualServices} value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix={copy.perYear} />
                 </div>
               </SectionCard>
             )}
@@ -641,8 +603,8 @@ export default function App() {
         {model.warnings.length > 0 && (
           <SectionCard
             className="mb-4"
-            title={t('Warning scenario', 'Scenario warnings')}
-            subtitle={t('Segnalazioni non bloccanti del validatore frontend.', 'Non-blocking signals from frontend validator.')}
+            title={copy.warningsTitle}
+            subtitle={copy.warningsSubtitle}
           >
             {model.warnings.map((warning) => (
               <p key={warning} className="mb-1 text-sm text-amber-700">• {warning}</p>
@@ -663,21 +625,18 @@ export default function App() {
           <Kpi title={copy.asIsPerUserYear} value={eur(model.asIsCostPerUserPerYear, lang, 0)} hint={t('Costo annuo per utente nello scenario attuale.', 'Annual cost per user in the current scenario.')} />
           <Kpi title={copy.hmcPerUserYear} value={eur(model.hmcCostPerUserPerYear, lang, 0)} hint={t('Costo annuo per utente nello scenario HMC.', 'Annual cost per user in the HMC scenario.')} />
           <Kpi title={copy.deltaPerUserYear} value={eur(model.perUserPerYearDelta, lang, 0)} hint={t('Differenza annua per utente tra scenario attuale e HMC.', 'Annual per-user difference between current and HMC scenario.')} />
-          <Kpi title={t('Utenti', 'Users')} value={String(model.users)} hint={t('Volume utenti scenario.', 'Scenario user volume.')} />
-          <Kpi title={t('Utenti remoti', 'Remote users')} value={String(Math.round(model.remoteUsers))} hint={t('Derivato da % remote/hybrid.', 'Derived from % remote/hybrid.')} />
+          <Kpi title={copy.usersKpi} value={String(model.users)} hint={copy.usersKpiHint} />
+          <Kpi title={copy.remoteUsers} value={String(Math.round(model.remoteUsers))} hint={copy.remoteUsersHint} />
         </div>
 
         <div className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-          {t(
-            'I KPI di TCO, delta, saving e ROI sono calcolati sull’intero periodo selezionato. I KPI €/utente/anno sono invece normalizzati su base annuale.',
-            'TCO, delta, saving and ROI KPIs are calculated over the selected project period. €/user/year KPIs are normalized on an annual basis.'
-          )}
+          {copy.kpiNote}
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
           <SectionCard
-            title={t('Dashboard - Confronto economico', 'Dashboard - Economic comparison')}
-            subtitle={t('Questa dashboard resta sempre visibile.', 'This dashboard is always visible.')}
+            title={copy.dashTitle}
+            subtitle={copy.dashSubtitle}
           >
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -693,8 +652,8 @@ export default function App() {
           </SectionCard>
 
           <SectionCard
-            title={t('Breakdown delta economico', 'Economic delta breakdown')}
-            subtitle={t('Aree di valore HMC (senza doppio conteggio).', 'HMC value areas (without double counting).')}
+            title={copy.breakdownTitle}
+            subtitle={copy.breakdownSubtitle}
           >
             <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr]">
               <div className="h-72">
@@ -726,16 +685,16 @@ export default function App() {
 
         <SectionCard
           className="mt-6"
-          title={t('Dettaglio calcoli - confronto sul periodo', 'Calculation details - project period comparison')}
-          subtitle={t('Valori As-Is, HMC e Differenza calcolati sull’intero orizzonte progetto selezionato.', 'As-Is, HMC and Difference values calculated over the full selected project horizon.')}
+          title={copy.detailsTitle}
+          subtitle={copy.detailsSubtitle}
         >
           {hoveredRowKey && hmcInfo[hoveredRowKey] ? (
             <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
               <p className="font-semibold text-blue-900">
-                {t('Funzionalità HMC', 'HMC feature')}: {hmcInfo[hoveredRowKey].feature}
+                {copy.hmcFeature}: {hmcInfo[hoveredRowKey].feature}
               </p>
               <p className="mt-1 text-blue-800">
-                {t('Descrizione', 'Description')}: {hmcInfo[hoveredRowKey].description}
+                {copy.description}: {hmcInfo[hoveredRowKey].description}
               </p>
             </div>
           ) : null}
@@ -744,10 +703,10 @@ export default function App() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-slate-600">
-                  <th className="py-2 pr-4">{t('Voce', 'Item')}</th>
-                  <th className="py-2 pr-4">{t('As Is', 'As Is')}</th>
-                  <th className="py-2 pr-4">HMC</th>
-                  <th className="py-2">{t('Differenza', 'Difference')}</th>
+                  <th className="py-2 pr-4">{copy.item}</th>
+                  <th className="py-2 pr-4">{copy.asIs}</th>
+                  <th className="py-2 pr-4">{copy.hmc}</th>
+                  <th className="py-2">{copy.difference}</th>
                 </tr>
               </thead>
               <tbody>
@@ -774,10 +733,7 @@ export default function App() {
             </table>
           </div>
           <p className="mt-4 text-xs text-slate-500">
-            {t(
-              'Nota: la voce PC refresh avoidance non è sommata separatamente: è già inclusa nel delta Endpoint (As Is Endpoint - HMC Endpoint).',
-              'Note: PC refresh avoidance is not added as a separate saving: it is already embedded in Endpoint delta (As Is Endpoint - HMC Endpoint).'
-            )}
+            {copy.methodNote}
           </p>
         </SectionCard>
       </div>
