@@ -581,7 +581,6 @@ export default function App() {
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-<<<<<<< codex/optimize-app-for-transparency-and-add-disclaimer-az8hur
                   <Field label={copy.newPcCost} help={copy.helpNewPcCost} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" suffix={copy.perUnit} />
                   <Field label={copy.newThinCost} help={copy.helpNewThinCost} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" suffix={copy.perUnit} />
                   <Field label={copy.hypervisorCostCoreYear} help={copy.helpHypervisorCost} value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" suffix={copy.perCoreYear} />
@@ -595,21 +594,6 @@ export default function App() {
                   <Field label={copy.remediationCost} help={copy.helpRemediationCost} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix={copy.perEndpointYear} />
                   <Field label={copy.residualHardware} help={copy.helpResidualHardware} value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix={copy.perYear} />
                   <Field label={copy.residualServices} help={copy.helpResidualServices} value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix={copy.perYear} />
-=======
-                  <Field label={copy.newPcCost} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" suffix={copy.perUnit} />
-                  <Field label={copy.newThinCost} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" suffix={copy.perUnit} help={copy.thinHelp} />
-                  <Field label={copy.hypervisorCostCoreYear} value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" suffix={copy.perCoreYear} />
-                  <Field label={copy.vpnApplianceCost} value={state.cost.costVpnAdcAppliance} onChange={(v) => setCost('costVpnAdcAppliance', v)} prefix="€" suffix={copy.perAppliance} />
-                  <RangeField label={copy.applianceMaintenance} value={state.cost.applianceMaintenanceAnnualPct} onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)} />
-                  <Field label={copy.mfaCost} value={state.cost.costMfaUserMonth} onChange={(v) => setCost('costMfaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
-                  <Field label={copy.ztnaCost} value={state.cost.costZtnaUserMonth} onChange={(v) => setCost('costZtnaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
-                  <Field label={copy.edrCost} value={state.cost.costEdrEndpointMonth} onChange={(v) => setCost('costEdrEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
-                  <Field label={copy.postureCost} value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
-                  <Field label={copy.socCost} value={state.cost.costSocMsspAnnual} onChange={(v) => setCost('costSocMsspAnnual', v)} prefix="€" suffix={copy.perYear} />
-                  <Field label={copy.remediationCost} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix={copy.perEndpointYear} />
-                  <Field label={copy.residualHardware} value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix={copy.perYear} />
-                  <Field label={copy.residualServices} value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix={copy.perYear} />
->>>>>>> develop
                 </div>
               </SectionCard>
             )}
