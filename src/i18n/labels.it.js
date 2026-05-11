@@ -63,4 +63,19 @@ export default {
   helpResidualPosture:'Quota residua di costo posture/device trust dopo HMC.',
   helpResidualSecurity:'Quota residua dei servizi di sicurezza dopo HMC.',
 
+
+  helpNewPcCost:'Costo unitario di acquisto di un nuovo PC.',
+  helpNewThinCost:'Costo unitario di acquisto di un nuovo thin client.',
+  helpHypervisorCost:'Costo annuale licenza hypervisor per singolo core CPU.',
+  helpVpnApplianceCost:'Costo di acquisto per singola appliance VPN/ADC.',
+  helpApplianceMaintenance:'Percentuale annua di manutenzione delle appliance.',
+  helpMfaCost:'Costo mensile MFA per utente.',
+  helpZtnaCost:'Costo mensile ZTNA per utente remoto/ibrido.',
+  helpEdrCost:'Costo mensile EDR per endpoint.',
+  helpPostureCost:'Costo mensile controllo postura/dispositivo per endpoint.',
+  helpSocCost:'Costo annuo del servizio SOC/MSSP.',
+  helpRemediationCost:'Costo annuo medio di remediation per endpoint.',
+  helpResidualHardware:'Costo hardware/infrastruttura che rimane anche nello scenario HMC.',
+  helpResidualServices:'Costo servizi residui che rimane anche nello scenario HMC.',
+
 };
