@@ -65,7 +65,7 @@ export default {
 
 
   helpNewPcCost:'Unit purchase cost of a new PC.',
-  helpNewThinCost:'Unit purchase cost of a new thin client.',
+  helpNewThinCost:'Unit purchase cost of a new thin client, with Unicon eLux keep €0.',
   helpHypervisorCost:'Annual hypervisor license cost per CPU core.',
   helpVpnApplianceCost:'Purchase cost per VPN/ADC appliance.',
   helpApplianceMaintenance:'Annual appliance maintenance percentage.',
