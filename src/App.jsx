@@ -29,7 +29,7 @@ const TEXT = {
   it: {
     title: 'Citrix HMC ROI Simulator / ROI Calculator',
     subtitle:
-      'Confronto trasparente tra TCO attuale e scenario HMC, con KPI, warning e dettaglio calcoli pronto per cliente/partner.',
+      'Confronto trasparente tra TCO attuale e scenario HMC, con KPI, warning e dettaglio calcoli per discussione aperta e validazione delle assunzioni.',
     customizationIntro:
       'I valori della dashboard sono modificabili: usa il pulsante qui sotto per accedere solo alle aree di personalizzazione dati (Scenario e Assunzioni costi).',
     editScenario: 'Modifica parametri scenario',
@@ -47,11 +47,15 @@ const TEXT = {
     hmcPerUserYear: 'HMC €/utente/anno',
     deltaPerUserYear: 'Delta €/utente/anno',
     years: 'anni',
+    disclaimerButton: 'Mostra disclaimer metodologico',
+    disclaimerTitle: 'Disclaimer metodologico',
+    disclaimerBody:
+      'Questo esercizio ha finalità dimostrative. Tutti i dati e le assunzioni sono modificabili in base alla situazione reale del cliente. Il calcolatore fornisce una simulazione semplificata, paragonabile a un foglio di calcolo evoluto: non rappresenta un impegno commerciale, legale o finanziario. Ideatore: Simone Ferrari, progetto personale di vibe coding con AI.',
   },
   en: {
     title: 'Citrix HMC ROI Simulator / ROI Calculator',
     subtitle:
-      'Transparent comparison between current TCO and HMC scenario with KPI, warnings, and calculation details ready for customer/partner use.',
+      'Transparent comparison between current TCO and HMC scenario with KPI, warnings, and calculation details for open discussion and assumption validation.',
     customizationIntro:
       'Dashboard values are editable: use the button below to open data customization only (Scenario and Cost assumptions).',
     editScenario: 'Edit scenario parameters',
@@ -69,6 +73,10 @@ const TEXT = {
     hmcPerUserYear: 'HMC €/user/year',
     deltaPerUserYear: 'Delta €/user/year',
     years: 'years',
+    disclaimerButton: 'Show methodology disclaimer',
+    disclaimerTitle: 'Methodology disclaimer',
+    disclaimerBody:
+      "This exercise is for demonstration purposes. All inputs and assumptions are editable according to the customer's real context. The calculator is a simplified simulation, similar to an advanced spreadsheet: it is not a commercial, legal, or financial commitment. Creator: Simone Ferrari, personal AI vibe-coding project.",
   },
 };
 
@@ -189,6 +197,7 @@ export default function App() {
   const [showCustomization, setShowCustomization] = useState(false);
   const [customTab, setCustomTab] = useState('params');
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const copy = TEXT[lang];
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
@@ -511,10 +520,23 @@ export default function App() {
                 <button onClick={() => setState(DEFAULTS)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.reset}
                 </button>
+                <button onClick={() => setShowDisclaimer((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
+                  {copy.disclaimerButton}
+                </button>
               </div>
             </div>
           </div>
         </motion.div>
+
+        {(showDisclaimer || !showCustomization) && (
+          <SectionCard
+            className="mb-6"
+            title={copy.disclaimerTitle}
+            subtitle={t("Trasparenza del modello e contesto d'uso.", 'Model transparency and usage context.')}
+          >
+            <p className="text-sm leading-6 text-slate-700">{copy.disclaimerBody}</p>
+          </SectionCard>
+        )}
 
         {showCustomization && (
           <div className="mb-6">
@@ -694,7 +716,7 @@ export default function App() {
 
           <SectionCard
             title={t('Breakdown delta economico', 'Economic delta breakdown')}
-            subtitle={t('Aree di valore HMC (senza doppio conteggio).', 'HMC value areas (without double counting).')}
+            subtitle={t('Aree di differenza economica (senza doppio conteggio).', 'Economic difference areas (without double counting).')}
           >
             <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr]">
               <div className="h-72">
@@ -732,7 +754,7 @@ export default function App() {
           {hoveredRowKey && hmcInfo[hoveredRowKey] ? (
             <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
               <p className="font-semibold text-blue-900">
-                {t('Funzionalità HMC', 'HMC feature')}: {hmcInfo[hoveredRowKey].feature}
+                {t('Funzionalità associate', 'Associated feature')}: {hmcInfo[hoveredRowKey].feature}
               </p>
               <p className="mt-1 text-blue-800">
                 {t('Descrizione', 'Description')}: {hmcInfo[hoveredRowKey].description}
@@ -775,7 +797,7 @@ export default function App() {
           </div>
           <p className="mt-4 text-xs text-slate-500">
             {t(
-              'Nota: la voce PC refresh avoidance non è sommata separatamente: è già inclusa nel delta Endpoint (As Is Endpoint - HMC Endpoint).',
+              'Nota metodologica: la voce PC refresh avoidance non è sommata separatamente perché è già inclusa nel delta Endpoint (As Is Endpoint - HMC Endpoint).',
               'Note: PC refresh avoidance is not added as a separate saving: it is already embedded in Endpoint delta (As Is Endpoint - HMC Endpoint).'
             )}
           </p>
