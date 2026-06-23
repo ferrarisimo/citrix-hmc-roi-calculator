@@ -132,7 +132,7 @@ function RangeField({ label, value, onChange, help }) {
 }
 
 
-const parseCsvLine = (line) => {
+const parseCsvLine = (line, delimiter = ',') => {
   const values = [];
   let current = '';
   let inQuotes = false;
@@ -144,7 +144,7 @@ const parseCsvLine = (line) => {
       index += 1;
     } else if (char === '"') {
       inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === delimiter && !inQuotes) {
       values.push(current);
       current = '';
     } else {
@@ -155,13 +155,13 @@ const parseCsvLine = (line) => {
   return values;
 };
 
-const parseCompatibilityCsv = (csvText) => {
+const parseCompatibilityCsv = (csvText, delimiter = ',') => {
   const rows = csvText.trim().split(/\r?\n/).filter(Boolean);
-  const headers = parseCsvLine(rows[0]);
+  const headers = parseCsvLine(rows[0], delimiter);
   return rows.slice(1)
-    .filter((line) => !line.startsWith('vendor_name,'))
+    .filter((line) => !line.startsWith(`vendor_name${delimiter}`) && !line.startsWith(`vendor${delimiter}`))
     .map((line) => {
-      const values = parseCsvLine(line);
+      const values = parseCsvLine(line, delimiter);
       return headers.reduce((record, header, index) => ({ ...record, [header]: values[index] || '' }), {});
     });
 };
@@ -229,6 +229,131 @@ function CompatibilityView({ lang, onBack }) {
           </div>
           <div className="mt-5 overflow-x-auto">
             <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+function EndpointCompatibilityView({ lang, onBack }) {
+  const [items, setItems] = useState([]);
+  const [query, setQuery] = useState('');
+  const [vendor, setVendor] = useState('all');
+  const [release, setRelease] = useState('all');
+  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+
+  useEffect(() => {
+    fetch('/data/elux_endpoint_hcl.csv')
+      .then((response) => response.text())
+      .then((text) => setItems(parseCompatibilityCsv(text, ';')))
+      .catch(() => setItems([]));
+  }, []);
+
+  const vendors = [...new Set(items.map((item) => item.vendor).filter(Boolean))].sort();
+  const releases = [...new Set(items.flatMap((item) => (item['eLux release'] || '').split(';').map((value) => value.trim()).filter(Boolean)))].sort();
+  const filteredItems = items.filter((item) => {
+    const haystack = `${item.vendor} ${item.modello} ${item.CPU} ${item.note} ${item['eLux release']}`.toLowerCase();
+    return (vendor === 'all' || item.vendor === vendor) &&
+      (release === 'all' || (item['eLux release'] || '').includes(release)) &&
+      haystack.includes(query.toLowerCase());
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="mx-auto max-w-7xl p-4 md:p-8">
+        <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-900 p-6 text-white shadow-sm">
+          <button onClick={onBack} className="mb-5 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm hover:bg-white/20">← {t('Torna al calcolatore ROI', 'Back to ROI calculator')}</button>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-200">Endpoint eLux Compatibility</p>
+          <h1 className="mt-3 text-3xl font-semibold md:text-4xl">{t('Verifica compatibilità endpoint convertibili a eLux 7', 'eLux 7 convertible endpoint compatibility checker')}</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-200">
+            {t('Usa questa vista per validare l’ipotesi di conversione dei PC e thin client compatibili a eLux nel modello ROI.', 'Use this view to validate the ROI model assumption that compatible PCs and thin clients can be converted to eLux.')}
+          </p>
+        </div>
+
+        <SectionCard className="mt-6" title={t('Profilo PC generico convertibile a eLux 7', 'Generic PC profile convertible to eLux 7')} subtitle={t('Caratteristiche principali da usare come prerequisito minimo di valutazione.', 'Key characteristics to use as the minimum assessment prerequisite.')}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Kpi title={t('Sistema operativo target', 'Target operating system')} value="eLux 7" hint={t('Conversione del dispositivo a endpoint gestito eLux.', 'Device conversion to an eLux-managed endpoint.')} />
+            <Kpi title={t('Processore', 'Processor')} value="x86" hint={t('Architettura richiesta per il PC generico.', 'Required architecture for the generic PC.')} />
+            <Kpi title={t('Memoria RAM', 'RAM memory')} value="4 GB" hint={t('Soglia minima indicata per la conversione.', 'Minimum threshold indicated for conversion.')} />
+          </div>
+        </SectionCard>
+
+        <SectionCard className="mt-6" title={t('Hardware certificato thin client convertibile ad eLux', 'Certified thin-client hardware convertible to eLux')} subtitle={t('Filtra per vendor, modello, CPU, note o release eLux.', 'Filter by vendor, model, CPU, notes, or eLux release.')}>
+          <div className="mb-4 grid gap-3 md:grid-cols-[1fr,220px,260px]">
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca modello, CPU o note...', 'Search model, CPU, or notes...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
+            <select value={vendor} onChange={(event) => setVendor(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti i vendor', 'All vendors')}</option>{vendors.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={release} onChange={(event) => setRelease(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le release eLux', 'All eLux releases')}</option>{releases.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+          </div>
+          <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} dispositivi certificati.`, `${filteredItems.length} results out of ${items.length} certified devices.`)}</p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">{t('Modello', 'Model')}</th><th className="py-3 pr-4">CPU</th><th className="py-3 pr-4">{t('Note', 'Notes')}</th><th className="py-3">eLux release</th></tr></thead><tbody>{filteredItems.map((item, index) => (<tr key={`${item.vendor}-${item.modello}-${item.CPU}-${index}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor}</td><td className="py-3 pr-4 font-medium">{item.modello}</td><td className="py-3 pr-4">{item.CPU || '—'}</td><td className="py-3 pr-4 text-slate-600">{item.note || '—'}</td><td className="py-3">{item['eLux release']}</td></tr>))}</tbody></table>
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+function NetScalerDetailView({ lang, onBack }) {
+  const [items, setItems] = useState([]);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('all');
+  const [scope, setScope] = useState('all');
+  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+
+  useEffect(() => {
+    fetch('/data/netscaler_hmc_features.csv')
+      .then((response) => response.text())
+      .then((text) => setItems(parseCompatibilityCsv(text)))
+      .catch(() => setItems([]));
+  }, []);
+
+  const categories = [...new Set(items.map((item) => item.Categoria).filter(Boolean))].sort();
+  const scopes = [...new Set(items.map((item) => item.Ambito).filter(Boolean))].sort();
+  const filteredItems = items.filter((item) => {
+    const haystack = `${item.Categoria} ${item.Sottocategoria} ${item.Funzionalità} ${item.Descrizione} ${item['Beneficio Principale']} ${item.Ambito}`.toLowerCase();
+    return (category === 'all' || item.Categoria === category) &&
+      (scope === 'all' || item.Ambito === scope) &&
+      haystack.includes(query.toLowerCase());
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="mx-auto max-w-7xl p-4 md:p-8">
+        <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-900 p-6 text-white shadow-sm">
+          <button onClick={onBack} className="mb-5 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm hover:bg-white/20">← {t('Torna al calcolatore ROI', 'Back to ROI calculator')}</button>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-200">NetScaler in HMC</p>
+          <h1 className="mt-3 text-3xl font-semibold md:text-4xl">{t('Dettaglio funzionalità NetScaler incluse in HMC', 'NetScaler capabilities included with HMC')}</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-200">
+            {t('Vista di dettaglio per qualificare quali funzionalità NetScaler possono contribuire al consolidamento di appliance, VPN, bilanciamento, sicurezza applicativa e osservabilità.', 'Detail view to qualify which NetScaler capabilities can contribute to appliance, VPN, load-balancing, application-security, and observability consolidation.')}
+          </p>
+        </div>
+
+        <SectionCard className="mt-6" title={t('Nota HMC su NetScaler', 'HMC note for NetScaler')} subtitle={t('Sintesi delle funzionalità Premium incluse nella subscription Citrix Universal Hybrid Multi-Cloud.', 'Summary of the Premium capabilities included in the Citrix Universal Hybrid Multi-Cloud subscription.')}>
+          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-5">
+              <p className="text-sm leading-7 text-slate-700">
+                {t('La subscription Citrix Universal Hybrid Multi-Cloud include NetScaler con funzionalità Premium per delivery applicativo e sicurezza, tra cui load balancing, SSL offload, Web Application Firewall e IP Reputation.', 'The Citrix Universal Hybrid Multi-Cloud subscription includes NetScaler Premium capabilities for application delivery and security, including load balancing, SSL offload, Web Application Firewall, and IP Reputation.')}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <Kpi title={t('Istanze incluse', 'Included instances')} value="999" hint="VPX / MPX / SDX / FIPS" />
+              <Kpi title={t('Throughput aggregato', 'Aggregate throughput')} value="1000 Gbps" hint={t('Capacità totale inclusa nel perimetro HMC.', 'Total capacity included in the HMC scope.')} />
+              <Kpi title={t('Feature tier', 'Feature tier')} value="Premium" hint="LB, SSL Offload, WAF, IP Reputation" />
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard className="mt-6" title={t('Catalogo funzionalità NetScaler', 'NetScaler capability catalog')} subtitle={t('Filtra le funzionalità per categoria, ambito o testo libero.', 'Filter capabilities by category, scope, or free text.')}>
+          <div className="mb-4 grid gap-3 md:grid-cols-[1fr,240px,220px]">
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca funzionalità o beneficio...', 'Search capability or benefit...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={scope} onChange={(event) => setScope(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli ambiti', 'All scopes')}</option>{scopes.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+          </div>
+          <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} funzionalità censite.`, `${filteredItems.length} results out of ${items.length} listed capabilities.`)}</p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">{t('Categoria', 'Category')}</th><th className="py-3 pr-4">{t('Sottocategoria', 'Subcategory')}</th><th className="py-3 pr-4">{t('Funzionalità', 'Capability')}</th><th className="py-3 pr-4">{t('Descrizione', 'Description')}</th><th className="py-3 pr-4">{t('Beneficio principale', 'Main benefit')}</th><th className="py-3">{t('Ambito', 'Scope')}</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.Categoria}-${item.Sottocategoria}-${item.Funzionalità}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.Categoria}</td><td className="py-3 pr-4">{item.Sottocategoria}</td><td className="py-3 pr-4 font-medium">{item.Funzionalità}</td><td className="py-3 pr-4 text-slate-600">{item.Descrizione}</td><td className="py-3 pr-4 text-slate-600">{item['Beneficio Principale']}</td><td className="py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.Ambito}</span></td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -552,6 +677,12 @@ export default function App() {
   if (view === 'compatibility') {
     return <CompatibilityView lang={lang} onBack={() => setView('roi')} />;
   }
+  if (view === 'endpointCompatibility') {
+    return <EndpointCompatibilityView lang={lang} onBack={() => setView('roi')} />;
+  }
+  if (view === 'netscalerDetail') {
+    return <NetScalerDetailView lang={lang} onBack={() => setView('roi')} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -799,12 +930,12 @@ export default function App() {
                   <div key={item.name} className="flex items-center justify-between rounded-2xl border border-slate-200 p-3">
                     <div className="flex items-center gap-3">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      {item.key === 'hypervisor' ? (
+                      {item.key === 'endpoint' || item.key === 'hypervisor' || item.key === 'access' ? (
                         <button
                           type="button"
-                          onClick={() => setView('compatibility')}
+                          onClick={() => setView(item.key === 'endpoint' ? 'endpointCompatibility' : item.key === 'access' ? 'netscalerDetail' : 'compatibility')}
                           className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
-                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                          title={item.key === 'endpoint' ? t('Apri la verifica compatibilità endpoint eLux', 'Open the eLux endpoint compatibility checker') : item.key === 'access' ? t('Apri il dettaglio funzionalità NetScaler', 'Open the NetScaler capability detail') : t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
                         >
                           {item.name}
                         </button>
@@ -864,12 +995,12 @@ export default function App() {
                     onMouseLeave={() => setHoveredRowKey(null)}
                   >
                     <td className="py-2 pr-4">
-                      {row.key === 'hypervisor' ? (
+                      {row.key === 'endpoint' || row.key === 'hypervisor' || row.key === 'access' ? (
                         <button
                           type="button"
-                          onClick={() => setView('compatibility')}
+                          onClick={() => setView(row.key === 'endpoint' ? 'endpointCompatibility' : row.key === 'access' ? 'netscalerDetail' : 'compatibility')}
                           className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
-                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                          title={row.key === 'endpoint' ? t('Apri la verifica compatibilità endpoint eLux', 'Open the eLux endpoint compatibility checker') : row.key === 'access' ? t('Apri il dettaglio funzionalità NetScaler', 'Open the NetScaler capability detail') : t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
                         >
                           {rowLabels[row.key]}
                         </button>
