@@ -82,7 +82,7 @@ const DEFAULTS = {
 };
 
 function SectionCard({ title, subtitle, children, className = '' }) {
-  return <div className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${className}`}><div className="border-b border-slate-100 px-6 py-5"><h3 className="text-lg font-semibold text-slate-950">{title}</h3>{subtitle ? <p className="mt-1 text-sm text-slate-500">{subtitle}</p> : null}</div><div className="p-6">{children}</div></div>;
+  return <div className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${className}`}><div className={children ? 'border-b border-slate-100 px-6 py-5' : 'px-6 py-5'}><h3 className="text-lg font-semibold text-slate-950">{title}</h3>{subtitle ? <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p> : null}</div>{children ? <div className="p-6">{children}</div> : null}</div>;
 }
 
 function Help({ text }) {
@@ -330,20 +330,14 @@ function NetScalerDetailView({ lang, onBack }) {
           </p>
         </div>
 
-        <SectionCard className="mt-6" title={t('Nota HMC su NetScaler', 'HMC note for NetScaler')} subtitle={t('Sintesi delle funzionalità Premium incluse nella subscription Citrix Universal Hybrid Multi-Cloud.', 'Summary of the Premium capabilities included in the Citrix Universal Hybrid Multi-Cloud subscription.')}>
-          <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-5">
-              <p className="text-sm leading-7 text-slate-700">
-                {t('La subscription Citrix Universal Hybrid Multi-Cloud include NetScaler con funzionalità Premium per delivery applicativo e sicurezza, tra cui load balancing, SSL offload, Web Application Firewall e IP Reputation.', 'The Citrix Universal Hybrid Multi-Cloud subscription includes NetScaler Premium capabilities for application delivery and security, including load balancing, SSL offload, Web Application Firewall, and IP Reputation.')}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <Kpi title={t('Istanze incluse', 'Included instances')} value="999" hint="VPX / MPX / SDX / FIPS" />
-              <Kpi title={t('Throughput aggregato', 'Aggregate throughput')} value="1000 Gbps" hint={t('Capacità totale inclusa nel perimetro HMC.', 'Total capacity included in the HMC scope.')} />
-              <Kpi title={t('Feature tier', 'Feature tier')} value="Premium" hint="LB, SSL Offload, WAF, IP Reputation" />
-            </div>
-          </div>
-        </SectionCard>
+        <SectionCard
+          className="mt-6"
+          title={t('Nota HMC su NetScaler', 'HMC note for NetScaler')}
+          subtitle={t(
+            'La subscription Citrix Universal Hybrid Multi-Cloud include NetScaler Premium per delivery applicativo e sicurezza: LB, SSL Offload, WAF, IP Reputation e altre funzionalità, fino a 999 istanze VPX/MPX/SDX/FIPS e 1000 Gbps di throughput aggregato.',
+            'The Citrix Universal Hybrid Multi-Cloud subscription includes NetScaler Premium for application delivery and security: LB, SSL Offload, WAF, IP Reputation, and other capabilities, with up to 999 VPX/MPX/SDX/FIPS instances and 1000 Gbps aggregate throughput.'
+          )}
+        />
 
         <SectionCard className="mt-6" title={t('Catalogo funzionalità NetScaler', 'NetScaler capability catalog')} subtitle={t('Filtra le funzionalità per categoria, ambito o testo libero.', 'Filter capabilities by category, scope, or free text.')}>
           <div className="mb-4 grid gap-3 md:grid-cols-[1fr,240px,220px]">
