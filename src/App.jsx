@@ -173,7 +173,7 @@ function CompatibilityView({ lang, onBack }) {
   const [status, setStatus] = useState('all');
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/xenserver_scl.csv')
+    fetch(`${import.meta.env.BASE_URL}data/xenserver_scl.csv`)
       .then((response) => response.text())
       .then((text) => setItems(parseCompatibilityCsv(text)))
       .catch(() => setItems([]));
@@ -244,7 +244,7 @@ function EndpointCompatibilityView({ lang, onBack }) {
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/elux_endpoint_hcl.csv')
+    fetch(`${import.meta.env.BASE_URL}data/elux_endpoint_hcl.csv`)
       .then((response) => response.text())
       .then((text) => setItems(parseCompatibilityCsv(text, ';')))
       .catch(() => setItems([]));
@@ -303,7 +303,7 @@ function NetScalerDetailView({ lang, onBack }) {
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/netscaler_hmc_features.csv')
+    fetch(`${import.meta.env.BASE_URL}data/netscaler_hmc_features.csv`)
       .then((response) => response.text())
       .then((text) => setItems(parseCompatibilityCsv(text)))
       .catch(() => setItems([]));
