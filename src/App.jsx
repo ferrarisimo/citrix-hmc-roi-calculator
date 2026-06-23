@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ResponsiveContainer,
@@ -46,6 +46,7 @@ const DEFAULTS = {
     pctPcReplaceableWithThinClient: 35,
     numberHosts: 8,
     coresPerHost: 48,
+    pctWorkloadsXenServerCompatible: 100,
     numberVpnAdcAppliances: 2,
     itDaysEndpointMgmt: 120,
     itDaysImageVdiMgmt: 90,
@@ -130,6 +131,111 @@ function RangeField({ label, value, onChange, help }) {
   );
 }
 
+
+const parseCsvLine = (line) => {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current);
+  return values;
+};
+
+const parseCompatibilityCsv = (csvText) => {
+  const rows = csvText.trim().split(/\r?\n/).filter(Boolean);
+  const headers = parseCsvLine(rows[0]);
+  return rows.slice(1)
+    .filter((line) => !line.startsWith('vendor_name,'))
+    .map((line) => {
+      const values = parseCsvLine(line);
+      return headers.reduce((record, header, index) => ({ ...record, [header]: values[index] || '' }), {});
+    });
+};
+
+function CompatibilityView({ lang, onBack }) {
+  const [items, setItems] = useState([]);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('all');
+  const [status, setStatus] = useState('all');
+
+  useEffect(() => {
+    fetch('/data/xenserver_scl.csv')
+      .then((response) => response.text())
+      .then((text) => setItems(parseCompatibilityCsv(text)))
+      .catch(() => setItems([]));
+  }, []);
+
+  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))].sort();
+  const statuses = [...new Set(items.map((item) => item.regulatory_status).filter(Boolean))].sort();
+  const filteredItems = items.filter((item) => {
+    const haystack = `${item.vendor_name} ${item.product_name} ${item.category} ${item.short_description} ${item.regulatory_status}`.toLowerCase();
+    return (category === 'all' || item.category === category) &&
+      (status === 'all' || item.regulatory_status === status) &&
+      haystack.includes(query.toLowerCase());
+  });
+
+  const supportedCount = items.filter((item) => item.regulatory_status === 'Supported').length;
+  const averageIndex = items.length ? Math.round(items.reduce((sum, item) => sum + Number(item.compatibility_index || 0), 0) / items.length) : 0;
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="mx-auto max-w-7xl p-4 md:p-8">
+        <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 p-6 text-white shadow-sm">
+          <button onClick={onBack} className="mb-5 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm hover:bg-white/20">← {t('Torna al calcolatore ROI', 'Back to ROI calculator')}</button>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-200">XenServer Hypervisor Compatibility</p>
+          <h1 className="mt-3 text-3xl font-semibold md:text-4xl">{t('Verifica compatibilità workload per XenServer', 'XenServer workload compatibility checker')}</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-200">
+            {t('Questa vista riguarda esclusivamente la compatibilità con XenServer come hypervisor. Non rappresenta una matrice per Citrix Virtual Apps and Desktops, NetScaler o altre funzionalità HMC.', 'This view is only about compatibility with XenServer as the hypervisor. It is not a compatibility matrix for Citrix Virtual Apps and Desktops, NetScaler, or other HMC capabilities.')}
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Kpi title={t('Soluzioni censite', 'Listed solutions')} value={String(items.length)} hint={t('Dati letti dal CSV separato aggiornabile.', 'Data loaded from the separately updateable CSV.')} />
+          <Kpi title={t('Supportate', 'Supported')} value={String(supportedCount)} hint={t('Record con stato Supported.', 'Records with Supported status.')} />
+          <Kpi title={t('Indice medio', 'Average index')} value={`${averageIndex}/100`} hint={t('Media semplice degli indici nel file.', 'Simple average of indexes in the file.')} />
+        </div>
+
+        <SectionCard className="mt-6" title={t('Hardware Compatibility List XenServer', 'XenServer Hardware Compatibility List')} subtitle={t('Verifica la compatibilità hardware direttamente sulla lista ufficiale XenServer.', 'Check hardware compatibility directly on the official XenServer list.')}>
+          <div className="flex flex-col gap-4 rounded-2xl bg-slate-50 p-5 md:flex-row md:items-center md:justify-between">
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {t('La lista di compatibilità hardware deve essere verificata sul sito XenServer per confermare il supporto di server, componenti e configurazioni specifiche.', 'The hardware compatibility list must be verified on the XenServer site to confirm support for specific servers, components, and configurations.')}
+            </p>
+            <a href="https://hcl.xenserver.com/" target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800">
+              {t('Apri HCL XenServer', 'Open XenServer HCL')}
+            </a>
+          </div>
+        </SectionCard>
+
+        <SectionCard className="mt-6" title={t('Ricerca Software Compatibility List XenServer', 'Search XenServer Software Compatibility List')} subtitle={t('Filtra per vendor, prodotto, categoria o stato di supporto.', 'Filter by vendor, product, category, or support status.')}>
+          <div className="grid gap-3 md:grid-cols-[1fr,220px,220px]">
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca vendor o prodotto...', 'Search vendor or product...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli stati', 'All statuses')}</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+          </div>
+          <div className="mt-5 overflow-x-auto">
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
 function Kpi({ title, value, hint }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -147,6 +253,7 @@ export default function App() {
   const [customTab, setCustomTab] = useState('params');
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [view, setView] = useState('roi');
   const copy = LABELS[lang];
   const t = (itText, enText) => (lang === 'it' ? itText : enText);
 
@@ -186,7 +293,7 @@ export default function App() {
       endpoint:
         (remainingPc * cost.costOnePc) / Math.max(tech.lifecyclePcTargetYears, 1) +
         (replaceablePc * cost.costOneThinClient) / 5,
-      hypervisor: 0,
+      hypervisor: asIs.hypervisor * (1 - Math.min(100, Math.max(0, tech.pctWorkloadsXenServerCompatible)) / 100),
       access: 0,
       mfa: 0,
       ztna: 0,
@@ -260,11 +367,11 @@ export default function App() {
     ];
 
     const byDomain = [
-      { name: copy.domainEndpoint, value: asIs.endpoint - hmc.endpoint },
-      { name: copy.domainHypervisor, value: asIs.hypervisor - hmc.hypervisor },
-      { name: copy.domainAccess, value: asIs.access - hmc.access },
-      { name: copy.domainSecurity, value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
-      { name: copy.domainOperations, value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
+      { key: 'endpoint', name: copy.domainEndpoint, value: asIs.endpoint - hmc.endpoint },
+      { key: 'hypervisor', name: copy.domainHypervisor, value: asIs.hypervisor - hmc.hypervisor },
+      { key: 'access', name: copy.domainAccess, value: asIs.access - hmc.access },
+      { key: 'security', name: copy.domainSecurity, value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
+      { key: 'operations', name: copy.domainOperations, value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
     ].filter((item) => item.value > 0);
 
     return {
@@ -287,6 +394,8 @@ export default function App() {
       warnings,
       chartRows,
       byDomain,
+      retainedLegacyHypervisorAnnual: hmc.hypervisor,
+      migratableWorkloadPct: Math.min(100, Math.max(0, tech.pctWorkloadsXenServerCompatible)),
       tableRows,
     };
   }, [state, lang]);
@@ -440,6 +549,10 @@ export default function App() {
     },
   };
 
+  if (view === 'compatibility') {
+    return <CompatibilityView lang={lang} onBack={() => setView('roi')} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <div className="mx-auto max-w-7xl p-4 md:p-8">
@@ -465,6 +578,9 @@ export default function App() {
                 </button>
                 <button onClick={() => setShowDisclaimer((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.disclaimerButton}
+                </button>
+                <button onClick={() => setView('compatibility')} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400">
+                  {t('Verifica compatibilità XenServer', 'Check XenServer compatibility')}
                 </button>
               </div>
             </div>
@@ -536,6 +652,7 @@ export default function App() {
                     <Field label={copy.vpnAdc} help={copy.helpVpnAdc} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={copy.appliances} />
                     <Field label={copy.hosts} help={copy.helpHosts} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={copy.host} />
                     <Field label={copy.cores} help={copy.helpCores} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={copy.core} />
+                    <RangeField label={t('% workload migrabili su XenServer', '% workloads migratable to XenServer')} help={t('Riduci questo valore se dalla verifica compatibilità emerge che alcuni workload devono restare sul virtualizzatore attuale: il modello mantiene una quota proporzionale dei costi hypervisor esistenti.', 'Lower this value if the compatibility check shows that some workloads must remain on the existing virtualizer: the model retains a proportional share of existing hypervisor costs.')} value={state.tech.pctWorkloadsXenServerCompatible} onChange={(v) => setTech('pctWorkloadsXenServerCompatible', v)} />
                   </div>
                 </SectionCard>
 
@@ -636,6 +753,12 @@ export default function App() {
           {copy.kpiNote}
         </div>
 
+        <button onClick={() => setView('compatibility')} className="mt-4 w-full rounded-3xl border border-blue-200 bg-blue-50 p-5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100">
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{t('Planning migrazione workload', 'Workload migration planning')}</p>
+          <p className="mt-2 text-lg font-semibold text-slate-950">{t('Prima di migrare tutti gli host, verifica quali software sono compatibili con XenServer hypervisor.', 'Before migrating all hosts, verify which software is compatible with the XenServer hypervisor.')}</p>
+          <p className="mt-1 text-sm text-slate-600">{t(`Workload migrabili impostati al ${model.migratableWorkloadPct}%. Costo annuo del vecchio virtualizzatore mantenuto nello scenario HMC: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`, `Migratable workloads set to ${model.migratableWorkloadPct}%. Annual legacy virtualizer cost retained in the HMC scenario: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`)}</p>
+        </button>
+
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
           <SectionCard
             title={copy.dashTitle}
@@ -676,7 +799,18 @@ export default function App() {
                   <div key={item.name} className="flex items-center justify-between rounded-2xl border border-slate-200 p-3">
                     <div className="flex items-center gap-3">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <p className="font-medium">{item.name}</p>
+                      {item.key === 'hypervisor' ? (
+                        <button
+                          type="button"
+                          onClick={() => setView('compatibility')}
+                          className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
+                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                        >
+                          {item.name}
+                        </button>
+                      ) : (
+                        <p className="font-medium">{item.name}</p>
+                      )}
                     </div>
                     <span className="font-semibold">{eur(item.value, lang)}</span>
                   </div>
@@ -695,6 +829,15 @@ export default function App() {
             <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
               <p className="font-semibold text-blue-900">
                 {copy.hmcFeature}: {hmcInfo[hoveredRowKey].feature}
+                {hoveredRowKey === 'hypervisor' ? (
+                  <button
+                    type="button"
+                    onClick={() => setView('compatibility')}
+                    className="ml-2 rounded-full border border-blue-300 bg-white px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    {t('Verifica compatibilità XenServer', 'Check XenServer compatibility')}
+                  </button>
+                ) : null}
               </p>
               <p className="mt-1 text-blue-800">
                 {copy.description}: {hmcInfo[hoveredRowKey].description}
@@ -720,7 +863,18 @@ export default function App() {
                     onMouseEnter={() => setHoveredRowKey(row.key)}
                     onMouseLeave={() => setHoveredRowKey(null)}
                   >
-                    <td className="py-2 pr-4">{rowLabels[row.key]}</td>
+                    <td className="py-2 pr-4">
+                      {row.key === 'hypervisor' ? (
+                        <button
+                          type="button"
+                          onClick={() => setView('compatibility')}
+                          className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
+                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                        >
+                          {rowLabels[row.key]}
+                        </button>
+                      ) : rowLabels[row.key]}
+                    </td>
                     <td className="py-2 pr-4">{eur(row.asIs, lang)}</td>
                     <td className="py-2 pr-4">{eur(row.hmc, lang)}</td>
                     <td className={`py-2 font-medium ${row.delta >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{eur(row.delta, lang)}</td>
