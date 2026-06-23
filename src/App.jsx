@@ -14,8 +14,43 @@ import {
 } from 'recharts';
 import { LABELS, detectBrowserLanguage } from './i18n/labels';
 
+const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES' };
+
+const ES_INLINE = {
+  'Back to ROI calculator': 'Volver a la calculadora ROI',
+  'XenServer workload compatibility checker': 'Verificador de compatibilidad de workloads XenServer',
+  'This view is only about compatibility with XenServer as the hypervisor. It is not a compatibility matrix for Citrix Virtual Apps and Desktops, NetScaler, or other HMC capabilities.': 'Esta vista trata exclusivamente la compatibilidad con XenServer como hypervisor. No representa una matriz para Citrix Virtual Apps and Desktops, NetScaler u otras funcionalidades HMC.',
+  'Listed solutions': 'Soluciones listadas', 'Data loaded from the separately updateable CSV.': 'Datos leídos desde el CSV separado y actualizable.',
+  'Supported': 'Soportadas', 'Records with Supported status.': 'Registros con estado Supported.', 'Average index': 'Índice medio', 'Simple average of indexes in the file.': 'Media simple de los índices del archivo.',
+  'XenServer Hardware Compatibility List': 'Hardware Compatibility List XenServer', 'Check hardware compatibility directly on the official XenServer list.': 'Verifica la compatibilidad hardware directamente en la lista oficial de XenServer.',
+  'The hardware compatibility list must be verified on the XenServer site to confirm support for specific servers, components, and configurations.': 'La lista de compatibilidad hardware debe verificarse en el sitio de XenServer para confirmar el soporte de servidores, componentes y configuraciones específicos.',
+  'Open XenServer HCL': 'Abrir HCL XenServer', 'Search XenServer Software Compatibility List': 'Buscar en la Software Compatibility List XenServer',
+  'Filter by vendor, product, category, or support status.': 'Filtra por vendor, producto, categoría o estado de soporte.', 'Search vendor or product...': 'Buscar vendor o producto...', 'All categories': 'Todas las categorías', 'All statuses': 'Todos los estados',
+  'eLux 7 convertible endpoint compatibility checker': 'Verificador de compatibilidad de endpoints convertibles a eLux 7',
+  'Use this view to validate the ROI model assumption that compatible PCs and thin clients can be converted to eLux.': 'Usa esta vista para validar el supuesto del modelo ROI de que los PC y thin clients compatibles pueden convertirse a eLux.',
+  'Generic PC profile convertible to eLux 7': 'Perfil de PC genérico convertible a eLux 7', 'Key characteristics to use as the minimum assessment prerequisite.': 'Características principales que se usan como requisito mínimo de evaluación.',
+  'Target operating system': 'Sistema operativo objetivo', 'Device conversion to an eLux-managed endpoint.': 'Conversión del dispositivo a endpoint gestionado con eLux.', 'Processor': 'Procesador', 'Required architecture for the generic PC.': 'Arquitectura requerida para el PC genérico.', 'RAM memory': 'Memoria RAM', 'Minimum threshold indicated for conversion.': 'Umbral mínimo indicado para la conversión.',
+  'Certified thin-client hardware convertible to eLux': 'Hardware thin client certificado convertible a eLux', 'Filter by vendor, model, CPU, notes, or eLux release.': 'Filtra por vendor, modelo, CPU, notas o release eLux.', 'Search model, CPU, or notes...': 'Buscar modelo, CPU o notas...', 'All vendors': 'Todos los vendors', 'All eLux releases': 'Todas las releases eLux', 'Model': 'Modelo', 'Notes': 'Notas',
+  'NetScaler capabilities included with HMC': 'Funcionalidades NetScaler incluidas con HMC', 'Detail view to qualify which NetScaler capabilities can contribute to appliance, VPN, load-balancing, application-security, and observability consolidation.': 'Vista de detalle para cualificar qué funcionalidades NetScaler contribuyen a consolidar appliances, VPN, balanceo, seguridad aplicativa y observabilidad.',
+  'HMC note for NetScaler': 'Nota HMC para NetScaler', 'The Citrix Universal Hybrid Multi-Cloud subscription includes NetScaler Premium for application delivery and security: LB, SSL Offload, WAF, IP Reputation, and other capabilities, with up to 999 VPX/MPX/SDX/FIPS instances and 1000 Gbps aggregate throughput.': 'La suscripción Citrix Universal Hybrid Multi-Cloud incluye NetScaler Premium para delivery aplicativo y seguridad: LB, SSL Offload, WAF, IP Reputation y otras funcionalidades, hasta 999 instancias VPX/MPX/SDX/FIPS y 1000 Gbps de throughput agregado.',
+  'NetScaler capability catalog': 'Catálogo de funcionalidades NetScaler', 'Filter capabilities by category, scope, or free text.': 'Filtra funcionalidades por categoría, ámbito o texto libre.', 'Search capability or benefit...': 'Buscar funcionalidad o beneficio...', 'All scopes': 'Todos los ámbitos', 'Category': 'Categoría', 'Subcategory': 'Subcategoría', 'Capability': 'Funcionalidad', 'Description': 'Descripción', 'Main benefit': 'Beneficio principal', 'Scope': 'Ámbito',
+  'Check XenServer compatibility': 'Verificar compatibilidad XenServer', '% workloads migratable to XenServer': '% workloads migrables a XenServer',
+  'Lower this value if the compatibility check shows that some workloads must remain on the existing virtualizer: the model retains a proportional share of existing hypervisor costs.': 'Reduce este valor si la verificación de compatibilidad muestra que algunos workloads deben permanecer en el virtualizador actual: el modelo conserva una cuota proporcional de los costes hypervisor existentes.',
+  'Total current cost over the selected project period.': 'Coste total actual en todo el periodo de proyecto seleccionado.', 'Total HMC cost over the selected project period, including the initial project cost in year one.': 'Coste total HMC en el periodo seleccionado, incluido el coste inicial de proyecto en el primer año.', 'Difference between current TCO and HMC TCO over the selected project period.': 'Diferencia entre TCO actual y TCO HMC en el periodo seleccionado.', 'Gross avoided costs over the period.': 'Costes brutos evitados durante el periodo.', 'Total net saving over the project horizon.': 'Ahorro neto total en el horizonte del proyecto.', 'Project TCO delta / HMC project TCO.': 'Delta TCO proyecto / TCO HMC proyecto.', 'Annual cost per user in the current scenario.': 'Coste anual por usuario en el escenario actual.', 'Annual cost per user in the HMC scenario.': 'Coste anual por usuario en el escenario HMC.', 'Annual per-user difference between current and HMC scenario.': 'Diferencia anual por usuario entre escenario actual y HMC.',
+  'Workload migration planning': 'Planificación de migración de workloads', 'Before migrating all hosts, verify which software is compatible with the XenServer hypervisor.': 'Antes de migrar todos los hosts, verifica qué software es compatible con XenServer hypervisor.',
+  'Open the eLux endpoint compatibility checker': 'Abrir el verificador de compatibilidad endpoint eLux', 'Open the NetScaler capability detail': 'Abrir el detalle de funcionalidades NetScaler', 'Open the XenServer hypervisor compatibility checker': 'Abrir el verificador de compatibilidad XenServer hypervisor',
+  'Item': 'Concepto', 'As-Is': 'As-Is', 'Delta': 'Delta', 'Project total': 'Total del proyecto', 'Initial project cost (year 1 only)': 'Coste inicial del proyecto (solo año 1)', 'HMC subscription': 'Suscripción HMC', 'Residual hardware / infra': 'Hardware / infra residual', 'Residual services': 'Servicios residuales'
+};
+
+
+const translate = (lang, itText, enText, esText) => {
+  if (lang === 'it') return itText;
+  if (lang === 'es') return esText ?? ES_INLINE[enText] ?? enText;
+  return enText;
+};
+
 const eur = (value, lang = 'it', digits = 0) =>
-  new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'it-IT', {
+  new Intl.NumberFormat(localeByLanguage[lang] ?? 'en-US', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: digits,
@@ -179,7 +214,7 @@ function CompatibilityView({ lang, onBack }) {
       .catch(() => setItems([]));
   }, []);
 
-  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
   const categories = [...new Set(items.map((item) => item.category).filter(Boolean))].sort();
   const statuses = [...new Set(items.map((item) => item.regulatory_status).filter(Boolean))].sort();
   const filteredItems = items.filter((item) => {
@@ -241,7 +276,7 @@ function EndpointCompatibilityView({ lang, onBack }) {
   const [query, setQuery] = useState('');
   const [vendor, setVendor] = useState('all');
   const [release, setRelease] = useState('all');
-  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/elux_endpoint_hcl.csv`)
@@ -300,7 +335,7 @@ function NetScalerDetailView({ lang, onBack }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [scope, setScope] = useState('all');
-  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/netscaler_hmc_features.csv`)
@@ -367,7 +402,7 @@ function Kpi({ title, value, hint }) {
 
 
 function ScenarioReport({ lang, state, model, rowLabels }) {
-  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
   const positiveDelta = model.projectDelta >= 0;
   const topRows = [...model.tableRows]
     .filter((row) => row.key !== 'migrationProject')
@@ -423,7 +458,7 @@ export default function App() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [view, setView] = useState('roi');
   const copy = LABELS[lang];
-  const t = (itText, enText) => (lang === 'it' ? itText : enText);
+  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   const setProfile = (key, value) => setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
   const setTech = (key, value) => setState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
@@ -737,6 +772,7 @@ export default function App() {
               <div className="mb-3 flex justify-end gap-2">
                 <button onClick={() => setLang('it')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'it' ? 'bg-white/20' : ''}`}>IT</button>
                 <button onClick={() => setLang('en')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'en' ? 'bg-white/20' : ''}`}>EN</button>
+                <button onClick={() => setLang('es')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'es' ? 'bg-white/20' : ''}`}>ES</button>
               </div>
               <h1 className="text-3xl font-semibold md:text-4xl">{copy.title}</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{copy.subtitle}</p>
