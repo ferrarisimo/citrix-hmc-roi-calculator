@@ -356,11 +356,11 @@ export default function App() {
     ];
 
     const byDomain = [
-      { name: copy.domainEndpoint, value: asIs.endpoint - hmc.endpoint },
-      { name: copy.domainHypervisor, value: asIs.hypervisor - hmc.hypervisor },
-      { name: copy.domainAccess, value: asIs.access - hmc.access },
-      { name: copy.domainSecurity, value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
-      { name: copy.domainOperations, value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
+      { key: 'endpoint', name: copy.domainEndpoint, value: asIs.endpoint - hmc.endpoint },
+      { key: 'hypervisor', name: copy.domainHypervisor, value: asIs.hypervisor - hmc.hypervisor },
+      { key: 'access', name: copy.domainAccess, value: asIs.access - hmc.access },
+      { key: 'security', name: copy.domainSecurity, value: asIs.mfa + asIs.ztna + asIs.edr + asIs.posture + asIs.securityServices - (hmc.mfa + hmc.ztna + hmc.edr + hmc.posture + hmc.securityServices) },
+      { key: 'operations', name: copy.domainOperations, value: asIs.opsEndpoint + asIs.opsImage + asIs.opsSupport + asIs.opsAccess - (hmc.opsEndpoint + hmc.opsImage + hmc.opsSupport + hmc.opsAccess) },
     ].filter((item) => item.value > 0);
 
     return {
@@ -788,7 +788,18 @@ export default function App() {
                   <div key={item.name} className="flex items-center justify-between rounded-2xl border border-slate-200 p-3">
                     <div className="flex items-center gap-3">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <p className="font-medium">{item.name}</p>
+                      {item.key === 'hypervisor' ? (
+                        <button
+                          type="button"
+                          onClick={() => setView('compatibility')}
+                          className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
+                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                        >
+                          {item.name}
+                        </button>
+                      ) : (
+                        <p className="font-medium">{item.name}</p>
+                      )}
                     </div>
                     <span className="font-semibold">{eur(item.value, lang)}</span>
                   </div>
@@ -807,6 +818,15 @@ export default function App() {
             <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm">
               <p className="font-semibold text-blue-900">
                 {copy.hmcFeature}: {hmcInfo[hoveredRowKey].feature}
+                {hoveredRowKey === 'hypervisor' ? (
+                  <button
+                    type="button"
+                    onClick={() => setView('compatibility')}
+                    className="ml-2 rounded-full border border-blue-300 bg-white px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    {t('Verifica compatibilità XenServer', 'Check XenServer compatibility')}
+                  </button>
+                ) : null}
               </p>
               <p className="mt-1 text-blue-800">
                 {copy.description}: {hmcInfo[hoveredRowKey].description}
@@ -832,7 +852,18 @@ export default function App() {
                     onMouseEnter={() => setHoveredRowKey(row.key)}
                     onMouseLeave={() => setHoveredRowKey(null)}
                   >
-                    <td className="py-2 pr-4">{rowLabels[row.key]}</td>
+                    <td className="py-2 pr-4">
+                      {row.key === 'hypervisor' ? (
+                        <button
+                          type="button"
+                          onClick={() => setView('compatibility')}
+                          className="font-medium text-blue-700 underline decoration-blue-300 underline-offset-4 hover:text-blue-900"
+                          title={t('Apri la verifica compatibilità XenServer hypervisor', 'Open the XenServer hypervisor compatibility checker')}
+                        >
+                          {rowLabels[row.key]}
+                        </button>
+                      ) : rowLabels[row.key]}
+                    </td>
                     <td className="py-2 pr-4">{eur(row.asIs, lang)}</td>
                     <td className="py-2 pr-4">{eur(row.hmc, lang)}</td>
                     <td className={`py-2 font-medium ${row.delta >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{eur(row.delta, lang)}</td>
