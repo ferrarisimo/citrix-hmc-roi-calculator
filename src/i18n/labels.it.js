@@ -3,7 +3,7 @@ export default {
   subtitle: 'Confronto trasparente tra TCO attuale e scenario HMC, con KPI, warning e dettaglio calcoli per discussione aperta e validazione delle assunzioni.',
   customizationIntro: 'I valori della dashboard sono modificabili: usa il pulsante qui sotto per accedere solo alle aree di personalizzazione dati (Scenario e Assunzioni costi).',
   editScenario: 'Modifica parametri scenario', hideScenario: 'Chiudi parametri scenario',
-  tabs: ['Parametri', 'Assunzioni costi'], reset: 'Reset scenario', print: 'Stampa / Salva PDF',
+  tabs: ['Parametri', 'Assunzioni costi'], reset: 'Reset scenario', print: 'Report',
   currentAnnual:'TCO attuale progetto', hmcAnnual:'TCO HMC progetto', annualDelta:'Delta TCO progetto', grossAvoided:'Gross avoided cost', netAnnual:'Risparmio netto progetto', annualRoi:'ROI progetto', asIsPerUserYear:'As-Is €/utente/anno', hmcPerUserYear:'HMC €/utente/anno', deltaPerUserYear:'Delta €/utente/anno', years:'anni',
   disclaimerButton:'Mostra disclaimer metodologico', disclaimerTitle:'Disclaimer metodologico', disclaimerSubtitle:"Trasparenza del modello e contesto d'uso.",
   disclaimerBody:'Questo esercizio ha finalità dimostrative. Tutti i dati e le assunzioni sono modificabili in base alla situazione reale del cliente. Il calcolatore fornisce una simulazione semplificata, paragonabile a un foglio di calcolo evoluto: non rappresenta un impegno commerciale, legale o finanziario. Ideatore: Simone Ferrari, progetto personale di vibe coding con AI.',
