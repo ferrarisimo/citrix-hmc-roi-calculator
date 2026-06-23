@@ -3,7 +3,7 @@ export default {
   subtitle: 'Transparent comparison between current TCO and HMC scenario with KPI, warnings, and calculation details for open discussion and assumption validation.',
   customizationIntro: 'Dashboard values are editable: use the button below to open data customization only (Scenario and Cost assumptions).',
   editScenario: 'Edit scenario parameters', hideScenario: 'Hide scenario parameters',
-  tabs: ['Parameters', 'Cost assumptions'], reset: 'Reset scenario', print: 'Print / Save PDF',
+  tabs: ['Parameters', 'Cost assumptions'], reset: 'Reset scenario', print: 'Report',
   currentAnnual:'Current project TCO', hmcAnnual:'HMC project TCO', annualDelta:'Project TCO delta', grossAvoided:'Gross avoided cost', netAnnual:'Net project saving', annualRoi:'Project ROI', asIsPerUserYear:'As-Is €/user/year', hmcPerUserYear:'HMC €/user/year', deltaPerUserYear:'Delta €/user/year', years:'years',
   disclaimerButton:'Show methodology disclaimer', disclaimerTitle:'Methodology disclaimer', disclaimerSubtitle:'Model transparency and usage context.',
   disclaimerBody:"This exercise is for demonstration purposes. All inputs and assumptions are editable according to the customer's real context. The calculator is a simplified simulation, similar to an advanced spreadsheet: it is not a commercial, legal, or financial commitment. Creator: Simone Ferrari, personal AI vibe-coding project.",
