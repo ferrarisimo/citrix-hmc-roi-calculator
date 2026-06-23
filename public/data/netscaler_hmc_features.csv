@@ -1,0 +1,31 @@
+Categoria,Sottocategoria,Funzionalità,Descrizione,Beneficio Principale,Ambito
+Traffic Management,Load Balancing,L4 Load Balancing,Bilanciamento TCP/UDP ad alte prestazioni,Distribuzione del carico e alta disponibilità,Datacenter/Cloud
+Traffic Management,Load Balancing,L7 Content Switching,Instradamento basato su URL Header Cookie e contenuto,Ottimizzazione delle applicazioni web,Datacenter/Cloud
+Traffic Management,Load Balancing,Global Server Load Balancing (GSLB),Bilanciamento geografico tra datacenter e cloud,Disaster Recovery e geo-redundancy,Multi-site
+Traffic Management,Availability,High Availability (HA),Failover automatico tra appliance NetScaler,Continuità operativa,Datacenter
+Traffic Management,Availability,Health Monitoring,Controllo stato server e servizi backend,Riduzione downtime,Datacenter/Cloud
+Traffic Management,Optimization,SSL Offload,Terminazione TLS/SSL sul NetScaler,Riduzione carico applicativo,Datacenter/Cloud
+Traffic Management,Optimization,SSL Bridging,Ispezione traffico mantenendo cifratura end-to-end,Sicurezza e controllo,Datacenter/Cloud
+Traffic Management,Optimization,Compression,Compressione HTTP e HTTPS,Riduzione banda e latenza,Datacenter/Cloud
+Traffic Management,Optimization,Caching,Cache dei contenuti statici,Miglioramento performance web,Datacenter/Cloud
+Traffic Management,Optimization,HTTP Multiplexing,Riutilizzo connessioni backend,Riduzione consumo risorse server,Datacenter/Cloud
+Application Delivery,Web Applications,Content Rewriting,Modifica dinamica di header URL e contenuti,Flessibilità applicativa,Datacenter/Cloud
+Application Delivery,Web Applications,Responder Policies,Risposte automatiche basate su policy,Automazione gestione traffico,Datacenter/Cloud
+Application Delivery,Microservices,Kubernetes Ingress Controller,Pubblicazione applicazioni Kubernetes,Supporto cloud-native,Kubernetes
+Application Delivery,Microservices,Container ADC (CPX/BLX),ADC containerizzato per microservizi,Scalabilità DevOps,Kubernetes
+Security,WAF,Web Application Firewall,Protezione da OWASP Top 10 e attacchi web,Sicurezza applicativa,Datacenter/Cloud
+Security,WAF,Bot Management,Rilevamento e mitigazione bot malevoli,Protezione applicazioni e API,Datacenter/Cloud
+Security,Threat Intelligence,IP Reputation,Blocco IP malevoli tramite feed reputazionali,Riduzione superficie di attacco,Datacenter/Cloud
+Security,DDoS,DDoS Protection,Protezione contro attacchi volumetrici e applicativi,Disponibilità servizi,Datacenter/Cloud
+Security,API Security,API Protection,Protezione e controllo API REST e JSON,Sicurezza API,Datacenter/Cloud
+Security,Compliance,FIPS Support,Supporto appliance certificate FIPS,Conformità normativa,Settori regolamentati
+Access Management,VPN,SSL VPN,Accesso remoto sicuro tramite VPN,Smart Working e accesso remoto,Remote Access
+Access Management,ZTNA,Secure Private Access Integration,Accesso Zero Trust ad applicazioni SaaS e Web,Riduzione utilizzo VPN,Hybrid Cloud
+Access Management,Authentication,nFactor Authentication,Autenticazione multi-step adattiva,MFA avanzata,Enterprise
+Access Management,Authentication,Adaptive Authentication,Autenticazione basata sul contesto e rischio,Aumento sicurezza accessi,Enterprise
+Access Management,Federation,SAML Federation,Federazione identità con Identity Provider,Singolo accesso alle applicazioni,Enterprise
+Access Management,Federation,OAuth/OpenID Connect,Supporto autenticazione moderna,Integrazione applicazioni cloud,SaaS
+Citrix Integration,HDX,ICA Proxy,Pubblicazione sicura sessioni Citrix senza VPN,Semplificazione accesso utenti,Citrix
+Citrix Integration,HDX,HDX Insight,Analisi dettagliata traffico HDX e sessioni utente,Troubleshooting e UX,Citrix
+Observability,Monitoring,NetScaler Console,Gestione centralizzata appliance e licenze,Governance e amministrazione,Enterprise
+Observability,Analytics,Web Insight e App Analytics,Monitoraggio performance applicative e utenti finali,Visibilità end-to-end,Enterprise
