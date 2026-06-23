@@ -210,6 +210,17 @@ function CompatibilityView({ lang, onBack }) {
           <Kpi title={t('Indice medio', 'Average index')} value={`${averageIndex}/100`} hint={t('Media semplice degli indici nel file.', 'Simple average of indexes in the file.')} />
         </div>
 
+        <SectionCard className="mt-6" title={t('Hardware Compatibility List XenServer', 'XenServer Hardware Compatibility List')} subtitle={t('Verifica la compatibilità hardware direttamente sulla lista ufficiale XenServer.', 'Check hardware compatibility directly on the official XenServer list.')}>
+          <div className="flex flex-col gap-4 rounded-2xl bg-slate-50 p-5 md:flex-row md:items-center md:justify-between">
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {t('La lista di compatibilità hardware deve essere verificata sul sito XenServer per confermare il supporto di server, componenti e configurazioni specifiche.', 'The hardware compatibility list must be verified on the XenServer site to confirm support for specific servers, components, and configurations.')}
+            </p>
+            <a href="https://hcl.xenserver.com/" target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800">
+              {t('Apri HCL XenServer', 'Open XenServer HCL')}
+            </a>
+          </div>
+        </SectionCard>
+
         <SectionCard className="mt-6" title={t('Ricerca Software Compatibility List XenServer', 'Search XenServer Software Compatibility List')} subtitle={t('Filtra per vendor, prodotto, categoria o stato di supporto.', 'Filter by vendor, product, category, or support status.')}>
           <div className="grid gap-3 md:grid-cols-[1fr,220px,220px]">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca vendor o prodotto...', 'Search vendor or product...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
