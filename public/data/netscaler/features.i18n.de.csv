@@ -1,0 +1,31 @@
+id,category_label,subcategory_label,capability_label,description,main_benefit,scope_label
+traffic_management_load_balancing_l4_load_balancing,Traffic Management,Load Balancing,L4 Load Balancing,Hochperformantes TCP/UDP Load Balancing,Lastverteilung und Hochverfügbarkeit,Datacenter/Cloud
+traffic_management_load_balancing_l7_content_switching,Traffic Management,Load Balancing,L7 Content Switching,"Routing basierend auf URL, Headern, Cookies und Content",Optimierung von Webanwendungen,Datacenter/Cloud
+traffic_management_load_balancing_global_server_load_balancing_gslb,Traffic Management,Load Balancing,Global Server Load Balancing (GSLB),Geografisches Load Balancing über Rechenzentren und Cloud,Disaster Recovery und Geo-Redundanz,Multi-site
+traffic_management_availability_high_availability_ha,Traffic Management,Verfügbarkeit,High Availability (HA),Automatisches Failover zwischen NetScaler-Appliances,Betriebskontinuität,Datacenter
+traffic_management_availability_health_monitoring,Traffic Management,Verfügbarkeit,Health Monitoring,Health Checks für Server und Backend-Services,Reduzierung von Ausfallzeiten,Datacenter/Cloud
+traffic_management_optimization_ssl_offload,Traffic Management,Optimierung,SSL Offload,TLS/SSL-Terminierung auf NetScaler,Reduzierte Anwendungslast,Datacenter/Cloud
+traffic_management_optimization_ssl_bridging,Traffic Management,Optimierung,SSL Bridging,Traffic-Inspektion bei Erhalt der Ende-zu-Ende-Verschlüsselung,Sicherheit und Kontrolle,Datacenter/Cloud
+traffic_management_optimization_compression,Traffic Management,Optimierung,Compression,HTTP- und HTTPS-Komprimierung,Reduzierung von Bandbreite und Latenz,Datacenter/Cloud
+traffic_management_optimization_caching,Traffic Management,Optimierung,Caching,Caching statischer Inhalte,Verbesserte Web-Performance,Datacenter/Cloud
+traffic_management_optimization_http_multiplexing,Traffic Management,Optimierung,HTTP Multiplexing,Wiederverwendung von Backend-Verbindungen,Reduzierter Ressourcenverbrauch auf Servern,Datacenter/Cloud
+application_delivery_web_applications_content_rewriting,Application Delivery,Webanwendungen,Content Rewriting,"Dynamische Änderung von Headern, URLs und Inhalten",Anwendungsflexibilität,Datacenter/Cloud
+application_delivery_web_applications_responder_policies,Application Delivery,Webanwendungen,Responder Policies,Policy-basierte automatische Antworten,Automatisierung des Traffic Managements,Datacenter/Cloud
+application_delivery_microservices_kubernetes_ingress_controller,Application Delivery,Microservices,Kubernetes Ingress Controller,Veröffentlichung von Kubernetes-Anwendungen,Cloud-native Unterstützung,Kubernetes
+application_delivery_microservices_container_adc_cpx_blx,Application Delivery,Microservices,Container ADC (CPX/BLX),Containerisierter ADC für Microservices,DevOps-Skalierbarkeit,Kubernetes
+security_waf_web_application_firewall,Security,WAF,Web Application Firewall,Schutz vor OWASP Top 10 und Webangriffen,Anwendungssicherheit,Datacenter/Cloud
+security_waf_bot_management,Security,WAF,Bot Management,Erkennung und Abwehr bösartiger Bots,Schutz von Anwendungen und APIs,Datacenter/Cloud
+security_threat_intelligence_ip_reputation,Security,Threat Intelligence,IP Reputation,Blockieren bösartiger IPs über Reputations-Feeds,Reduzierung der Angriffsfläche,Datacenter/Cloud
+security_ddos_ddos_protection,Security,DDoS,DDoS Protection,Schutz vor volumetrischen und Application-Layer-Angriffen,Serviceverfügbarkeit,Datacenter/Cloud
+security_api_security_api_protection,Security,API Security,API Protection,Schutz und Kontrolle für REST- und JSON-APIs,API-Sicherheit,Datacenter/Cloud
+security_compliance_fips_support,Security,Compliance,FIPS Support,Unterstützung FIPS-zertifizierter Appliances,Regulatorische Compliance,Regulierte Branchen
+access_management_vpn_ssl_vpn,Access Management,VPN,SSL VPN,Sicherer Remote-Zugriff über VPN,Smart Working und Remote Access,Remote Access
+access_management_ztna_secure_private_access_integration,Access Management,ZTNA,Secure Private Access Integration,Zero-Trust-Zugriff auf SaaS- und Webanwendungen,Reduzierte VPN-Nutzung,Hybrid Cloud
+access_management_authentication_nfactor_authentication,Access Management,Authentifizierung,nFactor Authentication,Adaptive mehrstufige Authentifizierung,Erweiterte MFA,Enterprise
+access_management_authentication_adaptive_authentication,Access Management,Authentifizierung,Adaptive Authentication,Kontext- und risikobasierte Authentifizierung,Erhöhte Zugriffssicherheit,Enterprise
+access_management_federation_saml_federation,Access Management,Föderation,SAML Federation,Identity Federation mit Identity Providern,Einheitlicher Zugriff auf Anwendungen,Enterprise
+access_management_federation_oauth_openid_connect,Access Management,Föderation,OAuth/OpenID Connect,Unterstützung moderner Authentifizierung,Integration von Cloud-Anwendungen,SaaS
+citrix_integration_hdx_ica_proxy,Citrix-Integration,HDX,ICA Proxy,Sichere Veröffentlichung von Citrix-Sitzungen ohne VPN,Vereinfachter Benutzerzugriff,Citrix
+citrix_integration_hdx_hdx_insight,Citrix-Integration,HDX,HDX Insight,Detaillierte Analyse von HDX-Traffic und Benutzersitzungen,Troubleshooting und UX,Citrix
+observability_monitoring_netscaler_console,Observability,Monitoring,NetScaler Console,Zentralisierte Verwaltung von Appliances und Lizenzen,Governance und Administration,Enterprise
+observability_analytics_web_insight_e_app_analytics,Observability,Analytics,Web Insight e App Analytics,Monitoring von Anwendungsperformance und Endbenutzern,End-to-End-Transparenz,Enterprise

@@ -6,7 +6,7 @@ const datasets = [
   { name: 'elux', base: 'public/data/elux/hcl.csv', i18n: 'public/data/elux/hcl.i18n', required: ['notes'], allowEmpty: ['notes'] },
   { name: 'netscaler', base: 'public/data/netscaler/features.csv', i18n: 'public/data/netscaler/features.i18n', required: ['category_label', 'subcategory_label', 'capability_label', 'description', 'main_benefit', 'scope_label'] },
 ];
-const languages = ['it', 'en', 'es'];
+const languages = ['it', 'en', 'es', 'de'];
 
 const parseCsvLine = (line, delimiter = ',') => {
   const values = [];
