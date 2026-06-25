@@ -531,11 +531,13 @@ export default function App() {
     const totalCores = tech.numberHosts * tech.coresPerHost;
     const replaceablePc = tech.numberPc * (tech.pctPcReplaceableWithThinClient / 100);
     const remainingPc = tech.numberPc - replaceablePc;
+    const accessAppliancePurchaseCost = tech.numberVpnAdcAppliances * cost.costVpnAdcAppliance;
+    const accessApplianceMaintenanceAnnual = accessAppliancePurchaseCost * (cost.applianceMaintenanceAnnualPct / 100);
 
     const asIs = {
       endpoint: (tech.numberPc * cost.costOnePc) / Math.max(tech.avgPcAgeYears, 1),
       hypervisor: totalCores * cost.costHypervisorPerCoreYear,
-      access: tech.numberVpnAdcAppliances * cost.costVpnAdcAppliance * (1 + cost.applianceMaintenanceAnnualPct / 100),
+      access: accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual,
       mfa: users * cost.costMfaUserMonth * 12,
       ztna: remoteUsers * cost.costZtnaUserMonth * 12,
       edr: tech.numberPc * cost.costEdrEndpointMonth * 12,
@@ -585,12 +587,18 @@ export default function App() {
     const migrationCostOneTime = profile.initialMigrationCost;
 
     const tableRows = annualRows
-      .map((row) => ({
-        ...row,
-        asIs: row.asIs * projectYears,
-        hmc: row.hmc * projectYears,
-        delta: (row.asIs - row.hmc) * projectYears,
-      }))
+      .map((row) => {
+        const projectAsIs = row.key === 'access'
+          ? accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual * projectYears
+          : row.asIs * projectYears;
+        const projectHmc = row.hmc * projectYears;
+        return {
+          ...row,
+          asIs: projectAsIs,
+          hmc: projectHmc,
+          delta: projectAsIs - projectHmc,
+        };
+      })
       .concat([
         {
           key: 'migrationProject',
@@ -606,8 +614,8 @@ export default function App() {
     const grossAvoided = totalAsIs - (totalHmc - (hmc.hmcSubscription * projectYears) + migrationCostOneTime);
     const roiAnnual = totalHmc > 0 ? projectDelta / totalHmc : null;
 
-    const asIsCostPerUserPerYear = users > 0 ? totalAsIsAnnual / users : 0;
-    const hmcCostPerUserPerYear = users > 0 ? totalHmcAnnual / users : 0;
+    const asIsCostPerUserPerYear = users > 0 ? totalAsIs / projectYears / users : 0;
+    const hmcCostPerUserPerYear = users > 0 ? totalHmc / projectYears / users : 0;
     const perUserPerYearDelta = asIsCostPerUserPerYear - hmcCostPerUserPerYear;
 
     const warnings = [];
