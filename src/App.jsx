@@ -192,13 +192,40 @@ const parseCsvLine = (line, delimiter = ',') => {
 
 const parseCompatibilityCsv = (csvText, delimiter = ',') => {
   const rows = csvText.trim().split(/\r?\n/).filter(Boolean);
+  if (!rows.length) return [];
   const headers = parseCsvLine(rows[0], delimiter);
   return rows.slice(1)
-    .filter((line) => !line.startsWith(`vendor_name${delimiter}`) && !line.startsWith(`vendor${delimiter}`))
+    .filter((line) => !line.startsWith(`vendor_name${delimiter}`) && !line.startsWith(`vendor${delimiter}`) && !line.startsWith(`id${delimiter}`))
     .map((line) => {
       const values = parseCsvLine(line, delimiter);
       return headers.reduce((record, header, index) => ({ ...record, [header]: values[index] || '' }), {});
     });
+};
+
+const indexRowsById = (rows) => rows.reduce((index, row) => ({ ...index, [row.id]: row }), {});
+
+const mergeLocalizedRows = (baseRows, localizedRows, fallbackRows = []) => {
+  const localizedById = indexRowsById(localizedRows);
+  const fallbackById = indexRowsById(fallbackRows);
+  return baseRows.map((row) => ({
+    ...row,
+    ...(fallbackById[row.id] || {}),
+    ...(localizedById[row.id] || {}),
+  }));
+};
+
+const loadLocalizedCsvDataset = async ({ basePath, i18nPath, lang, delimiter = ',', fallbackLang = 'en' }) => {
+  const baseUrl = import.meta.env.BASE_URL;
+  const [baseText, localizedText, fallbackText] = await Promise.all([
+    fetch(`${baseUrl}${basePath}`).then((response) => response.text()),
+    fetch(`${baseUrl}${i18nPath}.${lang}.csv`).then((response) => response.ok ? response.text() : ''),
+    lang === fallbackLang ? Promise.resolve('') : fetch(`${baseUrl}${i18nPath}.${fallbackLang}.csv`).then((response) => response.ok ? response.text() : ''),
+  ]);
+  return mergeLocalizedRows(
+    parseCompatibilityCsv(baseText, delimiter),
+    localizedText ? parseCompatibilityCsv(localizedText, delimiter) : [],
+    fallbackText ? parseCompatibilityCsv(fallbackText, delimiter) : []
+  );
 };
 
 function CompatibilityView({ lang, onBack }) {
@@ -208,23 +235,22 @@ function CompatibilityView({ lang, onBack }) {
   const [status, setStatus] = useState('all');
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/xenserver_scl.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text)))
+    loadLocalizedCsvDataset({ basePath: 'data/xenserver/scl.csv', i18nPath: 'data/xenserver/scl.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
-  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))].sort();
-  const statuses = [...new Set(items.map((item) => item.regulatory_status).filter(Boolean))].sort();
+  const categories = [...new Map(items.filter((item) => item.category_key).map((item) => [item.category_key, item.category_label || item.category_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const statuses = [...new Map(items.filter((item) => item.regulatory_status_key).map((item) => [item.regulatory_status_key, item.regulatory_status_label || item.regulatory_status_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.vendor_name} ${item.product_name} ${item.category} ${item.short_description} ${item.regulatory_status}`.toLowerCase();
-    return (category === 'all' || item.category === category) &&
-      (status === 'all' || item.regulatory_status === status) &&
+    const haystack = `${item.vendor_name} ${item.product_name} ${item.category_label} ${item.short_description} ${item.regulatory_status_label}`.toLowerCase();
+    return (category === 'all' || item.category_key === category) &&
+      (status === 'all' || item.regulatory_status_key === status) &&
       haystack.includes(query.toLowerCase());
   });
 
-  const supportedCount = items.filter((item) => item.regulatory_status === 'Supported').length;
+  const supportedCount = items.filter((item) => item.regulatory_status_key === 'supported').length;
   const averageIndex = items.length ? Math.round(items.reduce((sum, item) => sum + Number(item.compatibility_index || 0), 0) / items.length) : 0;
 
   return (
@@ -259,11 +285,11 @@ function CompatibilityView({ lang, onBack }) {
         <SectionCard className="mt-6" title={t('Ricerca Software Compatibility List XenServer', 'Search XenServer Software Compatibility List')} subtitle={t('Filtra per vendor, prodotto, categoria o stato di supporto.', 'Filter by vendor, product, category, or support status.')}>
           <div className="grid gap-3 md:grid-cols-[1fr,220px,220px]">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca vendor o prodotto...', 'Search vendor or product...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
-            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli stati', 'All statuses')}</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli stati', 'All statuses')}</option>{statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           </div>
           <div className="mt-5 overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category_label}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status_label}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -279,18 +305,17 @@ function EndpointCompatibilityView({ lang, onBack }) {
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/elux_endpoint_hcl.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text, ';')))
+    loadLocalizedCsvDataset({ basePath: 'data/elux/hcl.csv', i18nPath: 'data/elux/hcl.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
   const vendors = [...new Set(items.map((item) => item.vendor).filter(Boolean))].sort();
-  const releases = [...new Set(items.flatMap((item) => (item['eLux release'] || '').split(';').map((value) => value.trim()).filter(Boolean)))].sort();
+  const releases = [...new Set(items.flatMap((item) => (item.elux_release || '').split(';').map((value) => value.trim()).filter(Boolean)))].sort();
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.vendor} ${item.modello} ${item.CPU} ${item.note} ${item['eLux release']}`.toLowerCase();
+    const haystack = `${item.vendor} ${item.model} ${item.cpu} ${item.notes} ${item.elux_release}`.toLowerCase();
     return (vendor === 'all' || item.vendor === vendor) &&
-      (release === 'all' || (item['eLux release'] || '').includes(release)) &&
+      (release === 'all' || (item.elux_release || '').includes(release)) &&
       haystack.includes(query.toLowerCase());
   });
 
@@ -322,7 +347,7 @@ function EndpointCompatibilityView({ lang, onBack }) {
           </div>
           <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} dispositivi certificati.`, `${filteredItems.length} results out of ${items.length} certified devices.`)}</p>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">{t('Modello', 'Model')}</th><th className="py-3 pr-4">CPU</th><th className="py-3 pr-4">{t('Note', 'Notes')}</th><th className="py-3">eLux release</th></tr></thead><tbody>{filteredItems.map((item, index) => (<tr key={`${item.vendor}-${item.modello}-${item.CPU}-${index}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor}</td><td className="py-3 pr-4 font-medium">{item.modello}</td><td className="py-3 pr-4">{item.CPU || '—'}</td><td className="py-3 pr-4 text-slate-600">{item.note || '—'}</td><td className="py-3">{item['eLux release']}</td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">{t('Modello', 'Model')}</th><th className="py-3 pr-4">CPU</th><th className="py-3 pr-4">{t('Note', 'Notes')}</th><th className="py-3">eLux release</th></tr></thead><tbody>{filteredItems.map((item, index) => (<tr key={`${item.vendor}-${item.model}-${item.cpu}-${index}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor}</td><td className="py-3 pr-4 font-medium">{item.model}</td><td className="py-3 pr-4">{item.cpu || '—'}</td><td className="py-3 pr-4 text-slate-600">{item.notes || '—'}</td><td className="py-3">{item.elux_release}</td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -338,18 +363,17 @@ function NetScalerDetailView({ lang, onBack }) {
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/netscaler_hmc_features.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text)))
+    loadLocalizedCsvDataset({ basePath: 'data/netscaler/features.csv', i18nPath: 'data/netscaler/features.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
-  const categories = [...new Set(items.map((item) => item.Categoria).filter(Boolean))].sort();
-  const scopes = [...new Set(items.map((item) => item.Ambito).filter(Boolean))].sort();
+  const categories = [...new Map(items.filter((item) => item.category_key).map((item) => [item.category_key, item.category_label || item.category_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const scopes = [...new Map(items.filter((item) => item.scope_key).map((item) => [item.scope_key, item.scope_label || item.scope_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.Categoria} ${item.Sottocategoria} ${item.Funzionalità} ${item.Descrizione} ${item['Beneficio Principale']} ${item.Ambito}`.toLowerCase();
-    return (category === 'all' || item.Categoria === category) &&
-      (scope === 'all' || item.Ambito === scope) &&
+    const haystack = `${item.category_label} ${item.subcategory_label} ${item.capability_label} ${item.description} ${item.main_benefit} ${item.scope_label}`.toLowerCase();
+    return (category === 'all' || item.category_key === category) &&
+      (scope === 'all' || item.scope_key === scope) &&
       haystack.includes(query.toLowerCase());
   });
 
@@ -377,12 +401,12 @@ function NetScalerDetailView({ lang, onBack }) {
         <SectionCard className="mt-6" title={t('Catalogo funzionalità NetScaler', 'NetScaler capability catalog')} subtitle={t('Filtra le funzionalità per categoria, ambito o testo libero.', 'Filter capabilities by category, scope, or free text.')}>
           <div className="mb-4 grid gap-3 md:grid-cols-[1fr,240px,220px]">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca funzionalità o beneficio...', 'Search capability or benefit...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
-            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-            <select value={scope} onChange={(event) => setScope(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli ambiti', 'All scopes')}</option>{scopes.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+            <select value={scope} onChange={(event) => setScope(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli ambiti', 'All scopes')}</option>{scopes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           </div>
           <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} funzionalità censite.`, `${filteredItems.length} results out of ${items.length} listed capabilities.`)}</p>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">{t('Categoria', 'Category')}</th><th className="py-3 pr-4">{t('Sottocategoria', 'Subcategory')}</th><th className="py-3 pr-4">{t('Funzionalità', 'Capability')}</th><th className="py-3 pr-4">{t('Descrizione', 'Description')}</th><th className="py-3 pr-4">{t('Beneficio principale', 'Main benefit')}</th><th className="py-3">{t('Ambito', 'Scope')}</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.Categoria}-${item.Sottocategoria}-${item.Funzionalità}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.Categoria}</td><td className="py-3 pr-4">{item.Sottocategoria}</td><td className="py-3 pr-4 font-medium">{item.Funzionalità}</td><td className="py-3 pr-4 text-slate-600">{item.Descrizione}</td><td className="py-3 pr-4 text-slate-600">{item['Beneficio Principale']}</td><td className="py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.Ambito}</span></td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">{t('Categoria', 'Category')}</th><th className="py-3 pr-4">{t('Sottocategoria', 'Subcategory')}</th><th className="py-3 pr-4">{t('Funzionalità', 'Capability')}</th><th className="py-3 pr-4">{t('Descrizione', 'Description')}</th><th className="py-3 pr-4">{t('Beneficio principale', 'Main benefit')}</th><th className="py-3">{t('Ambito', 'Scope')}</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={item.id} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.category_label}</td><td className="py-3 pr-4">{item.subcategory_label}</td><td className="py-3 pr-4 font-medium">{item.capability_label}</td><td className="py-3 pr-4 text-slate-600">{item.description}</td><td className="py-3 pr-4 text-slate-600">{item.main_benefit}</td><td className="py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.scope_label}</span></td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
