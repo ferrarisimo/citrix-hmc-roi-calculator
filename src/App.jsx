@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { LABELS, detectBrowserLanguage } from './i18n/labels';
 
-const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES' };
+const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES', de: 'de-DE' };
 
 const ES_INLINE = {
   'Back to ROI calculator': 'Volver a la calculadora ROI',
@@ -42,10 +42,37 @@ const ES_INLINE = {
   'Item': 'Concepto', 'As-Is': 'As-Is', 'Delta': 'Delta', 'Project total': 'Total del proyecto', 'Initial project cost (year 1 only)': 'Coste inicial del proyecto (solo año 1)', 'HMC subscription': 'Suscripción HMC', 'Residual hardware / infra': 'Hardware / infra residual', 'Residual services': 'Servicios residuales'
 };
 
+const DE_INLINE = {
+  'Back to ROI calculator': 'Zurück zum ROI-Rechner',
+  'XenServer workload compatibility checker': 'XenServer Workload-Kompatibilitätsprüfung',
+  'This view is only about compatibility with XenServer as the hypervisor. It is not a compatibility matrix for Citrix Virtual Apps and Desktops, NetScaler, or other HMC capabilities.': 'Diese Ansicht betrifft ausschließlich die Kompatibilität mit XenServer als Hypervisor. Sie ist keine Kompatibilitätsmatrix für Citrix Virtual Apps and Desktops, NetScaler oder andere HMC-Funktionen.',
+  'Listed solutions': 'Erfasste Lösungen', 'Data loaded from the separately updateable CSV.': 'Daten aus separat aktualisierbaren CSV-Dateien.',
+  'Supported': 'Unterstützt', 'Records with Supported status.': 'Datensätze mit Status Supported.', 'Average index': 'Durchschnittsindex', 'Simple average of indexes in the file.': 'Einfacher Durchschnitt der Indizes in der Datei.',
+  'XenServer Hardware Compatibility List': 'XenServer Hardware Compatibility List', 'Check hardware compatibility directly on the official XenServer list.': 'Hardware-Kompatibilität direkt in der offiziellen XenServer-Liste prüfen.',
+  'The hardware compatibility list must be verified on the XenServer site to confirm support for specific servers, components, and configurations.': 'Die Hardware Compatibility List muss auf der XenServer-Website geprüft werden, um die Unterstützung spezifischer Server, Komponenten und Konfigurationen zu bestätigen.',
+  'Open XenServer HCL': 'XenServer HCL öffnen', 'Search XenServer Software Compatibility List': 'XenServer Software Compatibility List durchsuchen',
+  'Filter by vendor, product, category, or support status.': 'Nach Hersteller, Produkt, Kategorie oder Supportstatus filtern.', 'Search vendor or product...': 'Hersteller oder Produkt suchen...', 'All categories': 'Alle Kategorien', 'All statuses': 'Alle Status',
+  'eLux 7 convertible endpoint compatibility checker': 'Kompatibilitätsprüfung für zu eLux 7 konvertierbare Endpoints',
+  'Use this view to validate the ROI model assumption that compatible PCs and thin clients can be converted to eLux.': 'Diese Ansicht validiert die ROI-Annahme, dass kompatible PCs und Thin Clients zu eLux konvertiert werden können.',
+  'Generic PC profile convertible to eLux 7': 'Generisches zu eLux 7 konvertierbares PC-Profil', 'Key characteristics to use as the minimum assessment prerequisite.': 'Kerneigenschaften als Mindestvoraussetzung für die Bewertung.',
+  'Target operating system': 'Zielbetriebssystem', 'Device conversion to an eLux-managed endpoint.': 'Gerätekonvertierung zu einem eLux-verwalteten Endpoint.', 'Processor': 'Prozessor', 'Required architecture for the generic PC.': 'Erforderliche Architektur für den generischen PC.', 'RAM memory': 'RAM-Speicher', 'Minimum threshold indicated for conversion.': 'Angegebene Mindestanforderung für die Konvertierung.',
+  'Certified thin-client hardware convertible to eLux': 'Zertifizierte zu eLux konvertierbare Thin-Client-Hardware', 'Filter by vendor, model, CPU, notes, or eLux release.': 'Nach Hersteller, Modell, CPU, Notizen oder eLux-Release filtern.', 'Search model, CPU, or notes...': 'Modell, CPU oder Notizen suchen...', 'All vendors': 'Alle Hersteller', 'All eLux releases': 'Alle eLux-Releases', 'Model': 'Modell', 'Notes': 'Notizen',
+  'NetScaler capabilities included with HMC': 'In HMC enthaltene NetScaler-Funktionen', 'Detail view to qualify which NetScaler capabilities can contribute to appliance, VPN, load-balancing, application-security, and observability consolidation.': 'Detailansicht zur Bewertung, welche NetScaler-Funktionen zur Konsolidierung von Appliances, VPN, Load Balancing, Anwendungssicherheit und Observability beitragen.',
+  'HMC note for NetScaler': 'HMC-Hinweis zu NetScaler', 'The Citrix Universal Hybrid Multi-Cloud subscription includes NetScaler Premium for application delivery and security: LB, SSL Offload, WAF, IP Reputation, and other capabilities, with up to 999 VPX/MPX/SDX/FIPS instances and 1000 Gbps aggregate throughput.': 'Die Citrix Universal Hybrid Multi-Cloud Subscription enthält NetScaler Premium für Application Delivery und Security: LB, SSL Offload, WAF, IP Reputation und weitere Funktionen, mit bis zu 999 VPX/MPX/SDX/FIPS-Instanzen und 1000 Gbit/s aggregiertem Durchsatz.',
+  'NetScaler capability catalog': 'NetScaler-Funktionskatalog', 'Filter capabilities by category, scope, or free text.': 'Funktionen nach Kategorie, Scope oder Freitext filtern.', 'Search capability or benefit...': 'Funktion oder Nutzen suchen...', 'All scopes': 'Alle Scopes', 'Category': 'Kategorie', 'Subcategory': 'Unterkategorie', 'Capability': 'Funktion', 'Description': 'Beschreibung', 'Main benefit': 'Hauptnutzen', 'Scope': 'Scope',
+  'Check XenServer compatibility': 'XenServer-Kompatibilität prüfen', '% workloads migratable to XenServer': '% zu XenServer migrierbare Workloads',
+  'Lower this value if the compatibility check shows that some workloads must remain on the existing virtualizer: the model retains a proportional share of existing hypervisor costs.': 'Reduzieren Sie diesen Wert, wenn die Kompatibilitätsprüfung zeigt, dass einige Workloads auf dem bestehenden Virtualisierer bleiben müssen: Das Modell behält einen proportionalen Anteil der bestehenden Hypervisor-Kosten bei.',
+  'Total current cost over the selected project period.': 'Aktuelle Gesamtkosten über den ausgewählten Projektzeitraum.', 'Total HMC cost over the selected project period, including the initial project cost in year one.': 'HMC-Gesamtkosten über den ausgewählten Projektzeitraum einschließlich initialer Projektkosten im ersten Jahr.', 'Difference between current TCO and HMC TCO over the selected project period.': 'Differenz zwischen aktuellem TCO und HMC-TCO über den ausgewählten Projektzeitraum.', 'Gross avoided costs over the period.': 'Brutto vermiedene Kosten über den Zeitraum.', 'Total net saving over the project horizon.': 'Gesamte Nettoeinsparung über den Projekthorizont.', 'Project TCO delta / HMC project TCO.': 'Projekt-TCO-Delta / HMC-Projekt-TCO.', 'Annual cost per user in the current scenario.': 'Jährliche Kosten pro Benutzer im aktuellen Szenario.', 'Annual cost per user in the HMC scenario.': 'Jährliche Kosten pro Benutzer im HMC-Szenario.', 'Annual per-user difference between current and HMC scenario.': 'Jährliche Differenz pro Benutzer zwischen aktuellem und HMC-Szenario.',
+  'Workload migration planning': 'Workload-Migrationsplanung', 'Before migrating all hosts, verify which software is compatible with the XenServer hypervisor.': 'Vor der Migration aller Hosts prüfen, welche Software mit dem XenServer-Hypervisor kompatibel ist.',
+  'Open the eLux endpoint compatibility checker': 'eLux Endpoint-Kompatibilitätsprüfung öffnen', 'Open the NetScaler capability detail': 'NetScaler-Funktionsdetails öffnen', 'Open the XenServer hypervisor compatibility checker': 'XenServer Hypervisor-Kompatibilitätsprüfung öffnen',
+  'Item': 'Position', 'As-Is': 'As-Is', 'Delta': 'Delta', 'Project total': 'Projektsumme', 'Initial project cost (year 1 only)': 'Initiale Projektkosten (nur Jahr 1)', 'HMC subscription': 'HMC-Subscription', 'Residual hardware / infra': 'Rest-Hardware / Infra', 'Residual services': 'Rest-Services'
+};
 
-const translate = (lang, itText, enText, esText) => {
+
+const translate = (lang, itText, enText, esText, deText) => {
   if (lang === 'it') return itText;
   if (lang === 'es') return esText ?? ES_INLINE[enText] ?? enText;
+  if (lang === 'de') return deText ?? DE_INLINE[enText] ?? enText;
   return enText;
 };
 
@@ -192,13 +219,40 @@ const parseCsvLine = (line, delimiter = ',') => {
 
 const parseCompatibilityCsv = (csvText, delimiter = ',') => {
   const rows = csvText.trim().split(/\r?\n/).filter(Boolean);
+  if (!rows.length) return [];
   const headers = parseCsvLine(rows[0], delimiter);
   return rows.slice(1)
-    .filter((line) => !line.startsWith(`vendor_name${delimiter}`) && !line.startsWith(`vendor${delimiter}`))
+    .filter((line) => !line.startsWith(`vendor_name${delimiter}`) && !line.startsWith(`vendor${delimiter}`) && !line.startsWith(`id${delimiter}`))
     .map((line) => {
       const values = parseCsvLine(line, delimiter);
       return headers.reduce((record, header, index) => ({ ...record, [header]: values[index] || '' }), {});
     });
+};
+
+const indexRowsById = (rows) => rows.reduce((index, row) => ({ ...index, [row.id]: row }), {});
+
+const mergeLocalizedRows = (baseRows, localizedRows, fallbackRows = []) => {
+  const localizedById = indexRowsById(localizedRows);
+  const fallbackById = indexRowsById(fallbackRows);
+  return baseRows.map((row) => ({
+    ...row,
+    ...(fallbackById[row.id] || {}),
+    ...(localizedById[row.id] || {}),
+  }));
+};
+
+const loadLocalizedCsvDataset = async ({ basePath, i18nPath, lang, delimiter = ',', fallbackLang = 'en' }) => {
+  const baseUrl = import.meta.env.BASE_URL;
+  const [baseText, localizedText, fallbackText] = await Promise.all([
+    fetch(`${baseUrl}${basePath}`).then((response) => response.text()),
+    fetch(`${baseUrl}${i18nPath}.${lang}.csv`).then((response) => response.ok ? response.text() : ''),
+    lang === fallbackLang ? Promise.resolve('') : fetch(`${baseUrl}${i18nPath}.${fallbackLang}.csv`).then((response) => response.ok ? response.text() : ''),
+  ]);
+  return mergeLocalizedRows(
+    parseCompatibilityCsv(baseText, delimiter),
+    localizedText ? parseCompatibilityCsv(localizedText, delimiter) : [],
+    fallbackText ? parseCompatibilityCsv(fallbackText, delimiter) : []
+  );
 };
 
 function CompatibilityView({ lang, onBack }) {
@@ -208,23 +262,22 @@ function CompatibilityView({ lang, onBack }) {
   const [status, setStatus] = useState('all');
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/xenserver_scl.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text)))
+    loadLocalizedCsvDataset({ basePath: 'data/xenserver/scl.csv', i18nPath: 'data/xenserver/scl.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
-  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))].sort();
-  const statuses = [...new Set(items.map((item) => item.regulatory_status).filter(Boolean))].sort();
+  const categories = [...new Map(items.filter((item) => item.category_key).map((item) => [item.category_key, item.category_label || item.category_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const statuses = [...new Map(items.filter((item) => item.regulatory_status_key).map((item) => [item.regulatory_status_key, item.regulatory_status_label || item.regulatory_status_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.vendor_name} ${item.product_name} ${item.category} ${item.short_description} ${item.regulatory_status}`.toLowerCase();
-    return (category === 'all' || item.category === category) &&
-      (status === 'all' || item.regulatory_status === status) &&
+    const haystack = `${item.vendor_name} ${item.product_name} ${item.category_label} ${item.short_description} ${item.regulatory_status_label}`.toLowerCase();
+    return (category === 'all' || item.category_key === category) &&
+      (status === 'all' || item.regulatory_status_key === status) &&
       haystack.includes(query.toLowerCase());
   });
 
-  const supportedCount = items.filter((item) => item.regulatory_status === 'Supported').length;
+  const supportedCount = items.filter((item) => item.regulatory_status_key === 'supported').length;
   const averageIndex = items.length ? Math.round(items.reduce((sum, item) => sum + Number(item.compatibility_index || 0), 0) / items.length) : 0;
 
   return (
@@ -259,11 +312,11 @@ function CompatibilityView({ lang, onBack }) {
         <SectionCard className="mt-6" title={t('Ricerca Software Compatibility List XenServer', 'Search XenServer Software Compatibility List')} subtitle={t('Filtra per vendor, prodotto, categoria o stato di supporto.', 'Filter by vendor, product, category, or support status.')}>
           <div className="grid gap-3 md:grid-cols-[1fr,220px,220px]">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca vendor o prodotto...', 'Search vendor or product...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
-            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli stati', 'All statuses')}</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+            <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli stati', 'All statuses')}</option>{statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           </div>
           <div className="mt-5 overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">Product</th><th className="py-3 pr-4">Category</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Index</th><th className="py-3">Evidence</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.vendor_name}-${item.product_name}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor_name}</td><td className="py-3 pr-4"><p className="font-medium">{item.product_name}</p><p className="mt-1 text-xs text-slate-500">{item.short_description}</p></td><td className="py-3 pr-4">{item.category_label}</td><td className="py-3 pr-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.regulatory_status_label}</span></td><td className="py-3 pr-4 font-semibold">{item.compatibility_index}/100</td><td className="py-3"><p className="text-xs text-slate-600">{item.evidence_summary}</p><a href={(item.source_urls || '').split(' | ')[0]} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:text-blue-900">Source</a></td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -279,18 +332,17 @@ function EndpointCompatibilityView({ lang, onBack }) {
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/elux_endpoint_hcl.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text, ';')))
+    loadLocalizedCsvDataset({ basePath: 'data/elux/hcl.csv', i18nPath: 'data/elux/hcl.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
   const vendors = [...new Set(items.map((item) => item.vendor).filter(Boolean))].sort();
-  const releases = [...new Set(items.flatMap((item) => (item['eLux release'] || '').split(';').map((value) => value.trim()).filter(Boolean)))].sort();
+  const releases = [...new Set(items.flatMap((item) => (item.elux_release || '').split(';').map((value) => value.trim()).filter(Boolean)))].sort();
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.vendor} ${item.modello} ${item.CPU} ${item.note} ${item['eLux release']}`.toLowerCase();
+    const haystack = `${item.vendor} ${item.model} ${item.cpu} ${item.notes} ${item.elux_release}`.toLowerCase();
     return (vendor === 'all' || item.vendor === vendor) &&
-      (release === 'all' || (item['eLux release'] || '').includes(release)) &&
+      (release === 'all' || (item.elux_release || '').includes(release)) &&
       haystack.includes(query.toLowerCase());
   });
 
@@ -322,7 +374,7 @@ function EndpointCompatibilityView({ lang, onBack }) {
           </div>
           <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} dispositivi certificati.`, `${filteredItems.length} results out of ${items.length} certified devices.`)}</p>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">{t('Modello', 'Model')}</th><th className="py-3 pr-4">CPU</th><th className="py-3 pr-4">{t('Note', 'Notes')}</th><th className="py-3">eLux release</th></tr></thead><tbody>{filteredItems.map((item, index) => (<tr key={`${item.vendor}-${item.modello}-${item.CPU}-${index}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor}</td><td className="py-3 pr-4 font-medium">{item.modello}</td><td className="py-3 pr-4">{item.CPU || '—'}</td><td className="py-3 pr-4 text-slate-600">{item.note || '—'}</td><td className="py-3">{item['eLux release']}</td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">Vendor</th><th className="py-3 pr-4">{t('Modello', 'Model')}</th><th className="py-3 pr-4">CPU</th><th className="py-3 pr-4">{t('Note', 'Notes')}</th><th className="py-3">eLux release</th></tr></thead><tbody>{filteredItems.map((item, index) => (<tr key={`${item.vendor}-${item.model}-${item.cpu}-${index}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.vendor}</td><td className="py-3 pr-4 font-medium">{item.model}</td><td className="py-3 pr-4">{item.cpu || '—'}</td><td className="py-3 pr-4 text-slate-600">{item.notes || '—'}</td><td className="py-3">{item.elux_release}</td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -338,18 +390,17 @@ function NetScalerDetailView({ lang, onBack }) {
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/netscaler_hmc_features.csv`)
-      .then((response) => response.text())
-      .then((text) => setItems(parseCompatibilityCsv(text)))
+    loadLocalizedCsvDataset({ basePath: 'data/netscaler/features.csv', i18nPath: 'data/netscaler/features.i18n', lang })
+      .then(setItems)
       .catch(() => setItems([]));
-  }, []);
+  }, [lang]);
 
-  const categories = [...new Set(items.map((item) => item.Categoria).filter(Boolean))].sort();
-  const scopes = [...new Set(items.map((item) => item.Ambito).filter(Boolean))].sort();
+  const categories = [...new Map(items.filter((item) => item.category_key).map((item) => [item.category_key, item.category_label || item.category_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const scopes = [...new Map(items.filter((item) => item.scope_key).map((item) => [item.scope_key, item.scope_label || item.scope_key])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const filteredItems = items.filter((item) => {
-    const haystack = `${item.Categoria} ${item.Sottocategoria} ${item.Funzionalità} ${item.Descrizione} ${item['Beneficio Principale']} ${item.Ambito}`.toLowerCase();
-    return (category === 'all' || item.Categoria === category) &&
-      (scope === 'all' || item.Ambito === scope) &&
+    const haystack = `${item.category_label} ${item.subcategory_label} ${item.capability_label} ${item.description} ${item.main_benefit} ${item.scope_label}`.toLowerCase();
+    return (category === 'all' || item.category_key === category) &&
+      (scope === 'all' || item.scope_key === scope) &&
       haystack.includes(query.toLowerCase());
   });
 
@@ -377,12 +428,12 @@ function NetScalerDetailView({ lang, onBack }) {
         <SectionCard className="mt-6" title={t('Catalogo funzionalità NetScaler', 'NetScaler capability catalog')} subtitle={t('Filtra le funzionalità per categoria, ambito o testo libero.', 'Filter capabilities by category, scope, or free text.')}>
           <div className="mb-4 grid gap-3 md:grid-cols-[1fr,240px,220px]">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Cerca funzionalità o beneficio...', 'Search capability or benefit...')} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200" />
-            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-            <select value={scope} onChange={(event) => setScope(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli ambiti', 'All scopes')}</option>{scopes.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutte le categorie', 'All categories')}</option>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+            <select value={scope} onChange={(event) => setScope(event.target.value)} className="rounded-2xl border border-slate-300 px-4 py-2.5 text-sm"><option value="all">{t('Tutti gli ambiti', 'All scopes')}</option>{scopes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           </div>
           <p className="mb-3 text-xs text-slate-500">{t(`${filteredItems.length} risultati su ${items.length} funzionalità censite.`, `${filteredItems.length} results out of ${items.length} listed capabilities.`)}</p>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">{t('Categoria', 'Category')}</th><th className="py-3 pr-4">{t('Sottocategoria', 'Subcategory')}</th><th className="py-3 pr-4">{t('Funzionalità', 'Capability')}</th><th className="py-3 pr-4">{t('Descrizione', 'Description')}</th><th className="py-3 pr-4">{t('Beneficio principale', 'Main benefit')}</th><th className="py-3">{t('Ambito', 'Scope')}</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={`${item.Categoria}-${item.Sottocategoria}-${item.Funzionalità}`} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.Categoria}</td><td className="py-3 pr-4">{item.Sottocategoria}</td><td className="py-3 pr-4 font-medium">{item.Funzionalità}</td><td className="py-3 pr-4 text-slate-600">{item.Descrizione}</td><td className="py-3 pr-4 text-slate-600">{item['Beneficio Principale']}</td><td className="py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.Ambito}</span></td></tr>))}</tbody></table>
+            <table className="min-w-full text-sm"><thead><tr className="border-b text-left text-slate-600"><th className="py-3 pr-4">{t('Categoria', 'Category')}</th><th className="py-3 pr-4">{t('Sottocategoria', 'Subcategory')}</th><th className="py-3 pr-4">{t('Funzionalità', 'Capability')}</th><th className="py-3 pr-4">{t('Descrizione', 'Description')}</th><th className="py-3 pr-4">{t('Beneficio principale', 'Main benefit')}</th><th className="py-3">{t('Ambito', 'Scope')}</th></tr></thead><tbody>{filteredItems.map((item) => (<tr key={item.id} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 font-semibold">{item.category_label}</td><td className="py-3 pr-4">{item.subcategory_label}</td><td className="py-3 pr-4 font-medium">{item.capability_label}</td><td className="py-3 pr-4 text-slate-600">{item.description}</td><td className="py-3 pr-4 text-slate-600">{item.main_benefit}</td><td className="py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{item.scope_label}</span></td></tr>))}</tbody></table>
           </div>
         </SectionCard>
       </div>
@@ -402,46 +453,53 @@ function Kpi({ title, value, hint }) {
 
 
 function ScenarioReport({ lang, state, model, rowLabels }) {
-  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
+  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
   const positiveDelta = model.projectDelta >= 0;
+  const deltaMeaning = {
+    it: positiveDelta ? 'risparmio netto potenziale' : 'maggior costo netto potenziale',
+    en: positiveDelta ? 'potential net saving' : 'potential net additional cost',
+    es: positiveDelta ? 'ahorro neto potencial' : 'mayor coste neto potencial',
+    de: positiveDelta ? 'potenzielle Nettoeinsparung' : 'potenzielle Netto-Mehrkosten',
+  }[lang] ?? (positiveDelta ? 'potential net saving' : 'potential net additional cost');
   const topRows = [...model.tableRows]
     .filter((row) => row.key !== 'migrationProject')
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
     .slice(0, 5);
+  const topRowsText = topRows.map((row) => `${rowLabels[row.key]} (${eur(row.delta, lang)})`).join(', ');
 
   return (
     <article className="print-report">
       <header className="report-hero">
-        <p className="report-kicker">{t('Report scenario ROI Citrix HMC', 'Citrix HMC ROI scenario report')}</p>
-        <h1>{t('Riepilogo discorsivo dello scenario attuale e del confronto economico', 'Narrative summary of the current scenario and economic comparison')}</h1>
-        <p>{t('Documento generato automaticamente dai parametri impostati nel calcolatore. I valori riportati rappresentano una simulazione direzionale e devono essere validati con dati reali di cliente, contratti e perimetro tecnico.', 'Document automatically generated from the parameters configured in the calculator. The values shown are a directional simulation and must be validated with real customer data, contracts, and technical scope.')}</p>
+        <p className="report-kicker">{t('Report scenario ROI Citrix HMC', 'Citrix HMC ROI scenario report', 'Informe de escenario ROI Citrix HMC', 'Citrix HMC ROI-Szenariobericht')}</p>
+        <h1>{t('Riepilogo discorsivo dello scenario attuale e del confronto economico', 'Narrative summary of the current scenario and economic comparison', 'Resumen narrativo del escenario actual y de la comparación económica', 'Narrative Zusammenfassung des aktuellen Szenarios und des wirtschaftlichen Vergleichs')}</h1>
+        <p>{t('Documento generato automaticamente dai parametri impostati nel calcolatore. I valori riportati rappresentano una simulazione direzionale e devono essere validati con dati reali di cliente, contratti e perimetro tecnico.', 'Document automatically generated from the parameters configured in the calculator. The values shown are a directional simulation and must be validated with real customer data, contracts, and technical scope.', 'Documento generado automáticamente a partir de los parámetros configurados en la calculadora. Los valores mostrados son una simulación direccional y deben validarse con datos reales del cliente, contratos y alcance técnico.', 'Automatisch aus den im Rechner konfigurierten Parametern generiertes Dokument. Die ausgewiesenen Werte sind eine richtungsweisende Simulation und müssen mit realen Kundendaten, Verträgen und technischem Scope validiert werden.')}</p>
       </header>
 
       <section className="report-section">
-        <h2>{t('Scenario di partenza', 'Starting scenario')}</h2>
-        <p>{t(`Lo scenario analizzato considera ${model.users} utenti complessivi su un orizzonte di ${model.projectYears} anni. La popolazione di utenti remoti o ibridi è pari al ${pct(state.tech.pctRemoteHybridUsers)}, corrispondente a circa ${Math.round(model.remoteUsers)} utenti, mentre la quota BYOD impostata è pari al ${pct(state.tech.pctByodUsers)}. Il parco endpoint attuale comprende ${state.tech.numberPc} PC gestiti e ${state.tech.numberThinClient} thin client già presenti; l'età media dei PC è di ${state.tech.avgPcAgeYears} anni e il ciclo di vita target dopo l'adozione della piattaforma viene portato a ${state.tech.lifecyclePcTargetYears} anni. Nel modello, il ${pct(state.tech.pctPcReplaceableWithThinClient)} dei PC è considerato sostituibile o estendibile con un approccio più leggero, con impatto diretto sui costi di refresh hardware.`, `The analyzed scenario includes ${model.users} total users over a ${model.projectYears}-year horizon. Remote or hybrid users are set to ${pct(state.tech.pctRemoteHybridUsers)}, equal to about ${Math.round(model.remoteUsers)} users, while the BYOD share is ${pct(state.tech.pctByodUsers)}. The current endpoint estate includes ${state.tech.numberPc} managed PCs and ${state.tech.numberThinClient} existing thin clients; the average PC age is ${state.tech.avgPcAgeYears} years and the target lifecycle after platform adoption is ${state.tech.lifecyclePcTargetYears} years. In the model, ${pct(state.tech.pctPcReplaceableWithThinClient)} of PCs are considered replaceable or extendable with a lighter approach, directly affecting hardware refresh costs.`)}</p>
-        <p>{t(`Sul fronte infrastrutturale sono stati impostati ${state.tech.numberHosts} host hypervisor con ${state.tech.coresPerHost} core medi per host, per un totale di ${model.totalCores} core. La quota di workload considerata migrabile su XenServer è pari al ${pct(model.migratableWorkloadPct)}: l'eventuale quota non migrabile mantiene nel modello una parte proporzionale dei costi del virtualizzatore esistente. Per l'accesso remoto e ADC sono presenti ${state.tech.numberVpnAdcAppliances} appliance, valorizzate con costo unitario di ${eur(state.cost.costVpnAdcAppliance, lang)} e manutenzione annua del ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `On the infrastructure side, ${state.tech.numberHosts} hypervisor hosts with ${state.tech.coresPerHost} average cores per host have been configured, for a total of ${model.totalCores} cores. The workload share considered migratable to XenServer is ${pct(model.migratableWorkloadPct)}: any non-migratable share keeps a proportional amount of existing virtualizer costs in the model. For remote access and ADC, ${state.tech.numberVpnAdcAppliances} appliances are present, valued at a unit cost of ${eur(state.cost.costVpnAdcAppliance, lang)} and annual maintenance of ${pct(state.cost.applianceMaintenanceAnnualPct)}.`)}</p>
+        <h2>{t('Scenario di partenza', 'Starting scenario', 'Escenario de partida', 'Ausgangsszenario')}</h2>
+        <p>{t(`Lo scenario analizzato considera ${model.users} utenti complessivi su un orizzonte di ${model.projectYears} anni. La popolazione di utenti remoti o ibridi è pari al ${pct(state.tech.pctRemoteHybridUsers)}, corrispondente a circa ${Math.round(model.remoteUsers)} utenti, mentre la quota BYOD impostata è pari al ${pct(state.tech.pctByodUsers)}. Il parco endpoint attuale comprende ${state.tech.numberPc} PC gestiti e ${state.tech.numberThinClient} thin client già presenti; l'età media dei PC è di ${state.tech.avgPcAgeYears} anni e il ciclo di vita target dopo l'adozione della piattaforma viene portato a ${state.tech.lifecyclePcTargetYears} anni. Nel modello, il ${pct(state.tech.pctPcReplaceableWithThinClient)} dei PC è considerato sostituibile o estendibile con un approccio più leggero, con impatto diretto sui costi di refresh hardware.`, `The analyzed scenario includes ${model.users} total users over a ${model.projectYears}-year horizon. Remote or hybrid users are set to ${pct(state.tech.pctRemoteHybridUsers)}, equal to about ${Math.round(model.remoteUsers)} users, while the BYOD share is ${pct(state.tech.pctByodUsers)}. The current endpoint estate includes ${state.tech.numberPc} managed PCs and ${state.tech.numberThinClient} existing thin clients; the average PC age is ${state.tech.avgPcAgeYears} years and the target lifecycle after platform adoption is ${state.tech.lifecyclePcTargetYears} years. In the model, ${pct(state.tech.pctPcReplaceableWithThinClient)} of PCs are considered replaceable or extendable with a lighter approach, directly affecting hardware refresh costs.`, `El escenario analizado incluye ${model.users} usuarios totales en un horizonte de ${model.projectYears} años. Los usuarios remotos o híbridos representan el ${pct(state.tech.pctRemoteHybridUsers)}, aproximadamente ${Math.round(model.remoteUsers)} usuarios, mientras que la cuota BYOD configurada es del ${pct(state.tech.pctByodUsers)}. El parque endpoint actual incluye ${state.tech.numberPc} PC gestionados y ${state.tech.numberThinClient} thin clients existentes; la edad media de los PC es de ${state.tech.avgPcAgeYears} años y el ciclo de vida objetivo tras adoptar la plataforma pasa a ${state.tech.lifecyclePcTargetYears} años. En el modelo, el ${pct(state.tech.pctPcReplaceableWithThinClient)} de los PC se considera sustituible o extensible con un enfoque más ligero, con impacto directo en los costes de renovación hardware.`, `Das analysierte Szenario umfasst ${model.users} Benutzer über einen Horizont von ${model.projectYears} Jahren. Remote- oder Hybrid-Benutzer sind mit ${pct(state.tech.pctRemoteHybridUsers)} angesetzt, also etwa ${Math.round(model.remoteUsers)} Benutzer, während der BYOD-Anteil ${pct(state.tech.pctByodUsers)} beträgt. Die aktuelle Endpoint-Landschaft umfasst ${state.tech.numberPc} verwaltete PCs und ${state.tech.numberThinClient} vorhandene Thin Clients; das durchschnittliche PC-Alter beträgt ${state.tech.avgPcAgeYears} Jahre und der Ziel-Lifecycle nach Plattformadoption wird auf ${state.tech.lifecyclePcTargetYears} Jahre erhöht. Im Modell gelten ${pct(state.tech.pctPcReplaceableWithThinClient)} der PCs als ersetzbar oder mit einem leichteren Ansatz verlängerbar, mit direktem Effekt auf Hardware-Refresh-Kosten.`)}</p>
+        <p>{t(`Sul fronte infrastrutturale sono stati impostati ${state.tech.numberHosts} host hypervisor con ${state.tech.coresPerHost} core medi per host, per un totale di ${model.totalCores} core. La quota di workload considerata migrabile su XenServer è pari al ${pct(model.migratableWorkloadPct)}: l'eventuale quota non migrabile mantiene nel modello una parte proporzionale dei costi del virtualizzatore esistente. Per l'accesso remoto e ADC sono presenti ${state.tech.numberVpnAdcAppliances} appliance, valorizzate con costo unitario di ${eur(state.cost.costVpnAdcAppliance, lang)} e manutenzione annua del ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `On the infrastructure side, ${state.tech.numberHosts} hypervisor hosts with ${state.tech.coresPerHost} average cores per host have been configured, for a total of ${model.totalCores} cores. The workload share considered migratable to XenServer is ${pct(model.migratableWorkloadPct)}: any non-migratable share keeps a proportional amount of existing virtualizer costs in the model. For remote access and ADC, ${state.tech.numberVpnAdcAppliances} appliances are present, valued at a unit cost of ${eur(state.cost.costVpnAdcAppliance, lang)} and annual maintenance of ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `En la capa de infraestructura se han configurado ${state.tech.numberHosts} hosts hypervisor con ${state.tech.coresPerHost} cores medios por host, para un total de ${model.totalCores} cores. La cuota de workloads considerada migrable a XenServer es del ${pct(model.migratableWorkloadPct)}: cualquier cuota no migrable mantiene en el modelo una parte proporcional de los costes del virtualizador existente. Para acceso remoto y ADC hay ${state.tech.numberVpnAdcAppliances} appliances, valoradas con un coste unitario de ${eur(state.cost.costVpnAdcAppliance, lang)} y mantenimiento anual del ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `Auf der Infrastrukturseite wurden ${state.tech.numberHosts} Hypervisor-Hosts mit durchschnittlich ${state.tech.coresPerHost} Cores pro Host konfiguriert, insgesamt ${model.totalCores} Cores. Der als zu XenServer migrierbar betrachtete Workload-Anteil beträgt ${pct(model.migratableWorkloadPct)}: Ein nicht migrierbarer Anteil behält im Modell proportional Kosten des bestehenden Virtualisierers bei. Für Remote Access und ADC sind ${state.tech.numberVpnAdcAppliances} Appliances vorhanden, bewertet mit Stückkosten von ${eur(state.cost.costVpnAdcAppliance, lang)} und jährlicher Wartung von ${pct(state.cost.applianceMaintenanceAnnualPct)}.`)}</p>
       </section>
 
       <section className="report-section">
-        <h2>{t('Assunzioni economiche e operative', 'Economic and operational assumptions')}</h2>
-        <p>{t(`Il costo HMC è stato impostato a ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per utente al mese, con un costo iniziale di progetto pari a ${eur(model.migrationCostOneTime, lang)} imputato al primo anno. Il costo unitario di un nuovo PC è pari a ${eur(state.cost.costOnePc, lang)}, mentre il costo unitario thin client è pari a ${eur(state.cost.costOneThinClient, lang)}. Le componenti di sicurezza considerate nello scenario attuale includono MFA a ${eur(state.cost.costMfaUserMonth, lang, 1)} utente/mese, ZTNA a ${eur(state.cost.costZtnaUserMonth, lang, 1)} utente/mese, EDR a ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/mese, device posture a ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/mese, SOC/MSSP annuo pari a ${eur(state.cost.costSocMsspAnnual, lang)} e remediation media di ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/anno.`, `The HMC cost has been set to ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per user per month, with an initial project cost of ${eur(model.migrationCostOneTime, lang)} allocated to year one. The unit cost of a new PC is ${eur(state.cost.costOnePc, lang)}, while the thin client unit cost is ${eur(state.cost.costOneThinClient, lang)}. Security components in the current scenario include MFA at ${eur(state.cost.costMfaUserMonth, lang, 1)} user/month, ZTNA at ${eur(state.cost.costZtnaUserMonth, lang, 1)} user/month, EDR at ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/month, device posture at ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/month, annual SOC/MSSP of ${eur(state.cost.costSocMsspAnnual, lang)}, and average remediation of ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/year.`)}</p>
-        <p>{t(`Le giornate IT annue valorizzate sono ${state.tech.itDaysEndpointMgmt} per endpoint management, ${state.tech.itDaysImageVdiMgmt} per image/VDI management, ${state.tech.itDaysSupport} per supporto, ${state.tech.itDaysAccessMgmt} per access management e ${state.tech.itDaysSecurityOps} per security operations, con costo giornata sistemistica pari a ${eur(state.cost.costSysadminDay, lang)}. Nel passaggio allo scenario HMC il modello applica riduzioni di effort pari al ${pct(state.cost.reductionEffortEndpointPct)} sull'endpoint management, ${pct(state.cost.reductionEffortImagePct)} sulle immagini, ${pct(state.cost.reductionEffortSupportPct)} sul supporto e ${pct(state.cost.reductionEffortAccessPct)} sull'access management.`, `The annual IT days valued are ${state.tech.itDaysEndpointMgmt} for endpoint management, ${state.tech.itDaysImageVdiMgmt} for image/VDI management, ${state.tech.itDaysSupport} for support, ${state.tech.itDaysAccessMgmt} for access management, and ${state.tech.itDaysSecurityOps} for security operations, with a sysadmin day cost of ${eur(state.cost.costSysadminDay, lang)}. In the HMC scenario, the model applies effort reductions of ${pct(state.cost.reductionEffortEndpointPct)} on endpoint management, ${pct(state.cost.reductionEffortImagePct)} on image management, ${pct(state.cost.reductionEffortSupportPct)} on support, and ${pct(state.cost.reductionEffortAccessPct)} on access management.`)}</p>
+        <h2>{t('Assunzioni economiche e operative', 'Economic and operational assumptions', 'Supuestos económicos y operativos', 'Wirtschaftliche und operative Annahmen')}</h2>
+        <p>{t(`Il costo HMC è stato impostato a ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per utente al mese, con un costo iniziale di progetto pari a ${eur(model.migrationCostOneTime, lang)} imputato al primo anno. Il costo unitario di un nuovo PC è pari a ${eur(state.cost.costOnePc, lang)}, mentre il costo unitario thin client è pari a ${eur(state.cost.costOneThinClient, lang)}. Le componenti di sicurezza considerate nello scenario attuale includono MFA a ${eur(state.cost.costMfaUserMonth, lang, 1)} utente/mese, ZTNA a ${eur(state.cost.costZtnaUserMonth, lang, 1)} utente/mese, EDR a ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/mese, device posture a ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/mese, SOC/MSSP annuo pari a ${eur(state.cost.costSocMsspAnnual, lang)} e remediation media di ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/anno.`, `The HMC cost has been set to ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per user per month, with an initial project cost of ${eur(model.migrationCostOneTime, lang)} allocated to year one. The unit cost of a new PC is ${eur(state.cost.costOnePc, lang)}, while the thin client unit cost is ${eur(state.cost.costOneThinClient, lang)}. Security components in the current scenario include MFA at ${eur(state.cost.costMfaUserMonth, lang, 1)} user/month, ZTNA at ${eur(state.cost.costZtnaUserMonth, lang, 1)} user/month, EDR at ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/month, device posture at ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/month, annual SOC/MSSP of ${eur(state.cost.costSocMsspAnnual, lang)}, and average remediation of ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/year.`, `El coste HMC se ha configurado en ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} por usuario al mes, con un coste inicial de proyecto de ${eur(model.migrationCostOneTime, lang)} imputado al primer año. El coste unitario de un PC nuevo es ${eur(state.cost.costOnePc, lang)}, mientras que el coste unitario de thin client es ${eur(state.cost.costOneThinClient, lang)}. Los componentes de seguridad del escenario actual incluyen MFA a ${eur(state.cost.costMfaUserMonth, lang, 1)} usuario/mes, ZTNA a ${eur(state.cost.costZtnaUserMonth, lang, 1)} usuario/mes, EDR a ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/mes, device posture a ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/mes, SOC/MSSP anual de ${eur(state.cost.costSocMsspAnnual, lang)} y remediación media de ${eur(state.cost.costRemediationPerEndpointYear, lang)} por endpoint/año.`, `Die HMC-Kosten wurden auf ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} pro Benutzer und Monat festgelegt, mit initialen Projektkosten von ${eur(model.migrationCostOneTime, lang)} im ersten Jahr. Die Stückkosten eines neuen PCs betragen ${eur(state.cost.costOnePc, lang)}, die Stückkosten eines Thin Clients ${eur(state.cost.costOneThinClient, lang)}. Die Sicherheitskomponenten im aktuellen Szenario umfassen MFA mit ${eur(state.cost.costMfaUserMonth, lang, 1)} Benutzer/Monat, ZTNA mit ${eur(state.cost.costZtnaUserMonth, lang, 1)} Benutzer/Monat, EDR mit ${eur(state.cost.costEdrEndpointMonth, lang, 1)} Endpoint/Monat, Device Posture mit ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} Endpoint/Monat, jährliche SOC/MSSP-Kosten von ${eur(state.cost.costSocMsspAnnual, lang)} und durchschnittliche Remediation von ${eur(state.cost.costRemediationPerEndpointYear, lang)} pro Endpoint/Jahr.`)}</p>
+        <p>{t(`Le giornate IT annue valorizzate sono ${state.tech.itDaysEndpointMgmt} per endpoint management, ${state.tech.itDaysImageVdiMgmt} per image/VDI management, ${state.tech.itDaysSupport} per supporto, ${state.tech.itDaysAccessMgmt} per access management e ${state.tech.itDaysSecurityOps} per security operations, con costo giornata sistemistica pari a ${eur(state.cost.costSysadminDay, lang)}. Nel passaggio allo scenario HMC il modello applica riduzioni di effort pari al ${pct(state.cost.reductionEffortEndpointPct)} sull'endpoint management, ${pct(state.cost.reductionEffortImagePct)} sulle immagini, ${pct(state.cost.reductionEffortSupportPct)} sul supporto e ${pct(state.cost.reductionEffortAccessPct)} sull'access management.`, `The annual IT days valued are ${state.tech.itDaysEndpointMgmt} for endpoint management, ${state.tech.itDaysImageVdiMgmt} for image/VDI management, ${state.tech.itDaysSupport} for support, ${state.tech.itDaysAccessMgmt} for access management, and ${state.tech.itDaysSecurityOps} for security operations, with a sysadmin day cost of ${eur(state.cost.costSysadminDay, lang)}. In the HMC scenario, the model applies effort reductions of ${pct(state.cost.reductionEffortEndpointPct)} on endpoint management, ${pct(state.cost.reductionEffortImagePct)} on image management, ${pct(state.cost.reductionEffortSupportPct)} on support, and ${pct(state.cost.reductionEffortAccessPct)} on access management.`, `Los días anuales de TI valorados son ${state.tech.itDaysEndpointMgmt} para gestión endpoint, ${state.tech.itDaysImageVdiMgmt} para gestión de imagen/VDI, ${state.tech.itDaysSupport} para soporte, ${state.tech.itDaysAccessMgmt} para gestión de accesos y ${state.tech.itDaysSecurityOps} para operaciones de seguridad, con un coste diario de sysadmin de ${eur(state.cost.costSysadminDay, lang)}. En el escenario HMC, el modelo aplica reducciones de esfuerzo del ${pct(state.cost.reductionEffortEndpointPct)} en gestión endpoint, ${pct(state.cost.reductionEffortImagePct)} en gestión de imágenes, ${pct(state.cost.reductionEffortSupportPct)} en soporte y ${pct(state.cost.reductionEffortAccessPct)} en gestión de accesos.`, `Die bewerteten jährlichen IT-Tage betragen ${state.tech.itDaysEndpointMgmt} für Endpoint Management, ${state.tech.itDaysImageVdiMgmt} für Image/VDI Management, ${state.tech.itDaysSupport} für Support, ${state.tech.itDaysAccessMgmt} für Access Management und ${state.tech.itDaysSecurityOps} für Security Operations, bei einem Sysadmin-Tagessatz von ${eur(state.cost.costSysadminDay, lang)}. Im HMC-Szenario wendet das Modell Effort-Reduktionen von ${pct(state.cost.reductionEffortEndpointPct)} im Endpoint Management, ${pct(state.cost.reductionEffortImagePct)} im Image Management, ${pct(state.cost.reductionEffortSupportPct)} im Support und ${pct(state.cost.reductionEffortAccessPct)} im Access Management an.`)}</p>
       </section>
 
       <section className="report-section">
-        <h2>{t('Risultato economico sintetico', 'Economic summary')}</h2>
-        <p>{t(`Sul periodo di ${model.projectYears} anni, il TCO dello scenario attuale è pari a ${eur(model.totalAsIs, lang)}, mentre il TCO dello scenario HMC è pari a ${eur(model.totalHmc, lang)}. Il delta complessivo è quindi pari a ${eur(model.projectDelta, lang)} e viene interpretato come ${positiveDelta ? 'risparmio netto potenziale' : 'maggior costo netto potenziale'} rispetto allo scenario di partenza. Il ROI progetto calcolato come delta TCO su TCO HMC è pari a ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. In termini normalizzati, il costo annuo As-Is per utente è ${eur(model.asIsCostPerUserPerYear, lang)}, il costo annuo HMC per utente è ${eur(model.hmcCostPerUserPerYear, lang)} e il delta annuo per utente è ${eur(model.perUserPerYearDelta, lang)}.`, `Over the ${model.projectYears}-year period, the current scenario TCO is ${eur(model.totalAsIs, lang)}, while the HMC scenario TCO is ${eur(model.totalHmc, lang)}. The overall delta is therefore ${eur(model.projectDelta, lang)} and is interpreted as a ${positiveDelta ? 'potential net saving' : 'potential net additional cost'} compared with the starting scenario. Project ROI, calculated as TCO delta over HMC TCO, is ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. On a normalized basis, the annual As-Is cost per user is ${eur(model.asIsCostPerUserPerYear, lang)}, the annual HMC cost per user is ${eur(model.hmcCostPerUserPerYear, lang)}, and the annual per-user delta is ${eur(model.perUserPerYearDelta, lang)}.`)}</p>
-        <p>{t(`Le principali aree che contribuiscono al delta economico sono: ${topRows.map((row) => `${rowLabels[row.key]} (${eur(row.delta, lang)})`).join(', ')}. Queste voci aiutano a leggere il risultato non come un singolo numero isolato, ma come somma di scelte architetturali, razionalizzazione licenze, semplificazione operativa, sicurezza integrata e gestione del ciclo di vita degli endpoint.`, `The main areas contributing to the economic delta are: ${topRows.map((row) => `${rowLabels[row.key]} (${eur(row.delta, lang)})`).join(', ')}. These items help interpret the result not as a single isolated number, but as the sum of architectural choices, license rationalization, operational simplification, integrated security, and endpoint lifecycle management.`)}</p>
+        <h2>{t('Risultato economico sintetico', 'Economic summary', 'Resumen económico', 'Wirtschaftliche Zusammenfassung')}</h2>
+        <p>{t(`Sul periodo di ${model.projectYears} anni, il TCO dello scenario attuale è pari a ${eur(model.totalAsIs, lang)}, mentre il TCO dello scenario HMC è pari a ${eur(model.totalHmc, lang)}. Il delta complessivo è quindi pari a ${eur(model.projectDelta, lang)} e viene interpretato come ${deltaMeaning} rispetto allo scenario di partenza. Il ROI progetto calcolato come delta TCO su TCO HMC è pari a ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. In termini normalizzati, il costo annuo As-Is per utente è ${eur(model.asIsCostPerUserPerYear, lang)}, il costo annuo HMC per utente è ${eur(model.hmcCostPerUserPerYear, lang)} e il delta annuo per utente è ${eur(model.perUserPerYearDelta, lang)}.`, `Over the ${model.projectYears}-year period, the current scenario TCO is ${eur(model.totalAsIs, lang)}, while the HMC scenario TCO is ${eur(model.totalHmc, lang)}. The overall delta is therefore ${eur(model.projectDelta, lang)} and is interpreted as a ${deltaMeaning} compared with the starting scenario. Project ROI, calculated as TCO delta over HMC TCO, is ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. On a normalized basis, the annual As-Is cost per user is ${eur(model.asIsCostPerUserPerYear, lang)}, the annual HMC cost per user is ${eur(model.hmcCostPerUserPerYear, lang)}, and the annual per-user delta is ${eur(model.perUserPerYearDelta, lang)}.`, `Durante el periodo de ${model.projectYears} años, el TCO del escenario actual es ${eur(model.totalAsIs, lang)}, mientras que el TCO del escenario HMC es ${eur(model.totalHmc, lang)}. El delta global es por tanto ${eur(model.projectDelta, lang)} y se interpreta como ${deltaMeaning} frente al escenario de partida. El ROI del proyecto, calculado como delta TCO sobre TCO HMC, es ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. En términos normalizados, el coste anual As-Is por usuario es ${eur(model.asIsCostPerUserPerYear, lang)}, el coste anual HMC por usuario es ${eur(model.hmcCostPerUserPerYear, lang)} y el delta anual por usuario es ${eur(model.perUserPerYearDelta, lang)}.`, `Über den Zeitraum von ${model.projectYears} Jahren beträgt der TCO des aktuellen Szenarios ${eur(model.totalAsIs, lang)}, während der TCO des HMC-Szenarios ${eur(model.totalHmc, lang)} beträgt. Das Gesamtdelta beträgt damit ${eur(model.projectDelta, lang)} und wird gegenüber dem Ausgangsszenario als ${deltaMeaning} interpretiert. Der Projekt-ROI, berechnet als TCO-Delta über HMC-TCO, beträgt ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. Normalisiert beträgt der jährliche As-Is-Kostenwert pro Benutzer ${eur(model.asIsCostPerUserPerYear, lang)}, der jährliche HMC-Kostenwert pro Benutzer ${eur(model.hmcCostPerUserPerYear, lang)} und das jährliche Delta pro Benutzer ${eur(model.perUserPerYearDelta, lang)}.`)}</p>
+        <p>{t(`Le principali aree che contribuiscono al delta economico sono: ${topRowsText}. Queste voci aiutano a leggere il risultato non come un singolo numero isolato, ma come somma di scelte architetturali, razionalizzazione licenze, semplificazione operativa, sicurezza integrata e gestione del ciclo di vita degli endpoint.`, `The main areas contributing to the economic delta are: ${topRowsText}. These items help interpret the result not as a single isolated number, but as the sum of architectural choices, license rationalization, operational simplification, integrated security, and endpoint lifecycle management.`, `Las principales áreas que contribuyen al delta económico son: ${topRowsText}. Estas partidas ayudan a interpretar el resultado no como un número aislado, sino como la suma de decisiones arquitectónicas, racionalización de licencias, simplificación operativa, seguridad integrada y gestión del ciclo de vida endpoint.`, `Die wichtigsten Bereiche, die zum wirtschaftlichen Delta beitragen, sind: ${topRowsText}. Diese Positionen helfen, das Ergebnis nicht als isolierte Einzelzahl zu verstehen, sondern als Summe aus Architekturentscheidungen, Lizenzrationalisierung, operativer Vereinfachung, integrierter Sicherheit und Endpoint-Lifecycle-Management.`)}</p>
       </section>
 
       <section className="report-section">
-        <h2>{t('Dettaglio costi sul periodo', 'Cost details over the period')}</h2>
+        <h2>{t('Dettaglio costi sul periodo', 'Cost details over the period', 'Detalle de costes del periodo', 'Kostendetails über den Zeitraum')}</h2>
         <table>
-          <thead><tr><th>{t('Voce', 'Item')}</th><th>{t('As-Is', 'As-Is')}</th><th>HMC</th><th>{t('Delta', 'Delta')}</th></tr></thead>
+          <thead><tr><th>{t('Voce', 'Item', 'Concepto', 'Position')}</th><th>{t('As-Is', 'As-Is', 'As-Is', 'As-Is')}</th><th>HMC</th><th>{t('Delta', 'Delta', 'Delta', 'Delta')}</th></tr></thead>
           <tbody>
             {model.tableRows.map((row) => (<tr key={row.key}><td>{rowLabels[row.key]}</td><td>{eur(row.asIs, lang)}</td><td>{eur(row.hmc, lang)}</td><td>{eur(row.delta, lang)}</td></tr>))}
-            <tr className="report-total"><td>{t(`Totale progetto (${model.projectYears} anni)`, `Project total (${model.projectYears} years)`)}</td><td>{eur(model.totalAsIs, lang)}</td><td>{eur(model.totalHmc, lang)}</td><td>{eur(model.projectDelta, lang)}</td></tr>
+            <tr className="report-total"><td>{t(`Totale progetto (${model.projectYears} anni)`, `Project total (${model.projectYears} years)`, `Total del proyecto (${model.projectYears} años)`, `Projektsumme (${model.projectYears} Jahre)`)}</td><td>{eur(model.totalAsIs, lang)}</td><td>{eur(model.totalHmc, lang)}</td><td>{eur(model.projectDelta, lang)}</td></tr>
           </tbody>
         </table>
       </section>
@@ -604,37 +662,47 @@ export default function App() {
   }, [state, lang]);
 
   const rowLabels = {
-    endpoint: t('Endpoint (PC/thin client)', 'Endpoint (PC/thin client)'),
-    hypervisor: t('Hypervisor', 'Hypervisor'),
-    access: t('Access / NetScaler / ADC', 'Access / NetScaler / ADC'),
-    mfa: t('Security - MFA', 'Security - MFA'),
-    ztna: t('Security - ZTNA', 'Security - ZTNA'),
-    edr: t('Security - EDR/XDR', 'Security - EDR/XDR'),
-    posture: t('Security - Device posture', 'Security - Device posture'),
+    endpoint: t('Endpoint (PC/thin client)', 'Endpoint (PC/thin client)', 'Endpoint (PC/thin client)', 'Endpoint (PC/Thin Client)'),
+    hypervisor: t('Hypervisor', 'Hypervisor', 'Hypervisor', 'Hypervisor'),
+    access: t('Access / NetScaler / ADC', 'Access / NetScaler / ADC', 'Acceso / NetScaler / ADC', 'Access / NetScaler / ADC'),
+    mfa: t('Security - MFA', 'Security - MFA', 'Seguridad - MFA', 'Security - MFA'),
+    ztna: t('Security - ZTNA', 'Security - ZTNA', 'Seguridad - ZTNA', 'Security - ZTNA'),
+    edr: t('Security - EDR/XDR', 'Security - EDR/XDR', 'Seguridad - EDR/XDR', 'Security - EDR/XDR'),
+    posture: t('Security - Device posture', 'Security - Device posture', 'Seguridad - postura de dispositivo', 'Security - Device Posture'),
     securityServices: t(
       `Security services (SOC, remediation, SecOps ${state.tech.itDaysSecurityOps} giorni/anno)`,
-      `Security services (SOC, remediation, SecOps ${state.tech.itDaysSecurityOps} days/year)`
+      `Security services (SOC, remediation, SecOps ${state.tech.itDaysSecurityOps} days/year)`,
+      `Servicios de seguridad (SOC, remediación, SecOps ${state.tech.itDaysSecurityOps} días/año)`,
+      `Security Services (SOC, Remediation, SecOps ${state.tech.itDaysSecurityOps} Tage/Jahr)`
     ),
     opsEndpoint: t(
       `Operations - Endpoint effort (${state.tech.itDaysEndpointMgmt} giorni/anno)`,
-      `Operations - Endpoint effort (${state.tech.itDaysEndpointMgmt} days/year)`
+      `Operations - Endpoint effort (${state.tech.itDaysEndpointMgmt} days/year)`,
+      `Operaciones - esfuerzo endpoint (${state.tech.itDaysEndpointMgmt} días/año)`,
+      `Operations - Endpoint-Aufwand (${state.tech.itDaysEndpointMgmt} Tage/Jahr)`
     ),
     opsImage: t(
       `Operations - Image/VDI effort (${state.tech.itDaysImageVdiMgmt} giorni/anno)`,
-      `Operations - Image/VDI effort (${state.tech.itDaysImageVdiMgmt} days/year)`
+      `Operations - Image/VDI effort (${state.tech.itDaysImageVdiMgmt} days/year)`,
+      `Operaciones - esfuerzo imagen/VDI (${state.tech.itDaysImageVdiMgmt} días/año)`,
+      `Operations - Image/VDI-Aufwand (${state.tech.itDaysImageVdiMgmt} Tage/Jahr)`
     ),
     opsSupport: t(
       `Operations - Support effort (${state.tech.itDaysSupport} giorni/anno)`,
-      `Operations - Support effort (${state.tech.itDaysSupport} days/year)`
+      `Operations - Support effort (${state.tech.itDaysSupport} days/year)`,
+      `Operaciones - esfuerzo soporte (${state.tech.itDaysSupport} días/año)`,
+      `Operations - Support-Aufwand (${state.tech.itDaysSupport} Tage/Jahr)`
     ),
     opsAccess: t(
       `Operations - Access effort (${state.tech.itDaysAccessMgmt} giorni/anno)`,
-      `Operations - Access effort (${state.tech.itDaysAccessMgmt} days/year)`
+      `Operations - Access effort (${state.tech.itDaysAccessMgmt} days/year)`,
+      `Operaciones - esfuerzo acceso (${state.tech.itDaysAccessMgmt} días/año)`,
+      `Operations - Access-Aufwand (${state.tech.itDaysAccessMgmt} Tage/Jahr)`
     ),
-    hmcSubscription: t('HMC subscription', 'HMC subscription'),
-    residualHw: t('Residual hardware / infra', 'Residual hardware / infra'),
-    residualServices: t('Residual services', 'Residual services'),
-    migrationProject: t('Costo progetto iniziale (solo primo anno)', 'Initial project cost (year 1 only)'),
+    hmcSubscription: t('HMC subscription', 'HMC subscription', 'Suscripción HMC', 'HMC-Subscription'),
+    residualHw: t('Residual hardware / infra', 'Residual hardware / infra', 'Hardware / infra residual', 'Rest-Hardware / Infra'),
+    residualServices: t('Residual services', 'Residual services', 'Servicios residuales', 'Rest-Services'),
+    migrationProject: t('Costo progetto iniziale (solo primo anno)', 'Initial project cost (year 1 only)', 'Coste inicial del proyecto (solo año 1)', 'Initiale Projektkosten (nur Jahr 1)'),
   };
 
   const hmcInfo = {
@@ -773,6 +841,7 @@ export default function App() {
                 <button onClick={() => setLang('it')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'it' ? 'bg-white/20' : ''}`}>IT</button>
                 <button onClick={() => setLang('en')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'en' ? 'bg-white/20' : ''}`}>EN</button>
                 <button onClick={() => setLang('es')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'es' ? 'bg-white/20' : ''}`}>ES</button>
+                <button onClick={() => setLang('de')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'de' ? 'bg-white/20' : ''}`}>DE</button>
               </div>
               <h1 className="text-3xl font-semibold md:text-4xl">{copy.title}</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{copy.subtitle}</p>

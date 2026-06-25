@@ -1,0 +1,79 @@
+id,vendor,model,cpu,elux_release
+amulet_hotkey_dx1550_intel_processor_u300_1,Amulet Hotkey,DX1550,Intel Processor U300,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+amulet_hotkey_dx1554_intel_processor_u300_2,Amulet Hotkey,DX1554,Intel Processor U300,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+amulet_hotkey_dx1714_intel_core_i5_1335u_13th_gen_3,Amulet Hotkey,DX1714,Intel Core i5-1335U (13th Gen),eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+asus_nuc_14_essential_slim_pc_kit_rnuc14mnk9700002_intel_processor_n97_4,Asus,NUC 14 Essential Slim PC Kit RNUC14MNK9700002,Intel Processor N97,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+centerm_s25_ultra_mini_pc_intel_processor_n150_5,Centerm,S25 Ultra Mini PC,Intel Processor N150,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_pro_14_plus_pb14250_intel_core_ultra_5_235u_vpro_6,Dell,Pro 14 Plus PB14250,Intel Core Ultra 5 235U vPro,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5550_intel_core_i5_1335u_13th_gen_7,Dell,Latitude 5550,Intel Core i5-1335U (13th Gen),eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5540_8,Dell,Latitude 5540,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5440_9,Dell,Latitude 5440,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_3440_10,Dell,Latitude 3440,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5530_11,Dell,Latitude 5530,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5520_12,Dell,Latitude 5520,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_5420_13,Dell,Latitude 5420,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_3420_14,Dell,Latitude 3420,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_3410_15,Dell,Latitude 3410,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_latitude_3400_16,Dell,Latitude 3400,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_wyse_5470_mobile_thin_client_17,Dell,Wyse 5470 Mobile Thin Client,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_dock_wd19_18,Dell,Dock WD19,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_dock_integrated_in_monitor_c2422he_19,Dell,Dock integrated in Monitor C2422HE,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_dock_integrated_in_monitor_c2722de_20,Dell,Dock integrated in Monitor C2722DE,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_dock_integrated_in_monitor_c3422we_21,Dell,Dock integrated in Monitor C3422WE,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_pro_max_micro_fcm2250_intel_core_ultra_7_265_22,Dell,Pro Max Micro FCM2250,Intel Core Ultra 7 265,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_pro_micro_plus_qbm1250_intel_core_ultra_5_235t_23,Dell,Pro Micro Plus QBM1250,Intel Core Ultra 5 235T,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_micro_form_factor_plus_7020_24,Dell,OptiPlex Micro Form Factor Plus 7020,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_3060_25,Dell,OptiPlex 3060,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_3050_26,Dell,OptiPlex 3050,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_3000_intel_celeron_n5105_27,Dell,OptiPlex 3000,Intel Celeron N5105,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_3000_intel_pentium_n6005_28,Dell,OptiPlex 3000,Intel Pentium N6005,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_optiplex_3090_ultra_29,Dell,OptiPlex 3090 Ultra,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_wyse_5070_30,Dell,Wyse 5070,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_wyse_7020_wyse_z50qq_31,Dell,Wyse 7020 (Wyse Z50QQ),,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_wyse_5060_32,Dell,Wyse 5060,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_wyse_5020_33,Dell,Wyse 5020,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+dell_dock_wd19s_34,Dell,Dock WD19S,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+extra_computer_gmbh_exone_thin_client_mobile_x14_intel_n200_35,EXTRA Computer GmbH,exone Thin Client Mobile X14,Intel N200,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+extra_computer_gmbh_exone_thin_client_entry_x14_intel_n100_36,EXTRA Computer GmbH,exone Thin Client Entry X14,Intel N100,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e5512_intel_celeron_7305_37,Fujitsu,LIFEBOOK E5512,Intel Celeron 7305,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e5511_intel_core_i7_1165g7_38,Fujitsu,LIFEBOOK E5511,Intel Core i7-1165G7,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e5510_intel_core_i5_10210u_39,Fujitsu,LIFEBOOK E5510,Intel Core i5-10210U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e5410_intel_celeron_5305u_40,Fujitsu,LIFEBOOK E5410,Intel Celeron 5305U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e559_intel_core_i5_8265u_41,Fujitsu,LIFEBOOK E559,Intel Core i5-8265U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_lifebook_e556_intel_celeron_3855u_42,Fujitsu,LIFEBOOK E556,Intel Celeron 3855U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s9011_nvidia_quadro_t400_43,Fujitsu,FUTRO S9011,NVIDIA Quadro T400,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s7011_44,Fujitsu,FUTRO S7011,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s5011_45,Fujitsu,FUTRO S5011,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s9010_46,Fujitsu,FUTRO S9010,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s940_47,Fujitsu,FUTRO S940,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s740_48,Fujitsu,FUTRO S740,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+fujitsu_futro_s540_49,Fujitsu,FUTRO S540,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt645_g8_50,HP,mt645 G8,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt645_g7_51,HP,mt645 G7,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_pro_mt440_g3_52,HP,Pro mt440 G3,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt46_53,HP,mt46,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt45_54,HP,mt45,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt22_55,HP,mt22,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_mt21_56,HP,mt21,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_elite_t755_57,HP,Elite t755,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_elite_t655_58,HP,Elite t655,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_pro_t550_59,HP,Pro t550,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t740_60,HP,t740,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t640_61,HP,t640,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t540_62,HP,t540,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t730_63,HP,t730,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t630_64,HP,t630,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t530_65,HP,t530,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+hp_t430_66,HP,t430,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+igel_ud3_m350c_67,IGEL,UD3 M350C,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lenovo_thinkpad_e14_gen_7_intel_ultra_5_225u_68,Lenovo,ThinkPad E14 Gen 7,Intel Ultra 5 225U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lenovo_thinkpad_l16_gen1_intel_core_ultra_5_125u_69,Lenovo,ThinkPad L16 Gen1,Intel Core Ultra 5 125U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lenovo_thinkpad_l14_gen5_intel_core_ultra_5_125u_70,Lenovo,ThinkPad L14 Gen5,Intel Core Ultra 5 125U,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lenovo_thinkcentre_m720q_tiny_intel_core_i5_9500t_71,Lenovo,ThinkCentre M720q Tiny,Intel Core i5-9500T,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lenovo_thinkcentre_m70q_gen_5_intel_core_i3_14100t_72,Lenovo,ThinkCentre M70q Gen 5,Intel Core i3-14100T,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lg_gram_mobile_thin_client_17zt90r_g_ax34g_intel_core_i3_1315u_13th_gen_73,LG,gram Mobile Thin Client 17ZT90R-G.AX34G,Intel Core i3-1315U (13th Gen),eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+lg_thin_client_cl600n_6n_74,LG,Thin Client CL600N-6N,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+mostron_touch_panel_pc_tspc5_24_75,MOStron,Touch-Panel-PC TSPC5-24,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+nexterminal_nexlaptop_iv_76,NEXterminal,NEXlaptop IV,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+nexterminal_nexstation_xi_dp_dp2_intel_quad_core_2_0ghz_77,NEXterminal,NEXstation XI DP/DP2,Intel Quad Core 2.0GHz,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
+nexterminal_nexstation_x_78,NEXterminal,NEXstation X,,eLux 7 2603 LTSR CU1; eLux 7 2605 EAR
