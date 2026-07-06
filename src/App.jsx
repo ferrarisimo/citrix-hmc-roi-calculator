@@ -166,6 +166,35 @@ function Help({ text }) {
   );
 }
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMessage: error?.message || 'Unknown error' };
+  }
+
+  componentDidCatch(error) {
+    console.error(error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SectionCard title="Errore applicativo" subtitle="La sezione non può essere mostrata a causa di un errore di rendering.">
+          <p className="text-sm leading-6 text-slate-700">
+            Aggiorna la pagina per caricare l’ultima versione dell’applicazione. Dettaglio errore: {this.state.errorMessage}
+          </p>
+        </SectionCard>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function Field({ label, value, onChange, prefix, suffix, help, step = '1' }) {
   return (
     <label className="block space-y-2">
@@ -653,6 +682,11 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
           <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
           <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
         </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
+          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
+          <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
+        </div>
         {hasCostMismatch ? (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
             {t(
@@ -1056,6 +1090,7 @@ export default function App() {
         )}
 
 
+        <AppErrorBoundary>
         {calculatorMode === 'renewal' ? (
           <RenewalValueView lang={lang} renewal={state.renewal} onRenewalProfileChange={setRenewalProfile} />
         ) : (
@@ -1358,6 +1393,7 @@ export default function App() {
         </SectionCard>
           </>
         )}
+        </AppErrorBoundary>
       </div>
     </div>
   );
