@@ -6,6 +6,15 @@ export const RENEWAL_FEATURES = [
     category: 'Hypervisor',
     description: 'Riduzione o eliminazione dei costi hypervisor di terze parti.',
     calculationKey: 'xenserver',
+    adoption: {
+      xenserver: {
+        currentAdopted: true,
+        currentAdoptionPct: 40,
+        targetAdoptable: true,
+        potentialAdoptionPct: 90,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'cvadPremiumFeatures',
@@ -14,6 +23,15 @@ export const RENEWAL_FEATURES = [
     category: 'Virtual Apps and Desktops',
     description: 'Valore da consolidamento o adozione di feature premium non ancora implementate.',
     calculationKey: 'manualCvadPremium',
+    adoption: {
+      cvadPremiumFeatures: {
+        currentAdopted: false,
+        currentAdoptionPct: 10,
+        targetAdoptable: true,
+        potentialAdoptionPct: 65,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'platformRiskReduction',
@@ -22,6 +40,15 @@ export const RENEWAL_FEATURES = [
     category: 'Risk',
     description: 'Riduzione del rischio operativo e dei costi di piattaforma.',
     calculationKey: 'manualPlatformRisk',
+    adoption: {
+      platformRiskReduction: {
+        currentAdopted: false,
+        currentAdoptionPct: 15,
+        targetAdoptable: true,
+        potentialAdoptionPct: 70,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'infrastructureOptimization',
@@ -30,6 +57,15 @@ export const RENEWAL_FEATURES = [
     category: 'Infrastructure',
     description: 'Ottimizzazione infrastrutturale abilitata dal rinnovo.',
     calculationKey: 'manualInfrastructureOptimization',
+    adoption: {
+      infrastructureOptimization: {
+        currentAdopted: false,
+        currentAdoptionPct: 20,
+        targetAdoptable: true,
+        potentialAdoptionPct: 75,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'netscaler',
@@ -38,6 +74,15 @@ export const RENEWAL_FEATURES = [
     category: 'Access / ADC',
     description: 'Riduzione costi VPN, ADC e appliance sovrapposte.',
     calculationKey: 'netscaler',
+    adoption: {
+      netscaler: {
+        currentAdopted: false,
+        currentAdoptionPct: 25,
+        targetAdoptable: true,
+        potentialAdoptionPct: 85,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'uniconElux',
@@ -46,6 +91,15 @@ export const RENEWAL_FEATURES = [
     category: 'Endpoint',
     description: 'Estensione vita endpoint e conversione dispositivi compatibili.',
     calculationKey: 'uniconElux',
+    adoption: {
+      uniconElux: {
+        currentAdopted: false,
+        currentAdoptionPct: 10,
+        targetAdoptable: true,
+        potentialAdoptionPct: 70,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'endpointLifecycleExtension',
@@ -54,6 +108,15 @@ export const RENEWAL_FEATURES = [
     category: 'Endpoint',
     description: 'Riduzione refresh PC tramite estensione lifecycle.',
     calculationKey: 'endpointLifecycle',
+    adoption: {
+      endpointLifecycleExtension: {
+        currentAdopted: true,
+        currentAdoptionPct: 35,
+        targetAdoptable: true,
+        potentialAdoptionPct: 80,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'mfaZtnaOverlapReduction',
@@ -62,6 +125,15 @@ export const RENEWAL_FEATURES = [
     category: 'Security',
     description: 'Riduzione costi di strumenti MFA/ZTNA sovrapposti.',
     calculationKey: 'mfaZtna',
+    adoption: {
+      mfaZtnaOverlapReduction: {
+        currentAdopted: false,
+        currentAdoptionPct: 20,
+        targetAdoptable: true,
+        potentialAdoptionPct: 75,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'itEffortReduction',
@@ -70,6 +142,15 @@ export const RENEWAL_FEATURES = [
     category: 'Operations',
     description: 'Riduzione effort IT operativo.',
     calculationKey: 'itEffort',
+    adoption: {
+      itEffortReduction: {
+        currentAdopted: true,
+        currentAdoptionPct: 30,
+        targetAdoptable: true,
+        potentialAdoptionPct: 70,
+        manualAnnualSaving: 0,
+      },
+    },
   },
   {
     id: 'edrPostureSocOptimization',
@@ -78,5 +159,14 @@ export const RENEWAL_FEATURES = [
     category: 'Security',
     description: 'Riduzione costi residui EDR, posture, SOC e remediation.',
     calculationKey: 'securityOps',
+    adoption: {
+      edrPostureSocOptimization: {
+        currentAdopted: false,
+        currentAdoptionPct: 15,
+        targetAdoptable: true,
+        potentialAdoptionPct: 65,
+        manualAnnualSaving: 0,
+      },
+    },
   },
 ];

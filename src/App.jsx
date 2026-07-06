@@ -579,6 +579,48 @@ function ScenarioReport({ lang, state, model, rowLabels }) {
   );
 }
 
+
+const average = (values) => {
+  const validValues = values.filter((value) => Number.isFinite(value));
+  return validValues.length ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length : 0;
+};
+
+const getFeatureAdoption = (renewal, feature) => {
+  const catalogAdoption = feature.adoption?.[feature.id] ?? {};
+  const stateAdoption = renewal.adoption?.[feature.id] ?? {};
+  return {
+    currentAdopted: false,
+    currentAdoptionPct: 0,
+    targetAdoptable: false,
+    potentialAdoptionPct: 0,
+    manualAnnualSaving: 0,
+    ...catalogAdoption,
+    ...stateAdoption,
+  };
+};
+
+const getRenewalFeatureAnnualSaving = (feature, renewal, adoption) => {
+  const { profile, tech, cost } = renewal;
+  const users = Math.max(Number(profile.numberLicenses) || 0, 0);
+  const totalEndpoints = Math.max((Number(tech.numberPc) || 0) + (Number(tech.numberThinClient) || 0), 0);
+  const totalCores = Math.max(Number(tech.numberHosts) || 0, 0) * Math.max(Number(tech.coresPerHost) || 0, 0);
+  const appliancePurchaseCost = Math.max(Number(tech.numberVpnAdcAppliances) || 0, 0) * Math.max(Number(cost.costVpnAdcAppliance) || 0, 0);
+  const applianceAnnualCost = appliancePurchaseCost + appliancePurchaseCost * ((Number(cost.applianceMaintenanceAnnualPct) || 0) / 100);
+  const manualAnnualSaving = Math.max(Number(adoption.manualAnnualSaving) || 0, 0);
+
+  const calculatedAnnualSaving = {
+    xenserver: totalCores * Math.max(Number(cost.costHypervisorPerCoreYear) || 0, 0),
+    netscaler: applianceAnnualCost,
+    uniconElux: totalEndpoints * 80,
+    endpointLifecycle: Math.max(Number(tech.numberPc) || 0, 0) * 140,
+    mfaZtna: users * (Math.max(Number(cost.costMfaUserMonth) || 0, 0) + Math.max(Number(cost.costZtnaUserMonth) || 0, 0)) * 12,
+    itEffort: users * 24,
+    securityOps: totalEndpoints * (Math.max(Number(cost.costEdrEndpointMonth) || 0, 0) + Math.max(Number(cost.costDevicePostureEndpointMonth) || 0, 0)) * 12 + Math.max(Number(cost.costSocMsspAnnual) || 0, 0) + totalEndpoints * Math.max(Number(cost.costRemediationPerEndpointYear) || 0, 0),
+  }[feature.calculationKey];
+
+  return manualAnnualSaving || Math.max(Number(calculatedAnnualSaving) || 0, 0);
+};
+
 function ModeSelector({ mode, onChange, t }) {
   const options = [
     { value: 'newBusiness', label: 'New Business ROI' },
@@ -615,6 +657,25 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
     ? ((annualRenewalValue - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
     : 0;
   const visibleRenewalFeatures = RENEWAL_FEATURES.filter((feature) => feature.availableFor.includes(profile.renewalType));
+  const renewalFeatureRows = visibleRenewalFeatures.map((feature) => {
+    const adoption = getFeatureAdoption(renewal, feature);
+    const adoptionGapPct = Math.max(0, adoption.potentialAdoptionPct - adoption.currentAdoptionPct);
+    const annualSaving = getRenewalFeatureAnnualSaving(feature, renewal, adoption);
+    const currentSaving = annualSaving * (adoption.currentAdoptionPct / 100);
+    const potentialSaving = annualSaving * (adoption.potentialAdoptionPct / 100);
+    return {
+      feature,
+      adoption,
+      adoptionGapPct,
+      currentSaving,
+      potentialSaving,
+      incrementalSaving: Math.max(0, potentialSaving - currentSaving),
+    };
+  });
+  const alreadyAdoptedFeaturesCount = renewalFeatureRows.filter(({ adoption }) => adoption.currentAdopted).length;
+  const adoptableFeaturesCount = renewalFeatureRows.filter(({ adoption }) => adoption.targetAdoptable).length;
+  const averageCurrentAdoptionPct = average(renewalFeatureRows.map(({ adoption }) => adoption.currentAdoptionPct));
+  const averagePotentialAdoptionPct = average(renewalFeatureRows.map(({ adoption }) => adoption.potentialAdoptionPct));
 
   return (
     <div className="space-y-6">
@@ -733,24 +794,45 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
           `Für die ${profile.renewalType}-Verlängerung verfügbare Funktionen, einschließlich gemeinsamer CPC- und HMC-Funktionen.`
         )}
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          {visibleRenewalFeatures.map((feature) => (
-            <article key={feature.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">{feature.category}</p>
-                  <h4 className="mt-1 text-base font-semibold text-slate-950">{feature.label}</h4>
-                </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                  {feature.availableFor.join(' / ')}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{feature.description}</p>
-              <p className="mt-3 text-xs font-medium text-slate-500">
-                {t('Chiave calcolo', 'Calculation key', 'Clave de cálculo', 'Berechnungsschlüssel')}: {feature.calculationKey}
-              </p>
-            </article>
-          ))}
+        <div className="mb-5 grid gap-4 md:grid-cols-4">
+          <Kpi title={t('Feature già adottate', 'Already adopted features', 'Funcionalidades ya adoptadas', 'Bereits adoptierte Funktionen')} value={`${alreadyAdoptedFeaturesCount}/${visibleRenewalFeatures.length}`} hint={t('Conteggio feature visibili con currentAdopted attivo.', 'Count of visible features with currentAdopted enabled.', 'Recuento de funcionalidades visibles con currentAdopted activo.', 'Anzahl sichtbarer Funktionen mit aktivem currentAdopted.')} />
+          <Kpi title={t('Feature adottabili', 'Adoptable features', 'Funcionalidades adoptables', 'Adoptierbare Funktionen')} value={`${adoptableFeaturesCount}/${visibleRenewalFeatures.length}`} hint={t('Conteggio feature visibili con targetAdoptable attivo.', 'Count of visible features with targetAdoptable enabled.', 'Recuento de funcionalidades visibles con targetAdoptable activo.', 'Anzahl sichtbarer Funktionen mit aktivem targetAdoptable.')} />
+          <Kpi title={t('Adoption attuale media', 'Average current adoption', 'Adopción actual media', 'Durchschnittliche aktuelle Adoption')} value={pct(averageCurrentAdoptionPct, 1)} hint={t('Media delle percentuali attuali delle feature rilevanti.', 'Average current percentage across relevant features.', 'Media de porcentajes actuales de las funcionalidades relevantes.', 'Durchschnitt aktueller Prozentwerte relevanter Funktionen.')} />
+          <Kpi title={t('Adoption potenziale media', 'Average potential adoption', 'Adopción potencial media', 'Durchschnittliche potenzielle Adoption')} value={pct(averagePotentialAdoptionPct, 1)} hint={t('Media delle percentuali potenziali delle feature rilevanti.', 'Average potential percentage across relevant features.', 'Media de porcentajes potenciales de las funcionalidades relevantes.', 'Durchschnitt potenzieller Prozentwerte relevanter Funktionen.')} />
+        </div>
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">{t('Feature', 'Feature', 'Funcionalidad', 'Funktion')}</th>
+                <th className="px-4 py-3">{t('Categoria', 'Category', 'Categoría', 'Kategorie')}</th>
+                <th className="px-4 py-3">{t('Già adottata', 'Already adopted', 'Ya adoptada', 'Bereits adoptiert')}</th>
+                <th className="px-4 py-3">{t('Adoption attuale %', 'Current adoption %', 'Adopción actual %', 'Aktuelle Adoption %')}</th>
+                <th className="px-4 py-3">{t('Adottabile dopo rinnovo', 'Adoptable after renewal', 'Adoptable tras renovación', 'Nach Renewal adoptierbar')}</th>
+                <th className="px-4 py-3">{t('Adoption potenziale %', 'Potential adoption %', 'Adopción potencial %', 'Potenzielle Adoption %')}</th>
+                <th className="px-4 py-3">{t('Gap adoption', 'Adoption gap', 'Gap adopción', 'Adoptionslücke')}</th>
+                <th className="px-4 py-3">{t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')}</th>
+                <th className="px-4 py-3">{t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')}</th>
+                <th className="px-4 py-3">{t('Saving incrementale', 'Incremental saving', 'Saving incremental', 'Inkrementelle Einsparung')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+              {renewalFeatureRows.map(({ feature, adoption, adoptionGapPct, currentSaving, potentialSaving, incrementalSaving }) => (
+                <tr key={feature.id}>
+                  <td className="px-4 py-3 font-semibold text-slate-950">{feature.label}</td>
+                  <td className="px-4 py-3">{feature.category}</td>
+                  <td className="px-4 py-3">{adoption.currentAdopted ? t('Sì', 'Yes', 'Sí', 'Ja') : t('No', 'No', 'No', 'Nein')}</td>
+                  <td className="px-4 py-3">{pct(adoption.currentAdoptionPct, 0)}</td>
+                  <td className="px-4 py-3">{adoption.targetAdoptable ? t('Sì', 'Yes', 'Sí', 'Ja') : t('No', 'No', 'No', 'Nein')}</td>
+                  <td className="px-4 py-3">{pct(adoption.potentialAdoptionPct, 0)}</td>
+                  <td className="px-4 py-3 font-semibold text-blue-700">{pct(adoptionGapPct, 0)}</td>
+                  <td className="px-4 py-3">{eur(currentSaving, lang)}</td>
+                  <td className="px-4 py-3">{eur(potentialSaving, lang)}</td>
+                  <td className="px-4 py-3 font-semibold text-emerald-700">{eur(incrementalSaving, lang)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </SectionCard>
     </div>
