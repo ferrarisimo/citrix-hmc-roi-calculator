@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import { LABELS, detectBrowserLanguage } from './i18n/labels';
+import { RENEWAL_FEATURES } from './models/renewalFeatureCatalog';
 
 const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES', de: 'de-DE' };
 
@@ -613,6 +614,7 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
   const annualIncreasePct = previousRenewalAnnualCost > 0
     ? ((annualRenewalValue - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
     : 0;
+  const visibleRenewalFeatures = RENEWAL_FEATURES.filter((feature) => feature.availableFor.includes(profile.renewalType));
 
   return (
     <div className="space-y-6">
@@ -719,6 +721,36 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
           <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
           <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
           <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title={t('Catalogo feature renewal', 'Renewal feature catalog', 'Catálogo de funcionalidades renewal', 'Renewal-Funktionskatalog')}
+        subtitle={t(
+          `Feature disponibili per il rinnovo ${profile.renewalType}, incluse quelle comuni a CPC e HMC.`,
+          `Features available for the ${profile.renewalType} renewal, including capabilities common to CPC and HMC.`,
+          `Funcionalidades disponibles para la renovación ${profile.renewalType}, incluidas las comunes a CPC y HMC.`,
+          `Für die ${profile.renewalType}-Verlängerung verfügbare Funktionen, einschließlich gemeinsamer CPC- und HMC-Funktionen.`
+        )}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {visibleRenewalFeatures.map((feature) => (
+            <article key={feature.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">{feature.category}</p>
+                  <h4 className="mt-1 text-base font-semibold text-slate-950">{feature.label}</h4>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                  {feature.availableFor.join(' / ')}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{feature.description}</p>
+              <p className="mt-3 text-xs font-medium text-slate-500">
+                {t('Chiave calcolo', 'Calculation key', 'Clave de cálculo', 'Berechnungsschlüssel')}: {feature.calculationKey}
+              </p>
+            </article>
+          ))}
         </div>
       </SectionCard>
     </div>
