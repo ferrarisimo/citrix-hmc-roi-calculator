@@ -686,27 +686,32 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
               {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
             </select>
           </label>
-          <Field label={t('Costo rinnovo totale inserito', 'Entered total renewal cost', 'Coste total de renovación introducido', 'Eingegebene Renewal-Gesamtkosten')} value={profile.totalRenewalCost} onChange={(v) => onRenewalProfileChange('totalRenewalCost', v)} prefix="€" />
-          <Field label={t('Costo rinnovo precedente', 'Previous renewal cost', 'Coste renovación anterior', 'Vorherige Renewal-Kosten')} value={profile.previousRenewalCost} onChange={(v) => onRenewalProfileChange('previousRenewalCost', v)} prefix="€" />
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo precedente', 'Previous renewal years', 'Años renovación anterior', 'Vorherige Renewal-Jahre')}</span>
-            <select
-              value={profile.previousRenewalYears}
-              onChange={(e) => onRenewalProfileChange('previousRenewalYears', Number(e.target.value))}
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
-            >
-              {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
-          </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Aumento annuo vs rinnovo precedente', 'Annual increase vs previous renewal', 'Incremento anual vs renovación anterior', 'Jährliche Steigerung vs. vorherige Verlängerung')}</span>
-            <input
-              type="text"
-              value={pct(annualIncreasePct, 1)}
-              readOnly
-              className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold outline-none ${annualIncreasePct >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`}
-            />
-          </label>
+          <Field label={t('Costo rinnovo totale proposto', 'Proposed total renewal cost', 'Coste total de renovación propuesto', 'Vorgeschlagene Renewal-Gesamtkosten')} value={profile.totalRenewalCost} onChange={(v) => onRenewalProfileChange('totalRenewalCost', v)} prefix="€" />
+        </div>
+        <div className="mt-6 border-t border-slate-100 pt-6">
+          <h4 className="text-sm font-semibold text-slate-900">{t('Confronto rinnovo precedente', 'Previous renewal comparison', 'Comparativa renovación anterior', 'Vergleich mit vorheriger Verlängerung')}</h4>
+          <div className="mt-4 grid gap-5 md:grid-cols-3">
+            <Field label={t('Costo rinnovo precedente', 'Previous renewal cost', 'Coste renovación anterior', 'Vorherige Renewal-Kosten')} value={profile.previousRenewalCost} onChange={(v) => onRenewalProfileChange('previousRenewalCost', v)} prefix="€" />
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo precedente', 'Previous renewal years', 'Años renovación anterior', 'Vorherige Renewal-Jahre')}</span>
+              <select
+                value={profile.previousRenewalYears}
+                onChange={(e) => onRenewalProfileChange('previousRenewalYears', Number(e.target.value))}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
+              >
+                {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-slate-700">{t('Aumento annuo vs rinnovo precedente', 'Annual increase vs previous renewal', 'Incremento anual vs renovación anterior', 'Jährliche Steigerung vs. vorherige Verlängerung')}</span>
+              <input
+                type="text"
+                value={pct(annualIncreasePct, 1)}
+                readOnly
+                className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold outline-none ${annualIncreasePct >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`}
+              />
+            </label>
+          </div>
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
