@@ -154,6 +154,37 @@ const DEFAULTS = {
   },
 };
 
+const RENEWAL_DEFAULTS = {
+  profile: {
+    renewalType: 'HMC',
+    numberLicenses: 1000,
+    renewalPricePerUserYear: 420,
+    renewalYears: 3,
+    totalRenewalCost: 1260000,
+  },
+  adoption: {},
+  tech: {
+    numberHosts: 8,
+    coresPerHost: 48,
+    pctWorkloadsXenServerCompatible: 100,
+    numberVpnAdcAppliances: 2,
+    numberPc: 900,
+    numberThinClient: 100,
+  },
+  cost: {
+    costHypervisorPerCoreYear: 100,
+    costVpnAdcAppliance: 5000,
+    applianceMaintenanceAnnualPct: 20,
+    costMfaUserMonth: 4,
+    costZtnaUserMonth: 7,
+    costEdrEndpointMonth: 5,
+    costDevicePostureEndpointMonth: 2.5,
+    costSocMsspAnnual: 20000,
+    costRemediationPerEndpointYear: 40,
+    costSysadminDay: 600,
+  },
+};
+
 function SectionCard({ title, subtitle, children, className = '' }) {
   return <div className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${className}`}><div className={children ? 'border-b border-slate-100 px-6 py-5' : 'px-6 py-5'}><h3 className="text-lg font-semibold text-slate-950">{title}</h3>{subtitle ? <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p> : null}</div>{children ? <div className="p-6">{children}</div> : null}</div>;
 }
@@ -699,6 +730,7 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
 
 export default function App() {
   const [state, setState] = useState(DEFAULTS);
+  const [renewalState, setRenewalState] = useState(RENEWAL_DEFAULTS);
   const [lang, setLang] = useState(detectBrowserLanguage());
   const [showCustomization, setShowCustomization] = useState(false);
   const [customTab, setCustomTab] = useState('params');
@@ -713,10 +745,10 @@ export default function App() {
   const setTech = (key, value) => setState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
   const setCost = (key, value) => setState((s) => ({ ...s, cost: { ...s.cost, [key]: value } }));
   const setResidual = (key, value) => setState((s) => ({ ...s, residuals: { ...s.residuals, [key]: value } }));
-  const setRenewalProfile = (key, value) => setState((s) => {
-    const profile = { ...s.renewal.profile, [key]: value };
+  const setRenewalProfile = (key, value) => setRenewalState((s) => {
+    const profile = { ...s.profile, [key]: value };
     profile.renewalPricePerUserYear = profile.totalRenewalCost / Math.max(Number(profile.renewalYears) || 1, 1);
-    return { ...s, renewal: { ...s.renewal, profile } };
+    return { ...s, profile };
   });
 
   const model = useMemo(() => {
@@ -1087,7 +1119,7 @@ export default function App() {
 
         <AppErrorBoundary>
         {calculatorMode === 'renewal' ? (
-          <RenewalValueView lang={lang} renewal={state.renewal} onRenewalProfileChange={setRenewalProfile} />
+          <RenewalValueView lang={lang} renewal={renewalState} onRenewalProfileChange={setRenewalProfile} />
         ) : (
           <>
         {showCustomization && (
