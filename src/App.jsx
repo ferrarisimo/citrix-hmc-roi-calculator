@@ -682,6 +682,21 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
           <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
           <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
         </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
+          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
+          <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
+        </div>
+        {hasCostMismatch ? (
+          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            {t(
+              'Il costo rinnovo totale inserito differisce dal valore calcolato da prezzo/licenza.',
+              'The entered total renewal cost differs from the value calculated from price/license.',
+              'El coste total de renovación introducido difiere del valor calculado desde precio/licencia.',
+              'Die eingegebenen Renewal-Gesamtkosten weichen vom aus Preis/Lizenz berechneten Wert ab.'
+            )}
+          </div>
+        ) : null}
       </SectionCard>
     </div>
   );
