@@ -546,10 +546,10 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
   const profile = renewal.profile;
   const safeRenewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
   const safePreviousRenewalYears = Math.max(Number(profile.previousRenewalYears) || 1, 1);
-  const renewalPricePerUserYear = profile.totalRenewalCost / safeRenewalYears;
+  const annualRenewalValue = profile.totalRenewalCost / safeRenewalYears;
   const previousRenewalAnnualCost = profile.previousRenewalCost / safePreviousRenewalYears;
   const annualIncreasePct = previousRenewalAnnualCost > 0
-    ? ((renewalPricePerUserYear - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
+    ? ((annualRenewalValue - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
     : 0;
 
   return (
@@ -609,7 +609,7 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
               <input
                 type="number"
-                value={Number.isFinite(renewalPricePerUserYear) ? renewalPricePerUserYear : 0}
+                value={Number.isFinite(annualRenewalValue) ? annualRenewalValue : 0}
                 readOnly
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-8 pr-24 text-sm text-slate-600 outline-none"
               />
@@ -650,12 +650,8 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
-          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(renewalPricePerUserYear, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
+          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
           <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
-          <Kpi title={t('Costo rinnovo calcolato da prezzo per utente', 'Renewal cost calculated from per-user price', 'Coste renovación calculado desde precio por usuario', 'Aus Benutzerpreis berechnete Renewal-Kosten')} value={eur(calculatedRenewalCost, lang)} hint={t('Valore teorico derivato da numero licenze, prezzo per utente/anno e durata.', 'Theoretical value derived from licenses, user/year price, and duration.', 'Valor teórico derivado de licencias, precio usuario/año y duración.', 'Theoretischer Wert aus Lizenzen, Benutzer/Jahr-Preis und Laufzeit.')} />
         </div>
         {hasCostMismatch ? (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
