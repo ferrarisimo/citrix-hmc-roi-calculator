@@ -1036,7 +1036,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      <ScenarioReport lang={lang} state={state} model={model} rowLabels={rowLabels} />
+      {calculatorMode === 'newBusiness' ? <ScenarioReport lang={lang} state={state} model={model} rowLabels={rowLabels} /> : null}
       <div className="app-shell mx-auto max-w-7xl p-4 md:p-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -1074,7 +1074,7 @@ export default function App() {
           </div>
         </motion.div>
 
-        {showDisclaimer && (
+        {calculatorMode === 'newBusiness' && showDisclaimer && (
           <SectionCard
             className="mb-6"
             title={copy.disclaimerTitle}
