@@ -507,6 +507,84 @@ function ScenarioReport({ lang, state, model, rowLabels }) {
   );
 }
 
+function ModeSelector({ mode, onChange, t }) {
+  const options = [
+    { value: 'newBusiness', label: 'New Business ROI' },
+    { value: 'renewal', label: 'Renewal Value' },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-2 rounded-2xl border border-white/20 bg-white/10 p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${mode === option.value ? 'bg-white text-slate-950 shadow-sm' : 'text-white hover:bg-white/10'}`}
+          aria-pressed={mode === option.value}
+        >
+          {t(option.label, option.label)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RenewalValueView({ lang }) {
+  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
+
+  return (
+    <div className="space-y-6">
+      <SectionCard
+        title={t('Renewal Value', 'Renewal Value', 'Renewal Value', 'Renewal Value')}
+        subtitle={t(
+          'Vista dedicata alla valorizzazione dei rinnovi. Questa prima versione prepara lo spazio applicativo senza modificare il calcolatore New Business ROI esistente.',
+          'Dedicated view for renewal value. This first version prepares the application space without changing the existing New Business ROI calculator.',
+          'Vista dedicada al valor de renovación. Esta primera versión prepara el espacio aplicativo sin modificar la calculadora New Business ROI existente.',
+          'Dedizierte Ansicht für Renewal Value. Diese erste Version bereitet den Anwendungsbereich vor, ohne den bestehenden New Business ROI-Rechner zu ändern.'
+        )}
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <Kpi
+            title={t('Modalità', 'Mode', 'Modo', 'Modus')}
+            value="Renewal"
+            hint={t('Area separata dal modello ROI new business.', 'Area separated from the new business ROI model.', 'Área separada del modelo ROI new business.', 'Vom New-Business-ROI-Modell getrennter Bereich.')}
+          />
+          <Kpi
+            title={t('Stato', 'Status', 'Estado', 'Status')}
+            value={t('In preparazione', 'Ready for inputs', 'Lista para inputs', 'Bereit für Eingaben')}
+            hint={t('La struttura è pronta per aggiungere metriche e logiche di rinnovo.', 'The structure is ready to add renewal metrics and logic.', 'La estructura está lista para añadir métricas y lógica de renovación.', 'Die Struktur ist bereit für Renewal-Metriken und -Logik.')}
+          />
+          <Kpi
+            title={t('UX esistente', 'Existing UX', 'UX existente', 'Bestehende UX')}
+            value={t('Invariata', 'Unchanged', 'Sin cambios', 'Unverändert')}
+            hint={t('Tornando a New Business ROI si ritrova il calcolatore attuale.', 'Switching back to New Business ROI shows the current calculator.', 'Al volver a New Business ROI se muestra la calculadora actual.', 'Beim Wechsel zurück zu New Business ROI erscheint der aktuelle Rechner.')}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title={t('Prossimi input renewal', 'Next renewal inputs', 'Próximos inputs de renovación', 'Nächste Renewal-Eingaben')}
+        subtitle={t(
+          'Sezione placeholder per raccogliere in seguito dati di rinnovo, retention, uplift e valore contrattuale.',
+          'Placeholder section for future renewal, retention, uplift, and contract-value inputs.',
+          'Sección placeholder para futuros datos de renovación, retención, uplift y valor contractual.',
+          'Platzhalterbereich für künftige Eingaben zu Renewal, Retention, Uplift und Vertragswert.'
+        )}
+      >
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+          {t(
+            'La vista Renewal Value è intenzionalmente leggera in questa fase: lo stato applicativo è già separato e potrà ospitare formule, KPI e scenari dedicati ai rinnovi.',
+            'The Renewal Value view is intentionally lightweight at this stage: application state is already separated and can host formulas, KPIs, and scenarios dedicated to renewals.',
+            'La vista Renewal Value es intencionalmente ligera en esta fase: el estado aplicativo ya está separado y podrá alojar fórmulas, KPI y escenarios dedicados a renovaciones.',
+            'Die Renewal-Value-Ansicht ist in dieser Phase bewusst schlank: Der Anwendungsstatus ist bereits getrennt und kann Formeln, KPIs und Szenarien für Renewals aufnehmen.'
+          )}
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
 export default function App() {
   const [state, setState] = useState(DEFAULTS);
   const [lang, setLang] = useState(detectBrowserLanguage());
@@ -515,6 +593,7 @@ export default function App() {
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [view, setView] = useState('roi');
+  const [calculatorMode, setCalculatorMode] = useState('newBusiness');
   const copy = LABELS[lang];
   const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
 
@@ -845,16 +924,19 @@ export default function App() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 px-6 py-8 text-white rounded-t-3xl">
-              <div className="mb-3 flex justify-end gap-2">
-                <button onClick={() => setLang('it')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'it' ? 'bg-white/20' : ''}`}>IT</button>
-                <button onClick={() => setLang('en')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'en' ? 'bg-white/20' : ''}`}>EN</button>
-                <button onClick={() => setLang('es')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'es' ? 'bg-white/20' : ''}`}>ES</button>
-                <button onClick={() => setLang('de')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'de' ? 'bg-white/20' : ''}`}>DE</button>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <ModeSelector mode={calculatorMode} onChange={setCalculatorMode} t={t} />
+                <div className="flex gap-2">
+                  <button onClick={() => setLang('it')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'it' ? 'bg-white/20' : ''}`}>IT</button>
+                  <button onClick={() => setLang('en')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'en' ? 'bg-white/20' : ''}`}>EN</button>
+                  <button onClick={() => setLang('es')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'es' ? 'bg-white/20' : ''}`}>ES</button>
+                  <button onClick={() => setLang('de')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'de' ? 'bg-white/20' : ''}`}>DE</button>
+                </div>
               </div>
-              <h1 className="text-3xl font-semibold md:text-4xl">{copy.title}</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{copy.subtitle}</p>
-              <p className="mt-3 max-w-4xl rounded-xl border border-white/20 bg-white/10 p-3 text-sm">{copy.customizationIntro}</p>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <h1 className="text-3xl font-semibold md:text-4xl">{calculatorMode === 'newBusiness' ? copy.title : t('Renewal Value', 'Renewal Value')}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{calculatorMode === 'newBusiness' ? copy.subtitle : t('Vista dedicata alla valorizzazione dei rinnovi e delle opportunità di espansione.', 'Dedicated view for renewal value and expansion opportunities.')}</p>
+              {calculatorMode === 'newBusiness' ? <p className="mt-3 max-w-4xl rounded-xl border border-white/20 bg-white/10 p-3 text-sm">{copy.customizationIntro}</p> : null}
+              {calculatorMode === 'newBusiness' ? <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={() => setShowCustomization((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-400">
                   {showCustomization ? copy.hideScenario : copy.editScenario}
                 </button>
@@ -870,7 +952,7 @@ export default function App() {
                 <button onClick={() => setView('compatibility')} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400">
                   {t('Verifica compatibilità XenServer', 'Check XenServer compatibility')}
                 </button>
-              </div>
+              </div> : null}
             </div>
           </div>
         </motion.div>
@@ -885,6 +967,11 @@ export default function App() {
           </SectionCard>
         )}
 
+
+        {calculatorMode === 'renewal' ? (
+          <RenewalValueView lang={lang} />
+        ) : (
+          <>
         {showCustomization && (
           <div className="mb-6">
             <div className="mb-3 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
@@ -1181,6 +1268,8 @@ export default function App() {
             {copy.methodNote}
           </p>
         </SectionCard>
+          </>
+        )}
       </div>
     </div>
   );
