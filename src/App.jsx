@@ -605,8 +605,10 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
   const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
   const profile = renewal.profile;
   const safeRenewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
+  const safeRenewalUsers = Math.max(Number(profile.numberLicenses) || 1, 1);
   const safePreviousRenewalYears = Math.max(Number(profile.previousRenewalYears) || 1, 1);
   const annualRenewalValue = profile.totalRenewalCost / safeRenewalYears;
+  const renewalPricePerUserYear = annualRenewalValue / safeRenewalUsers;
   const previousRenewalAnnualCost = profile.previousRenewalCost / safePreviousRenewalYears;
   const annualIncreasePct = previousRenewalAnnualCost > 0
     ? ((annualRenewalValue - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
@@ -669,7 +671,7 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
               <input
                 type="number"
-                value={Number.isFinite(annualRenewalValue) ? annualRenewalValue : 0}
+                value={Number.isFinite(renewalPricePerUserYear) ? renewalPricePerUserYear : 0}
                 readOnly
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-8 pr-24 text-sm text-slate-600 outline-none"
               />
@@ -742,7 +744,9 @@ export default function App() {
   const setResidual = (key, value) => setState((s) => ({ ...s, residuals: { ...s.residuals, [key]: value } }));
   const setRenewalProfile = (key, value) => setRenewalState((s) => {
     const profile = { ...s.profile, [key]: value };
-    profile.renewalPricePerUserYear = profile.totalRenewalCost / Math.max(Number(profile.renewalYears) || 1, 1);
+    const renewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
+    const renewalUsers = Math.max(Number(profile.numberLicenses) || 1, 1);
+    profile.renewalPricePerUserYear = profile.totalRenewalCost / renewalYears / renewalUsers;
     return { ...s, profile };
   });
 
