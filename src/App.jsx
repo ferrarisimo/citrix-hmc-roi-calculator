@@ -145,9 +145,11 @@ const DEFAULTS = {
     profile: {
       renewalType: 'HMC',
       numberLicenses: 1000,
-      renewalPricePerUserYear: 420,
+      renewalPricePerUserYear: 420000,
       renewalYears: 3,
       totalRenewalCost: 1260000,
+      previousRenewalCost: 1200000,
+      previousRenewalYears: 3,
     },
   },
 };
@@ -542,8 +544,13 @@ function ModeSelector({ mode, onChange, t }) {
 function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
   const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
   const profile = renewal.profile;
-  const calculatedRenewalCost = profile.numberLicenses * profile.renewalPricePerUserYear * profile.renewalYears;
-  const hasCostMismatch = Math.abs(profile.totalRenewalCost - calculatedRenewalCost) > 0.01;
+  const safeRenewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
+  const safePreviousRenewalYears = Math.max(Number(profile.previousRenewalYears) || 1, 1);
+  const renewalPricePerUserYear = profile.totalRenewalCost / safeRenewalYears;
+  const previousRenewalAnnualCost = profile.previousRenewalCost / safePreviousRenewalYears;
+  const annualIncreasePct = previousRenewalAnnualCost > 0
+    ? ((renewalPricePerUserYear - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -578,15 +585,15 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
       <SectionCard
         title={t('Profilo rinnovo', 'Renewal profile', 'Perfil de renovación', 'Renewal-Profil')}
         subtitle={t(
-          'Input dedicati al modello renewal, con costo totale modificabile e controllo di coerenza non bloccante.',
-          'Dedicated renewal-model inputs, with an editable total cost and a non-blocking consistency check.',
-          'Inputs dedicados al modelo de renovación, con coste total editable y control de coherencia no bloqueante.',
-          'Dedizierte Renewal-Modell-Eingaben mit editierbaren Gesamtkosten und nicht blockierender Konsistenzprüfung.'
+          'Input dedicati al modello renewal, con valore annuo calcolato dal costo totale inserito e confronto con il rinnovo precedente.',
+          'Dedicated renewal-model inputs, with the annual value calculated from the entered total cost and compared with the previous renewal.',
+          'Inputs dedicados al modelo de renovación, con valor anual calculado desde el coste total introducido y comparado con la renovación anterior.',
+          'Dedizierte Renewal-Modell-Eingaben mit Jahreswert aus den eingegebenen Gesamtkosten und Vergleich mit der vorherigen Verlängerung.'
         )}
       >
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Tipo rinnovo', 'Renewal type', 'Tipo de renovación', 'Renewal-Typ')}</span>
+            <span className="text-sm font-medium text-slate-700">{t('Licenza rinnovata', 'Renewed license', 'Licencia renovada', 'Verlängerte Lizenz')}</span>
             <select
               value={profile.renewalType}
               onChange={(e) => onRenewalProfileChange('renewalType', e.target.value)}
@@ -596,7 +603,19 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
             </select>
           </label>
           <Field label={t('Numero licenze', 'Number of licenses', 'Número de licencias', 'Anzahl Lizenzen')} value={profile.numberLicenses} onChange={(v) => onRenewalProfileChange('numberLicenses', v)} suffix={t('licenze', 'licenses', 'licencias', 'Lizenzen')} />
-          <Field label={t('Prezzo rinnovo per utente / anno', 'Renewal price per user / year', 'Precio renovación por usuario / año', 'Renewal-Preis pro Benutzer / Jahr')} value={profile.renewalPricePerUserYear} onChange={(v) => onRenewalProfileChange('renewalPricePerUserYear', v)} prefix="€" suffix={t('/utente/anno', '/user/year', '/usuario/año', '/Benutzer/Jahr')} step="0.1" />
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-slate-700">{t('Prezzo rinnovo per utente / anno', 'Renewal price per user / year', 'Precio renovación por usuario / año', 'Renewal-Preis pro Benutzer / Jahr')}</span>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+              <input
+                type="number"
+                value={Number.isFinite(renewalPricePerUserYear) ? renewalPricePerUserYear : 0}
+                readOnly
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-8 pr-24 text-sm text-slate-600 outline-none"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">{t('/anno', '/year', '/año', '/Jahr')}</span>
+            </div>
+          </label>
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo', 'Renewal years', 'Años renovación', 'Renewal-Jahre')}</span>
             <select
@@ -608,11 +627,31 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
             </select>
           </label>
           <Field label={t('Costo rinnovo totale inserito', 'Entered total renewal cost', 'Coste total de renovación introducido', 'Eingegebene Renewal-Gesamtkosten')} value={profile.totalRenewalCost} onChange={(v) => onRenewalProfileChange('totalRenewalCost', v)} prefix="€" />
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-700">{t('Costo rinnovo calcolato da prezzo/licenza', 'Renewal cost calculated from price/license', 'Coste renovación calculado desde precio/licencia', 'Aus Preis/Lizenz berechnete Renewal-Kosten')}</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{eur(calculatedRenewalCost, lang)}</p>
-            <p className="mt-1 text-xs text-slate-500">numberLicenses × renewalPricePerUserYear × renewalYears</p>
-          </div>
+          <Field label={t('Costo rinnovo precedente', 'Previous renewal cost', 'Coste renovación anterior', 'Vorherige Renewal-Kosten')} value={profile.previousRenewalCost} onChange={(v) => onRenewalProfileChange('previousRenewalCost', v)} prefix="€" />
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo precedente', 'Previous renewal years', 'Años renovación anterior', 'Vorherige Renewal-Jahre')}</span>
+            <select
+              value={profile.previousRenewalYears}
+              onChange={(e) => onRenewalProfileChange('previousRenewalYears', Number(e.target.value))}
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
+            >
+              {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-slate-700">{t('Aumento annuo vs rinnovo precedente', 'Annual increase vs previous renewal', 'Incremento anual vs renovación anterior', 'Jährliche Steigerung vs. vorherige Verlängerung')}</span>
+            <input
+              type="text"
+              value={pct(annualIncreasePct, 1)}
+              readOnly
+              className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold outline-none ${annualIncreasePct >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`}
+            />
+          </label>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
+          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(renewalPricePerUserYear, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
+          <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
@@ -649,7 +688,11 @@ export default function App() {
   const setTech = (key, value) => setState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
   const setCost = (key, value) => setState((s) => ({ ...s, cost: { ...s.cost, [key]: value } }));
   const setResidual = (key, value) => setState((s) => ({ ...s, residuals: { ...s.residuals, [key]: value } }));
-  const setRenewalProfile = (key, value) => setState((s) => ({ ...s, renewal: { ...s.renewal, profile: { ...s.renewal.profile, [key]: value } } }));
+  const setRenewalProfile = (key, value) => setState((s) => {
+    const profile = { ...s.renewal.profile, [key]: value };
+    profile.renewalPricePerUserYear = profile.totalRenewalCost / Math.max(Number(profile.renewalYears) || 1, 1);
+    return { ...s, renewal: { ...s.renewal, profile } };
+  });
 
   const model = useMemo(() => {
     const { profile, tech, cost, residuals } = state;
