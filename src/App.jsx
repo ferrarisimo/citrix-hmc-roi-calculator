@@ -599,8 +599,9 @@ const getFeatureAdoption = (renewal, feature) => {
   };
 };
 
-const getRenewalFeatureAnnualSaving = (feature, renewal, adoption) => {
+const getRenewalFeatureSavingModel = (feature, renewal, adoption) => {
   const { profile, tech, cost } = renewal;
+  const renewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
   const users = Math.max(Number(profile.numberLicenses) || 0, 0);
   const totalEndpoints = Math.max((Number(tech.numberPc) || 0) + (Number(tech.numberThinClient) || 0), 0);
   const totalCores = Math.max(Number(tech.numberHosts) || 0, 0) * Math.max(Number(tech.coresPerHost) || 0, 0);
@@ -618,7 +619,13 @@ const getRenewalFeatureAnnualSaving = (feature, renewal, adoption) => {
     securityOps: totalEndpoints * (Math.max(Number(cost.costEdrEndpointMonth) || 0, 0) + Math.max(Number(cost.costDevicePostureEndpointMonth) || 0, 0)) * 12 + Math.max(Number(cost.costSocMsspAnnual) || 0, 0) + totalEndpoints * Math.max(Number(cost.costRemediationPerEndpointYear) || 0, 0),
   }[feature.calculationKey];
 
-  return manualAnnualSaving || Math.max(Number(calculatedAnnualSaving) || 0, 0);
+  const isManualEstimate = feature.calculationKey?.startsWith('manual');
+  const annualSaving = isManualEstimate ? manualAnnualSaving : Math.max(Number(calculatedAnnualSaving) || 0, 0);
+  return {
+    annualSaving,
+    maxSaving: annualSaving * renewalYears,
+    source: isManualEstimate ? 'manual' : 'automatic',
+  };
 };
 
 function ModeSelector({ mode, onChange, t }) {
@@ -644,7 +651,7 @@ function ModeSelector({ mode, onChange, t }) {
   );
 }
 
-function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
+function RenewalValueView({ lang, renewal, onRenewalProfileChange, onRenewalTechChange, onRenewalCostChange, onRenewalAdoptionChange }) {
   const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
   const profile = renewal.profile;
   const safeRenewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
@@ -660,13 +667,14 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
   const renewalFeatureRows = visibleRenewalFeatures.map((feature) => {
     const adoption = getFeatureAdoption(renewal, feature);
     const adoptionGapPct = Math.max(0, adoption.potentialAdoptionPct - adoption.currentAdoptionPct);
-    const annualSaving = getRenewalFeatureAnnualSaving(feature, renewal, adoption);
-    const currentSaving = annualSaving * (adoption.currentAdoptionPct / 100);
-    const potentialSaving = annualSaving * (adoption.potentialAdoptionPct / 100);
+    const savingModel = getRenewalFeatureSavingModel(feature, renewal, adoption);
+    const currentSaving = savingModel.maxSaving * (adoption.currentAdoptionPct / 100);
+    const potentialSaving = savingModel.maxSaving * (adoption.potentialAdoptionPct / 100);
     return {
       feature,
       adoption,
       adoptionGapPct,
+      savingModel,
       currentSaving,
       potentialSaving,
       incrementalSaving: Math.max(0, potentialSaving - currentSaving),
@@ -785,6 +793,22 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
         </div>
       </SectionCard>
 
+      {profile.renewalType === 'CPC' ? (
+        <SectionCard
+          title={t('Assunzioni saving CPC', 'CPC saving assumptions', 'Supuestos de saving CPC', 'CPC-Saving-Annahmen')}
+          subtitle={t('XenServer è calcolato automaticamente da host, core e costo hypervisor. Le altre aree CPC usano stime manuali annue.', 'XenServer is calculated automatically from hosts, cores, and hypervisor cost. The other CPC areas use manual annual estimates.', 'XenServer se calcula automáticamente a partir de hosts, cores y coste de hypervisor. Las demás áreas CPC usan estimaciones manuales anuales.', 'XenServer wird automatisch aus Hosts, Cores und Hypervisor-Kosten berechnet. Die anderen CPC-Bereiche verwenden manuelle jährliche Schätzungen.')}
+        >
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <Field label={t('Host XenServer', 'XenServer hosts', 'Hosts XenServer', 'XenServer-Hosts')} value={renewal.tech.numberHosts} onChange={(v) => onRenewalTechChange('numberHosts', v)} suffix="host" />
+            <Field label={t('Core per host', 'Cores per host', 'Cores por host', 'Cores pro Host')} value={renewal.tech.coresPerHost} onChange={(v) => onRenewalTechChange('coresPerHost', v)} suffix="core" />
+            <Field label={t('Costo hypervisor per core / anno', 'Hypervisor cost per core / year', 'Coste hypervisor por core / año', 'Hypervisor-Kosten pro Core / Jahr')} value={renewal.cost.costHypervisorPerCoreYear} onChange={(v) => onRenewalCostChange('costHypervisorPerCoreYear', v)} prefix="€" />
+            <Field label={t('Saving annuo manuale CVAD premium', 'Manual annual CVAD premium saving', 'Saving anual manual CVAD premium', 'Manuelles jährliches CVAD-Premium-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'cvadPremiumFeatures')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('cvadPremiumFeatures', 'manualAnnualSaving', v)} prefix="€" />
+            <Field label={t('Saving annuo manuale platform risk', 'Manual annual platform risk saving', 'Saving anual manual platform risk', 'Manuelles jährliches Platform-Risk-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'platformRiskReduction')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('platformRiskReduction', 'manualAnnualSaving', v)} prefix="€" />
+            <Field label={t('Saving annuo manuale infrastructure optimization', 'Manual annual infrastructure optimization saving', 'Saving anual manual infrastructure optimization', 'Manuelles jährliches Infrastructure-Optimization-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'infrastructureOptimization')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('infrastructureOptimization', 'manualAnnualSaving', v)} prefix="€" />
+          </div>
+        </SectionCard>
+      ) : null}
+
       <SectionCard
         title={t('Catalogo feature renewal', 'Renewal feature catalog', 'Catálogo de funcionalidades renewal', 'Renewal-Funktionskatalog')}
         subtitle={t(
@@ -810,6 +834,8 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
                 <th className="px-4 py-3">{t('Adoption attuale %', 'Current adoption %', 'Adopción actual %', 'Aktuelle Adoption %')}</th>
                 <th className="px-4 py-3">{t('Adottabile dopo rinnovo', 'Adoptable after renewal', 'Adoptable tras renovación', 'Nach Renewal adoptierbar')}</th>
                 <th className="px-4 py-3">{t('Adoption potenziale %', 'Potential adoption %', 'Adopción potencial %', 'Potenzielle Adoption %')}</th>
+                <th className="px-4 py-3">{t('Origine saving', 'Saving source', 'Origen saving', 'Saving-Quelle')}</th>
+                <th className="px-4 py-3">{t('Saving massimo periodo', 'Maximum period saving', 'Saving máximo periodo', 'Maximales Perioden-Saving')}</th>
                 <th className="px-4 py-3">{t('Gap adoption', 'Adoption gap', 'Gap adopción', 'Adoptionslücke')}</th>
                 <th className="px-4 py-3">{t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')}</th>
                 <th className="px-4 py-3">{t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')}</th>
@@ -817,7 +843,7 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-              {renewalFeatureRows.map(({ feature, adoption, adoptionGapPct, currentSaving, potentialSaving, incrementalSaving }) => (
+              {renewalFeatureRows.map(({ feature, adoption, adoptionGapPct, savingModel, currentSaving, potentialSaving, incrementalSaving }) => (
                 <tr key={feature.id}>
                   <td className="px-4 py-3 font-semibold text-slate-950">{feature.label}</td>
                   <td className="px-4 py-3">{feature.category}</td>
@@ -825,6 +851,8 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange }) {
                   <td className="px-4 py-3">{pct(adoption.currentAdoptionPct, 0)}</td>
                   <td className="px-4 py-3">{adoption.targetAdoptable ? t('Sì', 'Yes', 'Sí', 'Ja') : t('No', 'No', 'No', 'Nein')}</td>
                   <td className="px-4 py-3">{pct(adoption.potentialAdoptionPct, 0)}</td>
+                  <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${savingModel.source === 'automatic' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{savingModel.source === 'automatic' ? t('Automatico', 'Automatic', 'Automático', 'Automatisch') : t('Manuale stimato', 'Manual estimate', 'Estimación manual', 'Manuelle Schätzung')}</span></td>
+                  <td className="px-4 py-3">{eur(savingModel.maxSaving, lang)}</td>
                   <td className="px-4 py-3 font-semibold text-blue-700">{pct(adoptionGapPct, 0)}</td>
                   <td className="px-4 py-3">{eur(currentSaving, lang)}</td>
                   <td className="px-4 py-3">{eur(potentialSaving, lang)}</td>
@@ -863,6 +891,18 @@ export default function App() {
     profile.renewalPricePerUserYear = profile.totalRenewalCost / renewalYears / renewalUsers;
     return { ...s, profile };
   });
+  const setRenewalTech = (key, value) => setRenewalState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
+  const setRenewalCost = (key, value) => setRenewalState((s) => ({ ...s, cost: { ...s.cost, [key]: value } }));
+  const setRenewalAdoption = (featureId, key, value) => setRenewalState((s) => ({
+    ...s,
+    adoption: {
+      ...s.adoption,
+      [featureId]: {
+        ...s.adoption?.[featureId],
+        [key]: value,
+      },
+    },
+  }));
 
   const model = useMemo(() => {
     const { profile, tech, cost, residuals } = state;
@@ -1232,7 +1272,7 @@ export default function App() {
 
         <AppErrorBoundary>
         {calculatorMode === 'renewal' ? (
-          <RenewalValueView lang={lang} renewal={renewalState} onRenewalProfileChange={setRenewalProfile} />
+          <RenewalValueView lang={lang} renewal={renewalState} onRenewalProfileChange={setRenewalProfile} onRenewalTechChange={setRenewalTech} onRenewalCostChange={setRenewalCost} onRenewalAdoptionChange={setRenewalAdoption} />
         ) : (
           <>
         {showCustomization && (
