@@ -857,6 +857,85 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange, onRenewalTech
         </SectionCard>
       ) : null}
 
+      {profile.renewalType === 'HMC' ? (
+        <SectionCard
+          title={t('Assunzioni saving HMC', 'HMC saving assumptions', 'Supuestos de saving HMC', 'HMC-Saving-Annahmen')}
+          subtitle={t(
+            'Parametri manuali usati per calcolare i saving massimi HMC. XenServer usa la stessa logica CPC; le altre leve usano input espliciti per NetScaler, Unicon/eLux, MFA/ZTNA, effort IT e security operations.',
+            'Manual parameters used to calculate HMC maximum savings. XenServer uses the same CPC logic; the other levers use explicit inputs for NetScaler, Unicon/eLux, MFA/ZTNA, IT effort, and security operations.',
+            'Parámetros manuales usados para calcular los savings máximos HMC. XenServer usa la misma lógica CPC; las demás palancas usan inputs explícitos para NetScaler, Unicon/eLux, MFA/ZTNA, esfuerzo TI y operaciones de seguridad.',
+            'Manuelle Parameter zur Berechnung maximaler HMC-Einsparungen. XenServer nutzt dieselbe CPC-Logik; die anderen Hebel verwenden explizite Eingaben für NetScaler, Unicon/eLux, MFA/ZTNA, IT-Aufwand und Security Operations.'
+          )}
+        >
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-900">{t('XenServer', 'XenServer', 'XenServer', 'XenServer')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Field label={t('Host XenServer', 'XenServer hosts', 'Hosts XenServer', 'XenServer-Hosts')} value={renewal.tech.numberHosts} onChange={(v) => onRenewalTechChange('numberHosts', v)} suffix="host" />
+                <Field label={t('Core per host', 'Cores per host', 'Cores por host', 'Cores pro Host')} value={renewal.tech.coresPerHost} onChange={(v) => onRenewalTechChange('coresPerHost', v)} suffix="core" />
+                <Field label={t('Costo hypervisor per core / anno', 'Hypervisor cost per core / year', 'Coste hypervisor por core / año', 'Hypervisor-Kosten pro Core / Jahr')} value={renewal.cost.costHypervisorPerCoreYear} onChange={(v) => onRenewalCostChange('costHypervisorPerCoreYear', v)} prefix="€" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-semibold text-slate-900">{t('NetScaler / VPN / ADC', 'NetScaler / VPN / ADC', 'NetScaler / VPN / ADC', 'NetScaler / VPN / ADC')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Field label={t('Numero appliance VPN/ADC', 'VPN/ADC appliances', 'Appliances VPN/ADC', 'VPN/ADC-Appliances')} value={renewal.tech.numberVpnAdcAppliances} onChange={(v) => onRenewalTechChange('numberVpnAdcAppliances', v)} suffix="appliance" />
+                <Field label={t('Costo appliance VPN/ADC', 'VPN/ADC appliance cost', 'Coste appliance VPN/ADC', 'VPN/ADC-Appliance-Kosten')} value={renewal.cost.costVpnAdcAppliance} onChange={(v) => onRenewalCostChange('costVpnAdcAppliance', v)} prefix="€" />
+                <Field label={t('Manutenzione annua appliance', 'Annual appliance maintenance', 'Mantenimiento anual appliance', 'Jährliche Appliance-Wartung')} value={renewal.cost.applianceMaintenanceAnnualPct} onChange={(v) => onRenewalCostChange('applianceMaintenanceAnnualPct', v)} suffix="%" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-semibold text-slate-900">{t('Unicon/eLux ed endpoint lifecycle', 'Unicon/eLux and endpoint lifecycle', 'Unicon/eLux y lifecycle endpoint', 'Unicon/eLux und Endpoint-Lifecycle')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Field label={t('Numero PC', 'Number of PCs', 'Número de PCs', 'Anzahl PCs')} value={renewal.tech.numberPc} onChange={(v) => onRenewalTechChange('numberPc', v)} suffix="PC" />
+                <Field label={t('Costo nuovo PC', 'New PC cost', 'Coste nuevo PC', 'Kosten neuer PC')} value={renewal.cost.costOnePc} onChange={(v) => onRenewalCostChange('costOnePc', v)} prefix="€" />
+                <Field label={t('Età media PC', 'Average PC age', 'Edad media PC', 'Durchschnittliches PC-Alter')} value={renewal.tech.avgPcAgeYears} onChange={(v) => onRenewalTechChange('avgPcAgeYears', v)} suffix={t('anni', 'years', 'años', 'Jahre')} />
+                <Field label={t('Lifecycle target PC', 'Target PC lifecycle', 'Lifecycle objetivo PC', 'Ziel-PC-Lifecycle')} value={renewal.tech.lifecyclePcTargetYears} onChange={(v) => onRenewalTechChange('lifecyclePcTargetYears', v)} suffix={t('anni', 'years', 'años', 'Jahre')} />
+                <Field label={t('PC sostituibili con thin client', 'PCs replaceable with thin clients', 'PCs sustituibles por thin clients', 'Durch Thin Clients ersetzbare PCs')} value={renewal.tech.pctPcReplaceableWithThinClient} onChange={(v) => onRenewalTechChange('pctPcReplaceableWithThinClient', v)} suffix="%" />
+                <Field label={t('Costo thin client', 'Thin client cost', 'Coste thin client', 'Thin-Client-Kosten')} value={renewal.cost.costOneThinClient} onChange={(v) => onRenewalCostChange('costOneThinClient', v)} prefix="€" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-semibold text-slate-900">{t('MFA/ZTNA overlap', 'MFA/ZTNA overlap', 'Overlap MFA/ZTNA', 'MFA/ZTNA-Overlap')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Field label={t('Utenti remoti / hybrid', 'Remote / hybrid users', 'Usuarios remotos / híbridos', 'Remote-/Hybrid-Benutzer')} value={renewal.tech.pctRemoteHybridUsers} onChange={(v) => onRenewalTechChange('pctRemoteHybridUsers', v)} suffix="%" />
+                <Field label={t('Costo MFA / utente / mese', 'MFA cost / user / month', 'Coste MFA / usuario / mes', 'MFA-Kosten / Benutzer / Monat')} value={renewal.cost.costMfaUserMonth} onChange={(v) => onRenewalCostChange('costMfaUserMonth', v)} prefix="€" />
+                <Field label={t('Costo ZTNA / utente / mese', 'ZTNA cost / user / month', 'Coste ZTNA / usuario / mes', 'ZTNA-Kosten / Benutzer / Monat')} value={renewal.cost.costZtnaUserMonth} onChange={(v) => onRenewalCostChange('costZtnaUserMonth', v)} prefix="€" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-semibold text-slate-900">{t('IT effort reduction', 'IT effort reduction', 'Reducción esfuerzo TI', 'IT-Aufwandsreduktion')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                <Field label={t('Giorni IT endpoint management', 'IT days endpoint management', 'Días TI gestión endpoint', 'IT-Tage Endpoint Management')} value={renewal.tech.itDaysEndpointMgmt} onChange={(v) => onRenewalTechChange('itDaysEndpointMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
+                <Field label={t('Riduzione endpoint', 'Endpoint reduction', 'Reducción endpoint', 'Endpoint-Reduktion')} value={renewal.cost.reductionEffortEndpointPct} onChange={(v) => onRenewalCostChange('reductionEffortEndpointPct', v)} suffix="%" />
+                <Field label={t('Giorni IT image/VDI', 'IT days image/VDI', 'Días TI imagen/VDI', 'IT-Tage Image/VDI')} value={renewal.tech.itDaysImageVdiMgmt} onChange={(v) => onRenewalTechChange('itDaysImageVdiMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
+                <Field label={t('Riduzione image/VDI', 'Image/VDI reduction', 'Reducción imagen/VDI', 'Image/VDI-Reduktion')} value={renewal.cost.reductionEffortImagePct} onChange={(v) => onRenewalCostChange('reductionEffortImagePct', v)} suffix="%" />
+                <Field label={t('Giorni IT support', 'IT days support', 'Días TI soporte', 'IT-Tage Support')} value={renewal.tech.itDaysSupport} onChange={(v) => onRenewalTechChange('itDaysSupport', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
+                <Field label={t('Riduzione support', 'Support reduction', 'Reducción soporte', 'Support-Reduktion')} value={renewal.cost.reductionEffortSupportPct} onChange={(v) => onRenewalCostChange('reductionEffortSupportPct', v)} suffix="%" />
+                <Field label={t('Giorni IT access management', 'IT days access management', 'Días TI gestión accesos', 'IT-Tage Access Management')} value={renewal.tech.itDaysAccessMgmt} onChange={(v) => onRenewalTechChange('itDaysAccessMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
+                <Field label={t('Riduzione access', 'Access reduction', 'Reducción accesos', 'Access-Reduktion')} value={renewal.cost.reductionEffortAccessPct} onChange={(v) => onRenewalCostChange('reductionEffortAccessPct', v)} suffix="%" />
+                <Field label={t('Costo giornata sysadmin', 'Sysadmin day cost', 'Coste día sysadmin', 'Sysadmin-Tagessatz')} value={renewal.cost.costSysadminDay} onChange={(v) => onRenewalCostChange('costSysadminDay', v)} prefix="€" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-sm font-semibold text-slate-900">{t('EDR/Posture/SOC optimization', 'EDR/Posture/SOC optimization', 'Optimización EDR/Posture/SOC', 'EDR/Posture/SOC-Optimierung')}</h4>
+              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <Field label={t('Costo EDR / endpoint / mese', 'EDR cost / endpoint / month', 'Coste EDR / endpoint / mes', 'EDR-Kosten / Endpoint / Monat')} value={renewal.cost.costEdrEndpointMonth} onChange={(v) => onRenewalCostChange('costEdrEndpointMonth', v)} prefix="€" />
+                <Field label={t('Costo posture / endpoint / mese', 'Posture cost / endpoint / month', 'Coste posture / endpoint / mes', 'Posture-Kosten / Endpoint / Monat')} value={renewal.cost.costDevicePostureEndpointMonth} onChange={(v) => onRenewalCostChange('costDevicePostureEndpointMonth', v)} prefix="€" />
+                <Field label={t('Costo SOC/MSSP annuo', 'Annual SOC/MSSP cost', 'Coste anual SOC/MSSP', 'Jährliche SOC/MSSP-Kosten')} value={renewal.cost.costSocMsspAnnual} onChange={(v) => onRenewalCostChange('costSocMsspAnnual', v)} prefix="€" />
+                <Field label={t('Remediation per endpoint / anno', 'Remediation per endpoint / year', 'Remediation por endpoint / año', 'Remediation pro Endpoint / Jahr')} value={renewal.cost.costRemediationPerEndpointYear} onChange={(v) => onRenewalCostChange('costRemediationPerEndpointYear', v)} prefix="€" />
+                <Field label={t('Giorni security operations', 'Security operations days', 'Días security operations', 'Security-Operations-Tage')} value={renewal.tech.itDaysSecurityOps} onChange={(v) => onRenewalTechChange('itDaysSecurityOps', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+      ) : null}
+
       <SectionCard
         title={t('Catalogo feature renewal', 'Renewal feature catalog', 'Catálogo de funcionalidades renewal', 'Renewal-Funktionskatalog')}
         subtitle={t(
