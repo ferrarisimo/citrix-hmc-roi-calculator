@@ -171,8 +171,19 @@ const RENEWAL_DEFAULTS = {
     numberVpnAdcAppliances: 2,
     numberPc: 900,
     numberThinClient: 100,
+    avgPcAgeYears: 3,
+    lifecyclePcTargetYears: 5,
+    pctPcReplaceableWithThinClient: 35,
+    pctRemoteHybridUsers: 60,
+    itDaysEndpointMgmt: 120,
+    itDaysImageVdiMgmt: 90,
+    itDaysSupport: 180,
+    itDaysAccessMgmt: 50,
+    itDaysSecurityOps: 60,
   },
   cost: {
+    costOnePc: 700,
+    costOneThinClient: 0,
     costHypervisorPerCoreYear: 100,
     costVpnAdcAppliance: 5000,
     applianceMaintenanceAnnualPct: 20,
@@ -183,6 +194,10 @@ const RENEWAL_DEFAULTS = {
     costSocMsspAnnual: 20000,
     costRemediationPerEndpointYear: 40,
     costSysadminDay: 600,
+    reductionEffortEndpointPct: 35,
+    reductionEffortImagePct: 60,
+    reductionEffortSupportPct: 35,
+    reductionEffortAccessPct: 30,
   },
 };
 
@@ -602,28 +617,61 @@ const getFeatureAdoption = (renewal, feature) => {
 const getRenewalFeatureSavingModel = (feature, renewal, adoption) => {
   const { profile, tech, cost } = renewal;
   const renewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
-  const users = Math.max(Number(profile.numberLicenses) || 0, 0);
-  const totalEndpoints = Math.max((Number(tech.numberPc) || 0) + (Number(tech.numberThinClient) || 0), 0);
+  const numberLicenses = Math.max(Number(profile.numberLicenses) || 0, 0);
+  const numberPc = Math.max(Number(tech.numberPc) || 0, 0);
+  const remoteUsers = numberLicenses * (Math.min(Math.max(Number(tech.pctRemoteHybridUsers) || 0, 0), 100) / 100);
   const totalCores = Math.max(Number(tech.numberHosts) || 0, 0) * Math.max(Number(tech.coresPerHost) || 0, 0);
-  const appliancePurchaseCost = Math.max(Number(tech.numberVpnAdcAppliances) || 0, 0) * Math.max(Number(cost.costVpnAdcAppliance) || 0, 0);
-  const applianceAnnualCost = appliancePurchaseCost + appliancePurchaseCost * ((Number(cost.applianceMaintenanceAnnualPct) || 0) / 100);
+  const accessAppliancePurchaseCost = Math.max(Number(tech.numberVpnAdcAppliances) || 0, 0) * Math.max(Number(cost.costVpnAdcAppliance) || 0, 0);
+  const accessApplianceMaintenanceAnnual = accessAppliancePurchaseCost * ((Number(cost.applianceMaintenanceAnnualPct) || 0) / 100);
+  const replaceablePc = numberPc * (Math.min(Math.max(Number(tech.pctPcReplaceableWithThinClient) || 0, 0), 100) / 100);
+  const remainingPc = Math.max(numberPc - replaceablePc, 0);
+  const currentEndpointAnnualCost = numberPc * Math.max(Number(cost.costOnePc) || 0, 0) / Math.max(Number(tech.avgPcAgeYears) || 1, 1);
+  const optimizedEndpointAnnualCost =
+    remainingPc * Math.max(Number(cost.costOnePc) || 0, 0) / Math.max(Number(tech.lifecyclePcTargetYears) || 1, 1) +
+    replaceablePc * Math.max(Number(cost.costOneThinClient) || 0, 0) / 5;
+  const currentItEffortAnnualCost = (
+    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) +
+    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) +
+    Math.max(Number(tech.itDaysSupport) || 0, 0) +
+    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0)
+  ) * Math.max(Number(cost.costSysadminDay) || 0, 0);
+  const itEffortReductionNumerator =
+    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortEndpointPct) || 0, 0), 100) +
+    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortImagePct) || 0, 0), 100) +
+    Math.max(Number(tech.itDaysSupport) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortSupportPct) || 0, 0), 100) +
+    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortAccessPct) || 0, 0), 100);
+  const itEffortDays =
+    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) +
+    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) +
+    Math.max(Number(tech.itDaysSupport) || 0, 0) +
+    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0);
+  const averageReductionPct = itEffortDays > 0 ? itEffortReductionNumerator / itEffortDays / 100 : 0;
   const manualAnnualSaving = Math.max(Number(adoption.manualAnnualSaving) || 0, 0);
 
-  const calculatedAnnualSaving = {
-    xenserver: totalCores * Math.max(Number(cost.costHypervisorPerCoreYear) || 0, 0),
-    netscaler: applianceAnnualCost,
-    uniconElux: totalEndpoints * 80,
-    endpointLifecycle: Math.max(Number(tech.numberPc) || 0, 0) * 140,
-    mfaZtna: users * (Math.max(Number(cost.costMfaUserMonth) || 0, 0) + Math.max(Number(cost.costZtnaUserMonth) || 0, 0)) * 12,
-    itEffort: users * 24,
-    securityOps: totalEndpoints * (Math.max(Number(cost.costEdrEndpointMonth) || 0, 0) + Math.max(Number(cost.costDevicePostureEndpointMonth) || 0, 0)) * 12 + Math.max(Number(cost.costSocMsspAnnual) || 0, 0) + totalEndpoints * Math.max(Number(cost.costRemediationPerEndpointYear) || 0, 0),
+  const calculatedMaxSaving = {
+    xenserver: totalCores * Math.max(Number(cost.costHypervisorPerCoreYear) || 0, 0) * renewalYears,
+    netscaler: accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual * renewalYears,
+    uniconElux: Math.max(0, currentEndpointAnnualCost - optimizedEndpointAnnualCost) * renewalYears,
+    endpointLifecycle: Math.max(0, currentEndpointAnnualCost - optimizedEndpointAnnualCost) * renewalYears,
+    mfaZtna: (
+      numberLicenses * Math.max(Number(cost.costMfaUserMonth) || 0, 0) * 12 +
+      remoteUsers * Math.max(Number(cost.costZtnaUserMonth) || 0, 0) * 12
+    ) * renewalYears,
+    itEffort: currentItEffortAnnualCost * averageReductionPct * renewalYears,
+    securityOps: (
+      numberPc * Math.max(Number(cost.costEdrEndpointMonth) || 0, 0) * 12 +
+      numberPc * Math.max(Number(cost.costDevicePostureEndpointMonth) || 0, 0) * 12 +
+      Math.max(Number(cost.costSocMsspAnnual) || 0, 0) +
+      numberPc * Math.max(Number(cost.costRemediationPerEndpointYear) || 0, 0) +
+      Math.max(Number(tech.itDaysSecurityOps) || 0, 0) * Math.max(Number(cost.costSysadminDay) || 0, 0)
+    ) * renewalYears,
   }[feature.calculationKey];
 
   const isManualEstimate = feature.calculationKey?.startsWith('manual');
-  const annualSaving = isManualEstimate ? manualAnnualSaving : Math.max(Number(calculatedAnnualSaving) || 0, 0);
+  const maxSaving = isManualEstimate ? manualAnnualSaving * renewalYears : Math.max(Number(calculatedMaxSaving) || 0, 0);
   return {
-    annualSaving,
-    maxSaving: annualSaving * renewalYears,
+    annualSaving: maxSaving / renewalYears,
+    maxSaving,
     source: isManualEstimate ? 'manual' : 'automatic',
   };
 };
