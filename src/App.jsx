@@ -700,6 +700,51 @@ function ModeSelector({ mode, onChange, t }) {
   );
 }
 
+
+function RenewalScenarioReport({ lang, profile, featureRows, renewalValueModel, averageCurrentAdoptionPct, averagePotentialAdoptionPct }) {
+  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
+  const adoptedRows = featureRows.filter(({ adoption }) => adoption.currentAdopted);
+  const adoptableRows = featureRows.filter(({ adoption }) => adoption.targetAdoptable);
+  const featureList = (rows) => rows.length ? rows.map(({ feature }) => feature.label).join(', ') : t('Nessuna feature selezionata', 'No selected features', 'Ninguna funcionalidad seleccionada', 'Keine ausgewählten Funktionen');
+  const coverageValue = renewalValueModel.renewalCoverageRatio === null ? '—' : `${renewalValueModel.renewalCoverageRatio.toFixed(2)}x`;
+  const paybackValue = renewalValueModel.paybackMonths === null ? '—' : `${renewalValueModel.paybackMonths.toFixed(1)} ${t('mesi', 'months', 'meses', 'Monate')}`;
+  const antiChurnMessage = profile.renewalType === 'CPC'
+    ? t(
+      'Il rinnovo CPC va letto come una leva anti-churn per trasformare il rinnovo CVAD in un programma di ottimizzazione: XenServer riduce la dipendenza da hypervisor di terze parti, libera budget oggi assorbito da piattaforme sovrapposte e consente di valorizzare le funzionalità CVAD premium già incluse. L’adozione guidata riduce il rischio piattaforma, protegge la continuità del workspace e crea un percorso concreto di ottimizzazione infrastrutturale dopo il rinnovo.',
+      'The CPC renewal should be positioned as an anti-churn lever that turns the CVAD renewal into an optimization program: XenServer reduces dependence on third-party hypervisors, releases budget currently absorbed by overlapping platforms, and helps monetize included CVAD premium capabilities. Guided adoption reduces platform risk, protects workspace continuity, and creates a practical infrastructure-optimization path after renewal.',
+      'La renovación CPC debe leerse como una palanca anti-churn que convierte la renovación CVAD en un programa de optimización: XenServer reduce la dependencia de hypervisores de terceros, libera presupuesto absorbido por plataformas solapadas y permite valorizar las funcionalidades CVAD premium incluidas. La adopción guiada reduce el riesgo de plataforma, protege la continuidad del workspace y crea una ruta concreta de optimización infraestructural tras la renovación.',
+      'Das CPC-Renewal sollte als Anti-Churn-Hebel verstanden werden, der die CVAD-Verlängerung in ein Optimierungsprogramm verwandelt: XenServer reduziert die Abhängigkeit von Dritt-Hypervisoren, setzt Budget aus überlappenden Plattformen frei und erschließt den Wert enthaltener CVAD-Premium-Funktionen. Geführte Adoption reduziert Plattformrisiken, schützt die Workspace-Kontinuität und schafft einen konkreten Pfad zur Infrastruktur-Optimierung nach dem Renewal.'
+    )
+    : t(
+      'Il rinnovo HMC permette di spostare la conversazione dal solo prezzo alla riduzione strutturale dei costi: XenServer, NetScaler e Unicon/eLux creano un perimetro integrato per endpoint lifecycle, riduzione VPN/ADC, contenimento di MFA/ZTNA sovrapposti, minore effort IT e security cost optimization. Il messaggio anti-churn è quindi orientato a dimostrare che il rinnovo finanzia semplificazione operativa, razionalizzazione delle piattaforme e riduzione del rischio tecnico.',
+      'The HMC renewal shifts the conversation from price alone to structural cost reduction: XenServer, NetScaler, and Unicon/eLux create an integrated scope for endpoint lifecycle, VPN/ADC reduction, MFA/ZTNA overlap reduction, lower IT effort, and security cost optimization. The anti-churn message therefore shows that the renewal funds operational simplification, platform rationalization, and technical-risk reduction.',
+      'La renovación HMC permite mover la conversación desde el precio hacia la reducción estructural de costes: XenServer, NetScaler y Unicon/eLux crean un perímetro integrado para endpoint lifecycle, reducción de VPN/ADC, reducción de solapamientos MFA/ZTNA, menor esfuerzo TI y optimización de costes de seguridad. El mensaje anti-churn demuestra que la renovación financia simplificación operativa, racionalización de plataformas y reducción del riesgo técnico.',
+      'Das HMC-Renewal verschiebt die Diskussion vom reinen Preis hin zu struktureller Kostenreduktion: XenServer, NetScaler und Unicon/eLux schaffen einen integrierten Rahmen für Endpoint-Lifecycle, VPN/ADC-Reduktion, Reduktion überlappender MFA/ZTNA-Kosten, geringeren IT-Aufwand und Security Cost Optimization. Die Anti-Churn-Botschaft zeigt damit, dass das Renewal operative Vereinfachung, Plattform-Rationalisierung und technische Risikoreduktion finanziert.'
+    );
+
+  const rows = [
+    [t('Tipo rinnovo', 'Renewal type', 'Tipo renovación', 'Renewal-Typ'), profile.renewalType],
+    [t('Numero licenze', 'Number of licenses', 'Número de licencias', 'Anzahl Lizenzen'), Number(profile.numberLicenses).toLocaleString(localeByLanguage[lang] ?? 'en-US')],
+    [t('Durata', 'Duration', 'Duración', 'Laufzeit'), `${profile.renewalYears} ${t('anni', 'years', 'años', 'Jahre')}`],
+    [t('Prezzo rinnovo €/utente/anno', 'Renewal price €/user/year', 'Precio renovación €/usuario/año', 'Renewal-Preis €/Benutzer/Jahr'), eur(profile.renewalPricePerUserYear, lang, 1)],
+    [t('Costo rinnovo totale', 'Total renewal cost', 'Coste total renovación', 'Renewal-Gesamtkosten'), eur(renewalValueModel.renewalCost, lang)],
+  ];
+
+  return (
+    <SectionCard title={t('RenewalScenarioReport', 'RenewalScenarioReport', 'RenewalScenarioReport', 'RenewalScenarioReport')} subtitle={t('Report sintetico dello scenario di rinnovo, adoption e messaggio anti-churn.', 'Scenario report covering renewal profile, adoption, economics, and anti-churn messaging.', 'Informe sintético del escenario de renovación, adopción y mensaje anti-churn.', 'Szenariobericht zu Renewal-Profil, Adoption, Wirtschaftlichkeit und Anti-Churn-Botschaft.')}>
+      <div className="space-y-6 text-sm text-slate-700">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">1. {t('Profilo rinnovo', 'Renewal profile', 'Perfil renovación', 'Renewal-Profil')}</h4><dl className="mt-3 space-y-2">{rows.map(([label, value]) => <div key={label} className="flex justify-between gap-4"><dt>{label}</dt><dd className="font-semibold text-slate-950">{value}</dd></div>)}</dl></div>
+          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">2. {t('Adoption attuale', 'Current adoption', 'Adopción actual', 'Aktuelle Adoption')}</h4><p className="mt-3"><strong>{adoptedRows.length}</strong> {t('feature già adottate', 'already adopted features', 'funcionalidades ya adoptadas', 'bereits adoptierte Funktionen')}: {featureList(adoptedRows)}.</p><p className="mt-2">{t('Adoption media attuale', 'Average current adoption', 'Adopción media actual', 'Durchschnittliche aktuelle Adoption')}: <strong>{pct(averageCurrentAdoptionPct, 1)}</strong>.</p><p className="mt-2">{t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')}: <strong>{eur(renewalValueModel.alreadyRealizedSaving, lang)}</strong>.</p></div>
+          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">3. {t('Adoption potenziale', 'Potential adoption', 'Adopción potencial', 'Potenzielle Adoption')}</h4><p className="mt-3"><strong>{adoptableRows.length}</strong> {t('feature adottabili dopo rinnovo', 'features adoptable after renewal', 'funcionalidades adoptables tras renovación', 'nach Renewal adoptierbare Funktionen')}: {featureList(adoptableRows)}.</p><p className="mt-2">{t('Adoption media potenziale', 'Average potential adoption', 'Adopción media potencial', 'Durchschnittliche potenzielle Adoption')}: <strong>{pct(averagePotentialAdoptionPct, 1)}</strong>.</p><p className="mt-2">{t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')}: <strong>{eur(renewalValueModel.potentialSaving, lang)}</strong>. {t('Gap di adoption', 'Adoption gap', 'Gap de adopción', 'Adoptionslücke')}: <strong>{pct(renewalValueModel.adoptionGapPct, 1)}</strong>.</p></div>
+          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">4. {t('Lettura economica', 'Economic reading', 'Lectura económica', 'Wirtschaftliche Lesart')}</h4><p className="mt-3">{t('Costo rinnovo', 'Renewal cost', 'Coste renovación', 'Renewal-Kosten')}: <strong>{eur(renewalValueModel.renewalCost, lang)}</strong>; {t('saving potenziale', 'potential saving', 'saving potencial', 'potenzielle Einsparung')}: <strong>{eur(renewalValueModel.potentialSaving, lang)}</strong>; {t('saving incrementale', 'incremental saving', 'saving incremental', 'inkrementelle Einsparung')}: <strong>{eur(renewalValueModel.incrementalSaving, lang)}</strong>.</p><p className="mt-2">{t('Renewal coverage ratio', 'Renewal coverage ratio', 'Renewal coverage ratio', 'Renewal Coverage Ratio')}: <strong>{coverageValue}</strong>; {t('valore netto rinnovo', 'net renewal value', 'valor neto renovación', 'Netto-Renewal-Wert')}: <strong>{eur(renewalValueModel.netRenewalValue, lang)}</strong>; payback: <strong>{paybackValue}</strong>.</p></div>
+        </div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-950"><h4 className="font-semibold">5. {t('Messaggio anti-churn', 'Anti-churn message', 'Mensaje anti-churn', 'Anti-Churn-Botschaft')}</h4><p className="mt-2 leading-6">{antiChurnMessage}</p></div>
+      </div>
+    </SectionCard>
+  );
+}
+
 function RenewalValueView({ lang, renewal, onRenewalProfileChange, onRenewalTechChange, onRenewalCostChange, onRenewalAdoptionChange }) {
   const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
   const profile = renewal.profile;
@@ -946,6 +991,15 @@ function RenewalValueView({ lang, renewal, onRenewalProfileChange, onRenewalTech
           </div>
         </SectionCard>
       ) : null}
+
+      <RenewalScenarioReport
+        lang={lang}
+        profile={profile}
+        featureRows={renewalFeatureRows}
+        renewalValueModel={renewalValueModel}
+        averageCurrentAdoptionPct={averageCurrentAdoptionPct}
+        averagePotentialAdoptionPct={averagePotentialAdoptionPct}
+      />
 
       <SectionCard
         title={t('Catalogo feature renewal', 'Renewal feature catalog', 'Catálogo de funcionalidades renewal', 'Renewal-Funktionskatalog')}
