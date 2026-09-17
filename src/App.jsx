@@ -16,6 +16,7 @@ import { LABELS, detectBrowserLanguage } from './i18n/labels';
 import { CustomerAssessment, AssessmentSummary, OpportunityPlanner, OpportunityTable, Input, Card, wording, buttonStyle } from './AssessmentWorkflow';
 import { calculateCustomerScenario, calculateNewBusinessCosts } from './models/customerAssessmentModel';
 import RenewalAssessmentView from './RenewalAssessmentView';
+import { NewBusinessReport, RenewalReport } from './ScenarioReports';
 
 const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES', de: 'de-DE' };
 
@@ -444,11 +445,6 @@ function Kpi({ title, value, hint }) {
 }
 
 
-function ScenarioReport({ lang, state, model, rowLabels, opportunityModel }) {
-  const t = wording(lang);
-  return <article className="print-report"><header className="report-hero"><h1>New Business ROI</h1><p>{t('Profilo progetto', 'Project profile')}: {model.projectYears} {t('anni', 'years')} · HMC {eur(state.profile.hmcPricePerUserPerMonth, lang)} / {t('utente/mese', 'user/month')} · {t('Migrazione e interventi', 'Migration and implementation')}: {eur(model.migrationCostOneTime, lang)}</p><p>{(opportunityModel.complete && opportunityModel.baselineComplete) ? t('Scenario completato', 'Scenario complete') : t('SIMULAZIONE PARZIALE — assessment o obiettivi incompleti', 'PARTIAL SIMULATION — assessment or targets incomplete')}</p></header><OpportunityTable model={opportunityModel} lang={lang} /><h2>{t('Confronto economico sul periodo', 'Economic comparison over term')}</h2><table><thead><tr><th>{t('Voce', 'Item')}</th><th>As-Is</th><th>HMC</th><th>Delta</th></tr></thead><tbody>{model.tableRows.map((row) => <tr key={row.key}><td>{rowLabels[row.key]}</td><td>{eur(row.asIs, lang)}</td><td>{eur(row.hmc, lang)}</td><td>{eur(row.delta, lang)}</td></tr>)}<tr className="report-total"><td>{t('Totale', 'Total')}</td><td>{eur(model.totalAsIs, lang)}</td><td>{eur(model.totalHmc, lang)}</td><td>{eur(model.projectDelta, lang)}</td></tr></tbody></table></article>;
-}
-
 function ModeSelector({ mode, onChange, t }) {
   const options = [
     { value: 'assessment', label: t('Assessment cliente', 'Customer assessment', 'Assessment cliente', 'Kunden-Assessment') },
@@ -475,6 +471,9 @@ function ModeSelector({ mode, onChange, t }) {
 
 
 export default function App() {
+  const [reportOpen, setReportOpen] = useState(false);
+  const openReport = () => { setReportOpen(true); window.scrollTo(0, 0); };
+  const closeReport = () => { setReportOpen(false); window.scrollTo(0, 0); };
   const [state, setState] = useState(DEFAULTS);
   const [renewalProfile, setRenewalProfile] = useState(DEFAULTS.renewal.profile);
   const [renewalPlans, setRenewalPlans] = useState({});
@@ -730,8 +729,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      {calculatorMode === 'newBusiness' ? <ScenarioReport lang={lang} state={state} model={model} rowLabels={rowLabels} opportunityModel={businessModel} /> : null}
-      <div className="app-shell mx-auto max-w-7xl p-4 md:p-8">
+      {calculatorMode !== 'assessment' && <div className={reportOpen ? 'report-preview' : 'report-output'}>
+        {reportOpen && <div className="report-toolbar"><button onClick={closeReport}>← {t('Torna allo scenario', 'Back to scenario')}</button><span>{t('Anteprima report', 'Report preview')} · {calculatorMode === 'renewal' ? 'Renewal Value' : 'New Business ROI'}</span><button onClick={() => window.print()}>{t('Stampa / Salva PDF', 'Print / Save PDF', 'Imprimir / Guardar PDF', 'Drucken / PDF speichern')}</button></div>}
+        {calculatorMode === 'newBusiness'
+          ? <NewBusinessReport lang={lang} state={state} model={model} rowLabels={rowLabels} opportunityModel={businessModel} plans={businessPlans} />
+          : <RenewalReport lang={lang} state={state} profile={renewalProfile} plans={renewalPlans} />}
+      </div>}
+      <div className={`app-shell mx-auto max-w-7xl p-4 md:p-8 ${reportOpen ? 'hidden' : ''}`}>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-900 px-6 py-8 text-white rounded-t-3xl">
@@ -747,10 +751,11 @@ export default function App() {
               <h1 className="text-3xl font-semibold md:text-4xl">{calculatorMode === 'assessment' ? t('Assessment cliente', 'Customer assessment', 'Assessment cliente', 'Kunden-Assessment') : calculatorMode === 'newBusiness' ? 'New Business ROI' : 'Renewal Value'}</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{t('Un assessment condiviso, due percorsi: valutare un nuovo investimento o mitigare i costi del rinnovo completando l’adozione.', 'One shared assessment, two paths: evaluate a new investment or mitigate renewal costs by completing adoption.')}</p>
 
-              {calculatorMode === 'newBusiness' ? <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
+              {calculatorMode !== 'assessment' ? <div className="mt-4 flex flex-wrap gap-3">
+                <button onClick={openReport} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.print}
                 </button>
+                {calculatorMode === 'newBusiness' && <>
                 <button onClick={() => { setProfile('horizonYears', DEFAULTS.profile.horizonYears); setProfile('hmcPricePerUserPerMonth', DEFAULTS.profile.hmcPricePerUserPerMonth); setProfile('initialMigrationCost', DEFAULTS.profile.initialMigrationCost); setBusinessPlans({}); }} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.reset}
                 </button>
@@ -759,7 +764,7 @@ export default function App() {
                 </button>
                 <button onClick={() => setView('compatibility')} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400">
                   {t('Verifica compatibilità XenServer', 'Check XenServer compatibility')}
-                </button>
+                </button></>}
               </div> : null}
             </div>
           </div>
@@ -780,7 +785,7 @@ export default function App() {
         {calculatorMode === 'assessment' ? (
           <CustomerAssessment state={state} setState={setState} lang={lang} onNavigate={setCalculatorMode} onCompatibility={setView} />
         ) : calculatorMode === 'renewal' ? (
-          <RenewalAssessmentView lang={lang} state={state} profile={renewalProfile} setProfile={setRenewalProfile} plans={renewalPlans} setPlans={setRenewalPlans} onEdit={() => setCalculatorMode('assessment')} />
+          <RenewalAssessmentView lang={lang} state={state} profile={renewalProfile} setProfile={setRenewalProfile} plans={renewalPlans} setPlans={setRenewalPlans} onReport={openReport} onEdit={() => setCalculatorMode('assessment')} />
         ) : (
           <>
         <div className="mb-6 space-y-6">

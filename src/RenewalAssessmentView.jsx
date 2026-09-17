@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { AssessmentSummary, Card, Input, Metric, OpportunityPlanner, OpportunityTable, buttonStyle, money, wording } from './AssessmentWorkflow';
 import { calculateCustomerScenario, calculateRenewalComparison } from './models/customerAssessmentModel';
 
-export default function RenewalAssessmentView({ lang, state, profile, setProfile, plans, setPlans, onEdit }) {
+export default function RenewalAssessmentView({ lang, state, profile, setProfile, plans, setPlans, onEdit, onReport }) {
   const t = wording(lang);
   const years = Number(profile.renewalYears) || 1;
   const renewalCost = Number(profile.totalRenewalCost) || 0;
@@ -35,7 +35,7 @@ export default function RenewalAssessmentView({ lang, state, profile, setProfile
   const yearSelect = (key, label) => <label className="block space-y-2 text-sm font-medium text-slate-700">{label}<select className="block w-full rounded-xl border border-slate-300 p-2.5" value={profile[key]} onChange={(e) => update(key, Number(e.target.value))}>{[1,3,5].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>;
   const status = model.complete ? t('Scenario completato', 'Scenario complete') : `${t('Stima parziale · voci completate', 'Partial estimate · items completed')}: ${model.completed}/${model.rows.length}`;
   return <>
-    <article className="print-report renewal-print"><header className="report-hero"><h1>Renewal Value · {profile.renewalType}</h1><p>{status}</p><p>{profile.numberLicenses} {t('licenze', 'licenses')} · {years} {t('anni', 'years')} · {money(renewalCost, lang)}</p></header>{deltaSummary}<OpportunityTable model={model} lang={lang} /><h2>{t('Saving ancora ottenibile', 'Remaining savings opportunity')}</h2><p>{t('Saving annuo aggiuntivo', 'Additional annual saving')}: {money(model.annualSaving, lang)}. {t('Saving lordo sul periodo', 'Gross term saving')}: {money(model.periodSaving, lang)}. {t('Costi completamento', 'Completion costs')}: {money(model.activationCost, lang)}. {t('Saving netto disponibile', 'Available net saving')}: {money(model.netSaving, lang)}.</p><p>{t('Costo rinnovo ancora da coprire', 'Renewal cost still to cover')}: {money(model.uncoveredRenewalCost, lang)}.</p></article>
+
     <div className="space-y-6" data-testid="renewal-assessment-view">
       <Card title={t('Profilo rinnovo', 'Renewal profile', 'Perfil de renovación', 'Renewal-Profil')} subtitle={t('Dati economici del rinnovo e confronto con il contratto precedente.', 'Renewal financial data and comparison with the previous contract.')}>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -64,7 +64,7 @@ export default function RenewalAssessmentView({ lang, state, profile, setProfile
         </div>
         <p className="mt-5 text-sm leading-6 text-slate-500">{t('La copertura usa soltanto il saving aggiuntivo netto. Il beneficio stimato della quota già adottata è escluso dal nuovo saving. Le riduzioni di effort rappresentano capacità liberata, non necessariamente minori esborsi.', 'Coverage uses only additional net saving. Estimated benefits of existing adoption are excluded from new saving. Effort reductions represent released capacity, not necessarily cash reductions.')}</p>
         <div className="mt-5"><OpportunityTable model={model} lang={lang} /></div>
-        <button className={`${buttonStyle} mt-5`} onClick={() => window.print()}>{t('Stampa report', 'Print report', 'Imprimir informe', 'Bericht drucken')}</button>
+        <button className={`${buttonStyle} mt-5`} onClick={onReport}>{t('Report', 'Report', 'Informe', 'Bericht')}</button>
       </Card>
     </div>
   </>;
