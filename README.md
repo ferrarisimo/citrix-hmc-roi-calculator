@@ -192,3 +192,23 @@ costo/giornata dell’assessment. Questa capacità non implica automaticamente
 minori esborsi. SOC, remediation e Operations devono avere basi distinte per
 non contare due volte le stesse attività. Leve di migrazione e sostituzione
 licenze (inclusi EDR e posture) restano allo 0% fino alla definizione del perimetro.
+
+
+### Report descrittivi e PDF
+
+Il pulsante **Report**, disponibile in alto in New Business e Renewal (e anche
+nel riepilogo Renewal), apre un’anteprima dello scenario corrente. Da qui
+**Stampa / Salva PDF** apre la stampa del browser; scegliere la destinazione PDF.
+**Torna allo scenario** mantiene tutti i valori inseriti.
+
+Entrambi i report includono una sintesi descrittiva generata dai dati correnti,
+i principali contributi al saving, il profilo economico, tutti i parametri
+dell’assessment e un dettaglio per leva: adozione o riduzione, stato attuale e
+obiettivo nel Renewal, tempi, quota eliminabile, costi e note/evidenze. I valori
+iniziali conservati sono documentati come valori presenti nei campi, non come
+dati cliente verificati. Le stime parziali e i dati mancanti sono segnalati.
+
+New Business riporta TCO, ROI, progetto base e costi residui e descrive anche
+l’eventuale maggior costo. Renewal documenta entrambi i contratti, il delta
+annualizzato, le coperture annua e netta sul periodo e i costi ancora da coprire.
+La stampa usa un layout A4 dedicato, separato dai controlli della webapp.
