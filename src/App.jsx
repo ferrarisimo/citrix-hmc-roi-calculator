@@ -488,7 +488,7 @@ export default function App() {
   const t = (it, en, es, de) => translate(lang, it, en, es, de);
 
   const setProfile = (key, value) => setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
-  const businessModel = useMemo(() => calculateCustomerScenario(state, businessPlans, 'HMC', state.profile.horizonYears), [state, businessPlans]);
+  const businessModel = useMemo(() => calculateCustomerScenario(state, businessPlans, 'HMC', state.profile.horizonYears, 0, 'newBusiness'), [state, businessPlans]);
 
   const model = useMemo(() => {
     const { tech } = state;
@@ -554,7 +554,7 @@ export default function App() {
       chartRows,
       byDomain,
       retainedLegacyHypervisorAnnual: hmc.hypervisor,
-      migratableWorkloadPct: tech.numberHosts > 0 ? (Number(businessPlans.xenserver?.target) || 0) / tech.numberHosts * 100 : 0,
+      migratableWorkloadPct: businessModel.rows.find((row) => row.id === 'xenserver')?.targetPct ?? 0,
       tableRows,
     };
   }, [state, lang, businessModel, businessPlans]);

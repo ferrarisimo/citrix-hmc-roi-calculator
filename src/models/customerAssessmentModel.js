@@ -1,5 +1,6 @@
-// Reference quantities include the already adopted portion. Monetary baselines
-// are BEFORE adoption; confirmed savings are subtracted once to obtain As-Is.
+// Shared As-Is quantities and costs describe the full reference perimeter.
+// Only Renewal subtracts existing adoption; New Business models future coverage.
+import { newBusinessDefaultPct } from './newBusinessDefaults.js';
 export const numeric = (value) => value !== '' && value !== null && value !== undefined && Number.isFinite(Number(value)) && Number(value) >= 0;
 const n = (value) => numeric(value) ? Number(value) : 0;
 
@@ -53,51 +54,68 @@ export function assessmentLevers(state) {
       (lever.id !== 'ztna' || n(t.pctRemoteHybridUsers) <= 100) &&
       (lever.id !== 'netscaler' || n(c.applianceMaintenanceAnnualPct) <= 100) &&
       (['eurYear', 'days'].includes(lever.unit) || Number.isInteger(lever.total));
-    return { ...lever, referenceKnown };
+    return { ...lever, referenceKnown, replacementCost: lever.id === 'endpoint' ? n(c.costOnePc) : lever.id === 'netscaler' ? n(c.costVpnAdcAppliance) : 0, baselineLifecycle: n(t.avgPcAgeYears) };
   });
 }
 
-export function calculateOpportunity(lever, adoption = {}, plan = {}, years = 1) {
+// Defaults are displayed in the UI. Empty strings remain invalid; only absent
+// optional assumptions get defaults, so clearing an input never means zero.
+export function scenarioParameters(lever, plan = {}, mode = 'renewal') {
+  const adoptionPct = plan.adoptionPct ?? (mode === 'newBusiness' ? newBusinessDefaultPct(lever.id) : 0);
+  return {
+    current: mode === 'newBusiness' ? 0 : plan.current ?? (lever.total === 0 ? 0 : ''),
+    adoptionPct,
+    target: mode === 'newBusiness' ? lever.total * n(adoptionPct) / 100 : plan.target ?? lever.total,
+    avoidablePct: plan.avoidablePct ?? 100,
+    months: plan.months ?? 0,
+    activationCost: plan.activationCost ?? 0,
+    endpointLifecycleYears: plan.endpointLifecycleYears ?? lever.baselineLifecycle + 2,
+    endpointReplacementCost: plan.endpointReplacementCost ?? lever.replacementCost,
+    includeRefresh: plan.includeRefresh === true,
+  };
+}
+
+export function calculateOpportunity(lever, plan = {}, years = 1, mode = 'renewal') {
+  const p = scenarioParameters(lever, plan, mode);
   const total = lever.total;
-  const currentKnown = numeric(adoption.current) || total === 0;
-  const current = numeric(adoption.current) ? Number(adoption.current) : total === 0 ? 0 : null;
-  const currentValid = lever.referenceKnown !== false && currentKnown && current <= total && (lever.unit === 'eurYear' || lever.unit === 'days' || Number.isInteger(current));
-  // Financial realization is explicit: technical deployment alone cancels no bill.
-  const valuedQuantity = lever.unit === 'eurYear' || lever.unit === 'days';
-  const realizedKnown = current === 0 || (currentValid && valuedQuantity) || numeric(adoption.annualSaving);
-  const alreadySaving = current === 0 ? 0 : valuedQuantity ? n(current) * lever.unitCost : n(adoption.annualSaving);
-  const realizedValid = realizedKnown && alreadySaving <= lever.annualBaseline;
-  const baselineValid = currentValid && realizedValid;
-  const targetKnown = numeric(plan.target);
-  const target = targetKnown ? Number(plan.target) : null;
-  const targetValid = currentValid && targetKnown && target >= current && target <= total && (lever.unit === 'eurYear' || lever.unit === 'days' || Number.isInteger(target));
+  const current = numeric(p.current) ? Number(p.current) : null;
+  const isQuantity = !['eurYear', 'days'].includes(lever.unit);
+  const currentValid = lever.referenceKnown !== false && current !== null && current <= total && (!isQuantity || Number.isInteger(current));
+  const target = numeric(p.target) ? Number(p.target) : null;
+  // Percentages represent equivalent coverage in a forecast; real renewal
+  // host/user/device counts must remain integers.
+  const percentValid = mode !== 'newBusiness' || (numeric(p.adoptionPct) && Number(p.adoptionPct) <= 100);
+  const targetValid = currentValid && percentValid && target !== null && target >= current && target <= total &&
+    (mode === 'newBusiness' || !isQuantity || Number.isInteger(target));
   const gap = targetValid ? target - current : null;
-  const rateKnown = numeric(plan.avoidablePct) && Number(plan.avoidablePct) <= 100;
-  const timingKnown = numeric(plan.months) && Number(plan.months) <= years * 12;
-  const costKnown = numeric(plan.activationCost);
-  const endpointCostKnown = lever.id !== 'endpoint' || numeric(plan.endpointAnnualCost);
-  const excluded = plan.feasibility === 'no';
-  const complete = excluded || (baselineValid && (total === 0 || (targetValid && gap === 0) ||
-    (plan.feasibility === 'yes' && targetValid && rateKnown && timingKnown && costKnown && endpointCostKnown)));
-  const qualified = complete && !excluded && gap > 0;
+  const rateValid = numeric(p.avoidablePct) && Number(p.avoidablePct) <= 100;
+  const endpointValid = lever.id !== 'endpoint' ||
+    (numeric(p.endpointReplacementCost) && numeric(p.endpointLifecycleYears) && Number(p.endpointLifecycleYears) > 0);
+  const endpointAnnualCost = lever.id === 'endpoint' && endpointValid ? n(p.endpointReplacementCost) / Number(p.endpointLifecycleYears) : 0;
+  const unitSaving = lever.id === 'endpoint' ? Math.max(0, lever.unitCost - endpointAnnualCost) : lever.unitCost;
+  const baselineValid = currentValid && endpointValid && rateValid;
+  const alreadySaving = baselineValid ? current * unitSaving * n(p.avoidablePct) / 100 : 0;
   const remainingAnnualCost = Math.max(0, lever.annualBaseline - alreadySaving);
-  const unitSaving = lever.id === 'endpoint' ? Math.max(0, lever.unitCost - n(plan.endpointAnnualCost)) : lever.unitCost;
-  const annualSaving = qualified ? Math.min(remainingAnnualCost, gap * unitSaving * n(plan.avoidablePct) / 100) : 0;
-  const effectiveMonths = qualified ? Math.max(0, years * 12 - n(plan.months)) : 0;
-  // Hardware already purchased is a sunk cost. Only an explicitly avoided
-  // future refresh on remaining appliances can be included, once.
-  const oneTimeSaving = qualified && lever.id === 'netscaler' && effectiveMonths > 0 ? n(plan.avoidedPurchase) : 0;
+  const excluded = plan.feasibility === 'no';
+  const complete = excluded || (baselineValid && targetValid &&
+    numeric(p.months) && Number(p.months) <= years * 12 && numeric(p.activationCost));
+  const qualified = complete && !excluded && gap > 0;
+  const annualSaving = qualified ? Math.min(remainingAnnualCost, gap * unitSaving * n(p.avoidablePct) / 100) : 0;
+  const effectiveMonths = qualified ? Math.max(0, years * 12 - n(p.months)) : 0;
+  const oneTimeSaving = qualified && lever.id === 'netscaler' && p.includeRefresh && effectiveMonths > 0
+    ? gap * lever.replacementCost * n(p.avoidablePct) / 100 : 0;
   const periodSaving = annualSaving * effectiveMonths / 12 + oneTimeSaving;
-  const activationCost = qualified ? n(plan.activationCost) : 0;
-  return { ...lever, current, currentValid, baselineValid, target, targetValid, gap, complete, qualified, excluded,
-    alreadySaving, remainingAnnualCost, annualSaving, periodSaving, oneTimeSaving, activationCost,
-    months: n(plan.months), effectiveMonths, netSaving: periodSaving - activationCost,
+  const activationCost = qualified ? n(p.activationCost) : 0;
+  return { ...lever, mode, parameters: p, current, currentValid, baselineValid, target, targetValid, gap, complete, qualified, excluded,
+    alreadySaving, remainingAnnualCost, annualSaving, periodSaving, oneTimeSaving, activationCost, endpointAnnualCost, unitSaving,
+    months: n(p.months), effectiveMonths, netSaving: periodSaving - activationCost,
+    targetPct: targetValid && total > 0 ? target / total * 100 : 0,
     currentPct: currentValid && total > 0 ? current / total * 100 : 0 };
 }
 
-export function calculateCustomerScenario(state, plans, offer, years, renewalCost = 0) {
+export function calculateCustomerScenario(state, plans, offer, years, renewalCost = 0, mode = 'renewal') {
   const rows = assessmentLevers(state).filter((l) => l.offer.includes(offer)).map((lever) =>
-    calculateOpportunity(lever, state.adoption?.[lever.id], plans?.[lever.id], years));
+    calculateOpportunity(lever, plans?.[lever.id], years, mode));
   const sum = (key) => rows.reduce((acc, row) => acc + row[key], 0);
   const annualSaving = sum('annualSaving');
   const periodSaving = sum('periodSaving');
@@ -113,12 +131,31 @@ export function calculateCustomerScenario(state, plans, offer, years, renewalCos
     }
     if (cumulative >= 0) paybackMonths = month;
   }
-  return { rows, annualSaving, periodSaving, activationCost, netSaving,
+  return { mode, rows, annualSaving, periodSaving, activationCost, netSaving,
     complete: rows.every((row) => row.complete), completed: rows.filter((row) => row.complete).length,
     baselineComplete: rows.every((row) => row.baselineValid),
     paybackMonths: paybackMonths ?? null,
     coveragePct: renewalCost > 0 ? Math.max(0, netSaving) / renewalCost * 100 : null,
     uncoveredRenewalCost: Math.max(0, renewalCost - netSaving) };
+}
+
+// Compare annualized contracts even when their durations differ. An unknown
+// previous price must never be interpreted as a zero-cost previous contract.
+export function calculateRenewalComparison(profile, scenario) {
+  const known = ['totalRenewalCost', 'renewalYears', 'previousRenewalCost', 'previousRenewalYears'].every((key) => numeric(profile[key])) &&
+    Number(profile.renewalYears) > 0 && Number(profile.previousRenewalYears) > 0;
+  const annual = known ? Number(profile.totalRenewalCost) / Number(profile.renewalYears) : null;
+  const previousAnnual = known ? Number(profile.previousRenewalCost) / Number(profile.previousRenewalYears) : null;
+  const annualUplift = known ? Math.max(0, annual - previousAnnual) : null;
+  const uplift = known ? annualUplift * Number(profile.renewalYears) : null;
+  return {
+    known, previousAnnual, annualUplift, uplift,
+    increasePct: known && previousAnnual > 0 ? (annual - previousAnnual) / previousAnnual * 100 : null,
+    annualCoveragePct: annualUplift > 0 ? Math.max(0, scenario.annualSaving) / annualUplift * 100 : null,
+    netCoveragePct: uplift > 0 ? Math.max(0, scenario.netSaving) / uplift * 100 : null,
+    remainingUplift: known ? Math.max(0, uplift - scenario.netSaving) : null,
+    netAfterUplift: known ? scenario.netSaving - uplift : null,
+  };
 }
 
 export function calculateNewBusinessCosts(state, scenario) {
