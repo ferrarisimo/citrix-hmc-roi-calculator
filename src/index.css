@@ -97,3 +97,16 @@
     font-weight: 800;
   }
 }
+
+@media print {
+  .app-shell:has(> .renewal-print) {
+    display: block !important;
+    max-width: none;
+    padding: 0;
+  }
+  .app-shell:has(> .renewal-print) > :not(.renewal-print) {
+    display: none !important;
+  }
+  .renewal-print .overflow-x-auto { overflow: visible; }
+  .print-report table tr { break-inside: avoid; }
+}

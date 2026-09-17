@@ -13,8 +13,9 @@ import {
   Cell,
 } from 'recharts';
 import { LABELS, detectBrowserLanguage } from './i18n/labels';
-import { RENEWAL_FEATURES } from './models/renewalFeatureCatalog';
-import { calculateRenewalValueModel } from './models/renewalValueModel';
+import { CustomerAssessment, AssessmentSummary, OpportunityPlanner, OpportunityTable, Input, Card, wording, buttonStyle } from './AssessmentWorkflow';
+import { calculateCustomerScenario, calculateNewBusinessCosts } from './models/customerAssessmentModel';
+import RenewalAssessmentView from './RenewalAssessmentView';
 
 const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES', de: 'de-DE' };
 
@@ -106,11 +107,8 @@ const DEFAULTS = {
     numberPc: 900,
     numberThinClient: 100,
     avgPcAgeYears: 3,
-    lifecyclePcTargetYears: 5,
-    pctPcReplaceableWithThinClient: 35,
     numberHosts: 8,
     coresPerHost: 48,
-    pctWorkloadsXenServerCompatible: 100,
     numberVpnAdcAppliances: 2,
     itDaysEndpointMgmt: 120,
     itDaysImageVdiMgmt: 90,
@@ -120,7 +118,6 @@ const DEFAULTS = {
   },
   cost: {
     costOnePc: 700,
-    costOneThinClient: 0,
     costHypervisorPerCoreYear: 100,
     costVpnAdcAppliance: 5000,
     applianceMaintenanceAnnualPct: 20,
@@ -131,13 +128,6 @@ const DEFAULTS = {
     costSocMsspAnnual: 20000,
     costRemediationPerEndpointYear: 40,
     costSysadminDay: 600,
-    reductionEffortEndpointPct: 35,
-    reductionEffortImagePct: 60,
-    reductionEffortSupportPct: 35,
-    reductionEffortAccessPct: 30,
-    residualEdrRatioWithHmc: 65,
-    residualDevicePostureRatioWithHmc: 30,
-    residualSecurityServicesRatioWithHmc: 70,
   },
   residuals: {
     residualHardwareInfra: 0,
@@ -147,58 +137,11 @@ const DEFAULTS = {
     profile: {
       renewalType: 'HMC',
       numberLicenses: 1000,
-      renewalPricePerUserYear: 420000,
       renewalYears: 3,
       totalRenewalCost: 1260000,
       previousRenewalCost: 1200000,
       previousRenewalYears: 3,
     },
-  },
-};
-
-const RENEWAL_DEFAULTS = {
-  profile: {
-    renewalType: 'HMC',
-    numberLicenses: 1000,
-    renewalPricePerUserYear: 420,
-    renewalYears: 3,
-    totalRenewalCost: 1260000,
-  },
-  adoption: {},
-  tech: {
-    numberHosts: 8,
-    coresPerHost: 48,
-    pctWorkloadsXenServerCompatible: 100,
-    numberVpnAdcAppliances: 2,
-    numberPc: 900,
-    numberThinClient: 100,
-    avgPcAgeYears: 3,
-    lifecyclePcTargetYears: 5,
-    pctPcReplaceableWithThinClient: 35,
-    pctRemoteHybridUsers: 60,
-    itDaysEndpointMgmt: 120,
-    itDaysImageVdiMgmt: 90,
-    itDaysSupport: 180,
-    itDaysAccessMgmt: 50,
-    itDaysSecurityOps: 60,
-  },
-  cost: {
-    costOnePc: 700,
-    costOneThinClient: 0,
-    costHypervisorPerCoreYear: 100,
-    costVpnAdcAppliance: 5000,
-    applianceMaintenanceAnnualPct: 20,
-    costMfaUserMonth: 4,
-    costZtnaUserMonth: 7,
-    costEdrEndpointMonth: 5,
-    costDevicePostureEndpointMonth: 2.5,
-    costSocMsspAnnual: 20000,
-    costRemediationPerEndpointYear: 40,
-    costSysadminDay: 600,
-    reductionEffortEndpointPct: 35,
-    reductionEffortImagePct: 60,
-    reductionEffortSupportPct: 35,
-    reductionEffortAccessPct: 30,
   },
 };
 
@@ -242,45 +185,6 @@ class AppErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-
-function Field({ label, value, onChange, prefix, suffix, help, step = '1' }) {
-  return (
-    <label className="block space-y-2">
-      <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-        {label}
-        {help ? <Help text={help} /> : null}
-      </span>
-      <div className="relative">
-        {prefix ? <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">{prefix}</span> : null}
-        <input
-          type="number"
-          value={value}
-          step={step}
-          min="0"
-          onChange={(e) => onChange(Number(e.target.value))}
-          className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 ${prefix ? 'pl-8' : ''} ${suffix ? 'pr-24' : ''}`}
-        />
-        {suffix ? <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">{suffix}</span> : null}
-      </div>
-    </label>
-  );
-}
-
-function RangeField({ label, value, onChange, help }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          {label}
-          {help ? <Help text={help} /> : null}
-        </span>
-        <span className="text-sm text-slate-500">{pct(value)}</span>
-      </div>
-      <input type="range" min="0" max="100" step="1" value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" />
-    </div>
-  );
-}
-
 
 const parseCsvLine = (line, delimiter = ',') => {
   const values = [];
@@ -540,145 +444,14 @@ function Kpi({ title, value, hint }) {
 }
 
 
-function ScenarioReport({ lang, state, model, rowLabels }) {
-  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
-  const positiveDelta = model.projectDelta >= 0;
-  const deltaMeaning = {
-    it: positiveDelta ? 'risparmio netto potenziale' : 'maggior costo netto potenziale',
-    en: positiveDelta ? 'potential net saving' : 'potential net additional cost',
-    es: positiveDelta ? 'ahorro neto potencial' : 'mayor coste neto potencial',
-    de: positiveDelta ? 'potenzielle Nettoeinsparung' : 'potenzielle Netto-Mehrkosten',
-  }[lang] ?? (positiveDelta ? 'potential net saving' : 'potential net additional cost');
-  const topRows = [...model.tableRows]
-    .filter((row) => row.key !== 'migrationProject')
-    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-    .slice(0, 5);
-  const topRowsText = topRows.map((row) => `${rowLabels[row.key]} (${eur(row.delta, lang)})`).join(', ');
-
-  return (
-    <article className="print-report">
-      <header className="report-hero">
-        <p className="report-kicker">{t('Report scenario ROI Citrix HMC', 'Citrix HMC ROI scenario report', 'Informe de escenario ROI Citrix HMC', 'Citrix HMC ROI-Szenariobericht')}</p>
-        <h1>{t('Riepilogo discorsivo dello scenario attuale e del confronto economico', 'Narrative summary of the current scenario and economic comparison', 'Resumen narrativo del escenario actual y de la comparación económica', 'Narrative Zusammenfassung des aktuellen Szenarios und des wirtschaftlichen Vergleichs')}</h1>
-        <p>{t('Documento generato automaticamente dai parametri impostati nel calcolatore. I valori riportati rappresentano una simulazione direzionale e devono essere validati con dati reali di cliente, contratti e perimetro tecnico.', 'Document automatically generated from the parameters configured in the calculator. The values shown are a directional simulation and must be validated with real customer data, contracts, and technical scope.', 'Documento generado automáticamente a partir de los parámetros configurados en la calculadora. Los valores mostrados son una simulación direccional y deben validarse con datos reales del cliente, contratos y alcance técnico.', 'Automatisch aus den im Rechner konfigurierten Parametern generiertes Dokument. Die ausgewiesenen Werte sind eine richtungsweisende Simulation und müssen mit realen Kundendaten, Verträgen und technischem Scope validiert werden.')}</p>
-      </header>
-
-      <section className="report-section">
-        <h2>{t('Scenario di partenza', 'Starting scenario', 'Escenario de partida', 'Ausgangsszenario')}</h2>
-        <p>{t(`Lo scenario analizzato considera ${model.users} utenti complessivi su un orizzonte di ${model.projectYears} anni. La popolazione di utenti remoti o ibridi è pari al ${pct(state.tech.pctRemoteHybridUsers)}, corrispondente a circa ${Math.round(model.remoteUsers)} utenti, mentre la quota BYOD impostata è pari al ${pct(state.tech.pctByodUsers)}. Il parco endpoint attuale comprende ${state.tech.numberPc} PC gestiti e ${state.tech.numberThinClient} thin client già presenti; l'età media dei PC è di ${state.tech.avgPcAgeYears} anni e il ciclo di vita target dopo l'adozione della piattaforma viene portato a ${state.tech.lifecyclePcTargetYears} anni. Nel modello, il ${pct(state.tech.pctPcReplaceableWithThinClient)} dei PC è considerato sostituibile o estendibile con un approccio più leggero, con impatto diretto sui costi di refresh hardware.`, `The analyzed scenario includes ${model.users} total users over a ${model.projectYears}-year horizon. Remote or hybrid users are set to ${pct(state.tech.pctRemoteHybridUsers)}, equal to about ${Math.round(model.remoteUsers)} users, while the BYOD share is ${pct(state.tech.pctByodUsers)}. The current endpoint estate includes ${state.tech.numberPc} managed PCs and ${state.tech.numberThinClient} existing thin clients; the average PC age is ${state.tech.avgPcAgeYears} years and the target lifecycle after platform adoption is ${state.tech.lifecyclePcTargetYears} years. In the model, ${pct(state.tech.pctPcReplaceableWithThinClient)} of PCs are considered replaceable or extendable with a lighter approach, directly affecting hardware refresh costs.`, `El escenario analizado incluye ${model.users} usuarios totales en un horizonte de ${model.projectYears} años. Los usuarios remotos o híbridos representan el ${pct(state.tech.pctRemoteHybridUsers)}, aproximadamente ${Math.round(model.remoteUsers)} usuarios, mientras que la cuota BYOD configurada es del ${pct(state.tech.pctByodUsers)}. El parque endpoint actual incluye ${state.tech.numberPc} PC gestionados y ${state.tech.numberThinClient} thin clients existentes; la edad media de los PC es de ${state.tech.avgPcAgeYears} años y el ciclo de vida objetivo tras adoptar la plataforma pasa a ${state.tech.lifecyclePcTargetYears} años. En el modelo, el ${pct(state.tech.pctPcReplaceableWithThinClient)} de los PC se considera sustituible o extensible con un enfoque más ligero, con impacto directo en los costes de renovación hardware.`, `Das analysierte Szenario umfasst ${model.users} Benutzer über einen Horizont von ${model.projectYears} Jahren. Remote- oder Hybrid-Benutzer sind mit ${pct(state.tech.pctRemoteHybridUsers)} angesetzt, also etwa ${Math.round(model.remoteUsers)} Benutzer, während der BYOD-Anteil ${pct(state.tech.pctByodUsers)} beträgt. Die aktuelle Endpoint-Landschaft umfasst ${state.tech.numberPc} verwaltete PCs und ${state.tech.numberThinClient} vorhandene Thin Clients; das durchschnittliche PC-Alter beträgt ${state.tech.avgPcAgeYears} Jahre und der Ziel-Lifecycle nach Plattformadoption wird auf ${state.tech.lifecyclePcTargetYears} Jahre erhöht. Im Modell gelten ${pct(state.tech.pctPcReplaceableWithThinClient)} der PCs als ersetzbar oder mit einem leichteren Ansatz verlängerbar, mit direktem Effekt auf Hardware-Refresh-Kosten.`)}</p>
-        <p>{t(`Sul fronte infrastrutturale sono stati impostati ${state.tech.numberHosts} host hypervisor con ${state.tech.coresPerHost} core medi per host, per un totale di ${model.totalCores} core. La quota di workload considerata migrabile su XenServer è pari al ${pct(model.migratableWorkloadPct)}: l'eventuale quota non migrabile mantiene nel modello una parte proporzionale dei costi del virtualizzatore esistente. Per l'accesso remoto e ADC sono presenti ${state.tech.numberVpnAdcAppliances} appliance, valorizzate con costo unitario di ${eur(state.cost.costVpnAdcAppliance, lang)} e manutenzione annua del ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `On the infrastructure side, ${state.tech.numberHosts} hypervisor hosts with ${state.tech.coresPerHost} average cores per host have been configured, for a total of ${model.totalCores} cores. The workload share considered migratable to XenServer is ${pct(model.migratableWorkloadPct)}: any non-migratable share keeps a proportional amount of existing virtualizer costs in the model. For remote access and ADC, ${state.tech.numberVpnAdcAppliances} appliances are present, valued at a unit cost of ${eur(state.cost.costVpnAdcAppliance, lang)} and annual maintenance of ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `En la capa de infraestructura se han configurado ${state.tech.numberHosts} hosts hypervisor con ${state.tech.coresPerHost} cores medios por host, para un total de ${model.totalCores} cores. La cuota de workloads considerada migrable a XenServer es del ${pct(model.migratableWorkloadPct)}: cualquier cuota no migrable mantiene en el modelo una parte proporcional de los costes del virtualizador existente. Para acceso remoto y ADC hay ${state.tech.numberVpnAdcAppliances} appliances, valoradas con un coste unitario de ${eur(state.cost.costVpnAdcAppliance, lang)} y mantenimiento anual del ${pct(state.cost.applianceMaintenanceAnnualPct)}.`, `Auf der Infrastrukturseite wurden ${state.tech.numberHosts} Hypervisor-Hosts mit durchschnittlich ${state.tech.coresPerHost} Cores pro Host konfiguriert, insgesamt ${model.totalCores} Cores. Der als zu XenServer migrierbar betrachtete Workload-Anteil beträgt ${pct(model.migratableWorkloadPct)}: Ein nicht migrierbarer Anteil behält im Modell proportional Kosten des bestehenden Virtualisierers bei. Für Remote Access und ADC sind ${state.tech.numberVpnAdcAppliances} Appliances vorhanden, bewertet mit Stückkosten von ${eur(state.cost.costVpnAdcAppliance, lang)} und jährlicher Wartung von ${pct(state.cost.applianceMaintenanceAnnualPct)}.`)}</p>
-      </section>
-
-      <section className="report-section">
-        <h2>{t('Assunzioni economiche e operative', 'Economic and operational assumptions', 'Supuestos económicos y operativos', 'Wirtschaftliche und operative Annahmen')}</h2>
-        <p>{t(`Il costo HMC è stato impostato a ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per utente al mese, con un costo iniziale di progetto pari a ${eur(model.migrationCostOneTime, lang)} imputato al primo anno. Il costo unitario di un nuovo PC è pari a ${eur(state.cost.costOnePc, lang)}, mentre il costo unitario thin client è pari a ${eur(state.cost.costOneThinClient, lang)}. Le componenti di sicurezza considerate nello scenario attuale includono MFA a ${eur(state.cost.costMfaUserMonth, lang, 1)} utente/mese, ZTNA a ${eur(state.cost.costZtnaUserMonth, lang, 1)} utente/mese, EDR a ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/mese, device posture a ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/mese, SOC/MSSP annuo pari a ${eur(state.cost.costSocMsspAnnual, lang)} e remediation media di ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/anno.`, `The HMC cost has been set to ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} per user per month, with an initial project cost of ${eur(model.migrationCostOneTime, lang)} allocated to year one. The unit cost of a new PC is ${eur(state.cost.costOnePc, lang)}, while the thin client unit cost is ${eur(state.cost.costOneThinClient, lang)}. Security components in the current scenario include MFA at ${eur(state.cost.costMfaUserMonth, lang, 1)} user/month, ZTNA at ${eur(state.cost.costZtnaUserMonth, lang, 1)} user/month, EDR at ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/month, device posture at ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/month, annual SOC/MSSP of ${eur(state.cost.costSocMsspAnnual, lang)}, and average remediation of ${eur(state.cost.costRemediationPerEndpointYear, lang)} per endpoint/year.`, `El coste HMC se ha configurado en ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} por usuario al mes, con un coste inicial de proyecto de ${eur(model.migrationCostOneTime, lang)} imputado al primer año. El coste unitario de un PC nuevo es ${eur(state.cost.costOnePc, lang)}, mientras que el coste unitario de thin client es ${eur(state.cost.costOneThinClient, lang)}. Los componentes de seguridad del escenario actual incluyen MFA a ${eur(state.cost.costMfaUserMonth, lang, 1)} usuario/mes, ZTNA a ${eur(state.cost.costZtnaUserMonth, lang, 1)} usuario/mes, EDR a ${eur(state.cost.costEdrEndpointMonth, lang, 1)} endpoint/mes, device posture a ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} endpoint/mes, SOC/MSSP anual de ${eur(state.cost.costSocMsspAnnual, lang)} y remediación media de ${eur(state.cost.costRemediationPerEndpointYear, lang)} por endpoint/año.`, `Die HMC-Kosten wurden auf ${eur(state.profile.hmcPricePerUserPerMonth, lang, 1)} pro Benutzer und Monat festgelegt, mit initialen Projektkosten von ${eur(model.migrationCostOneTime, lang)} im ersten Jahr. Die Stückkosten eines neuen PCs betragen ${eur(state.cost.costOnePc, lang)}, die Stückkosten eines Thin Clients ${eur(state.cost.costOneThinClient, lang)}. Die Sicherheitskomponenten im aktuellen Szenario umfassen MFA mit ${eur(state.cost.costMfaUserMonth, lang, 1)} Benutzer/Monat, ZTNA mit ${eur(state.cost.costZtnaUserMonth, lang, 1)} Benutzer/Monat, EDR mit ${eur(state.cost.costEdrEndpointMonth, lang, 1)} Endpoint/Monat, Device Posture mit ${eur(state.cost.costDevicePostureEndpointMonth, lang, 1)} Endpoint/Monat, jährliche SOC/MSSP-Kosten von ${eur(state.cost.costSocMsspAnnual, lang)} und durchschnittliche Remediation von ${eur(state.cost.costRemediationPerEndpointYear, lang)} pro Endpoint/Jahr.`)}</p>
-        <p>{t(`Le giornate IT annue valorizzate sono ${state.tech.itDaysEndpointMgmt} per endpoint management, ${state.tech.itDaysImageVdiMgmt} per image/VDI management, ${state.tech.itDaysSupport} per supporto, ${state.tech.itDaysAccessMgmt} per access management e ${state.tech.itDaysSecurityOps} per security operations, con costo giornata sistemistica pari a ${eur(state.cost.costSysadminDay, lang)}. Nel passaggio allo scenario HMC il modello applica riduzioni di effort pari al ${pct(state.cost.reductionEffortEndpointPct)} sull'endpoint management, ${pct(state.cost.reductionEffortImagePct)} sulle immagini, ${pct(state.cost.reductionEffortSupportPct)} sul supporto e ${pct(state.cost.reductionEffortAccessPct)} sull'access management.`, `The annual IT days valued are ${state.tech.itDaysEndpointMgmt} for endpoint management, ${state.tech.itDaysImageVdiMgmt} for image/VDI management, ${state.tech.itDaysSupport} for support, ${state.tech.itDaysAccessMgmt} for access management, and ${state.tech.itDaysSecurityOps} for security operations, with a sysadmin day cost of ${eur(state.cost.costSysadminDay, lang)}. In the HMC scenario, the model applies effort reductions of ${pct(state.cost.reductionEffortEndpointPct)} on endpoint management, ${pct(state.cost.reductionEffortImagePct)} on image management, ${pct(state.cost.reductionEffortSupportPct)} on support, and ${pct(state.cost.reductionEffortAccessPct)} on access management.`, `Los días anuales de TI valorados son ${state.tech.itDaysEndpointMgmt} para gestión endpoint, ${state.tech.itDaysImageVdiMgmt} para gestión de imagen/VDI, ${state.tech.itDaysSupport} para soporte, ${state.tech.itDaysAccessMgmt} para gestión de accesos y ${state.tech.itDaysSecurityOps} para operaciones de seguridad, con un coste diario de sysadmin de ${eur(state.cost.costSysadminDay, lang)}. En el escenario HMC, el modelo aplica reducciones de esfuerzo del ${pct(state.cost.reductionEffortEndpointPct)} en gestión endpoint, ${pct(state.cost.reductionEffortImagePct)} en gestión de imágenes, ${pct(state.cost.reductionEffortSupportPct)} en soporte y ${pct(state.cost.reductionEffortAccessPct)} en gestión de accesos.`, `Die bewerteten jährlichen IT-Tage betragen ${state.tech.itDaysEndpointMgmt} für Endpoint Management, ${state.tech.itDaysImageVdiMgmt} für Image/VDI Management, ${state.tech.itDaysSupport} für Support, ${state.tech.itDaysAccessMgmt} für Access Management und ${state.tech.itDaysSecurityOps} für Security Operations, bei einem Sysadmin-Tagessatz von ${eur(state.cost.costSysadminDay, lang)}. Im HMC-Szenario wendet das Modell Effort-Reduktionen von ${pct(state.cost.reductionEffortEndpointPct)} im Endpoint Management, ${pct(state.cost.reductionEffortImagePct)} im Image Management, ${pct(state.cost.reductionEffortSupportPct)} im Support und ${pct(state.cost.reductionEffortAccessPct)} im Access Management an.`)}</p>
-      </section>
-
-      <section className="report-section">
-        <h2>{t('Risultato economico sintetico', 'Economic summary', 'Resumen económico', 'Wirtschaftliche Zusammenfassung')}</h2>
-        <p>{t(`Sul periodo di ${model.projectYears} anni, il TCO dello scenario attuale è pari a ${eur(model.totalAsIs, lang)}, mentre il TCO dello scenario HMC è pari a ${eur(model.totalHmc, lang)}. Il delta complessivo è quindi pari a ${eur(model.projectDelta, lang)} e viene interpretato come ${deltaMeaning} rispetto allo scenario di partenza. Il ROI progetto calcolato come delta TCO su TCO HMC è pari a ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. In termini normalizzati, il costo annuo As-Is per utente è ${eur(model.asIsCostPerUserPerYear, lang)}, il costo annuo HMC per utente è ${eur(model.hmcCostPerUserPerYear, lang)} e il delta annuo per utente è ${eur(model.perUserPerYearDelta, lang)}.`, `Over the ${model.projectYears}-year period, the current scenario TCO is ${eur(model.totalAsIs, lang)}, while the HMC scenario TCO is ${eur(model.totalHmc, lang)}. The overall delta is therefore ${eur(model.projectDelta, lang)} and is interpreted as a ${deltaMeaning} compared with the starting scenario. Project ROI, calculated as TCO delta over HMC TCO, is ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. On a normalized basis, the annual As-Is cost per user is ${eur(model.asIsCostPerUserPerYear, lang)}, the annual HMC cost per user is ${eur(model.hmcCostPerUserPerYear, lang)}, and the annual per-user delta is ${eur(model.perUserPerYearDelta, lang)}.`, `Durante el periodo de ${model.projectYears} años, el TCO del escenario actual es ${eur(model.totalAsIs, lang)}, mientras que el TCO del escenario HMC es ${eur(model.totalHmc, lang)}. El delta global es por tanto ${eur(model.projectDelta, lang)} y se interpreta como ${deltaMeaning} frente al escenario de partida. El ROI del proyecto, calculado como delta TCO sobre TCO HMC, es ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. En términos normalizados, el coste anual As-Is por usuario es ${eur(model.asIsCostPerUserPerYear, lang)}, el coste anual HMC por usuario es ${eur(model.hmcCostPerUserPerYear, lang)} y el delta anual por usuario es ${eur(model.perUserPerYearDelta, lang)}.`, `Über den Zeitraum von ${model.projectYears} Jahren beträgt der TCO des aktuellen Szenarios ${eur(model.totalAsIs, lang)}, während der TCO des HMC-Szenarios ${eur(model.totalHmc, lang)} beträgt. Das Gesamtdelta beträgt damit ${eur(model.projectDelta, lang)} und wird gegenüber dem Ausgangsszenario als ${deltaMeaning} interpretiert. Der Projekt-ROI, berechnet als TCO-Delta über HMC-TCO, beträgt ${model.roiAnnual === null ? '—' : pct(model.roiAnnual * 100, 1)}. Normalisiert beträgt der jährliche As-Is-Kostenwert pro Benutzer ${eur(model.asIsCostPerUserPerYear, lang)}, der jährliche HMC-Kostenwert pro Benutzer ${eur(model.hmcCostPerUserPerYear, lang)} und das jährliche Delta pro Benutzer ${eur(model.perUserPerYearDelta, lang)}.`)}</p>
-        <p>{t(`Le principali aree che contribuiscono al delta economico sono: ${topRowsText}. Queste voci aiutano a leggere il risultato non come un singolo numero isolato, ma come somma di scelte architetturali, razionalizzazione licenze, semplificazione operativa, sicurezza integrata e gestione del ciclo di vita degli endpoint.`, `The main areas contributing to the economic delta are: ${topRowsText}. These items help interpret the result not as a single isolated number, but as the sum of architectural choices, license rationalization, operational simplification, integrated security, and endpoint lifecycle management.`, `Las principales áreas que contribuyen al delta económico son: ${topRowsText}. Estas partidas ayudan a interpretar el resultado no como un número aislado, sino como la suma de decisiones arquitectónicas, racionalización de licencias, simplificación operativa, seguridad integrada y gestión del ciclo de vida endpoint.`, `Die wichtigsten Bereiche, die zum wirtschaftlichen Delta beitragen, sind: ${topRowsText}. Diese Positionen helfen, das Ergebnis nicht als isolierte Einzelzahl zu verstehen, sondern als Summe aus Architekturentscheidungen, Lizenzrationalisierung, operativer Vereinfachung, integrierter Sicherheit und Endpoint-Lifecycle-Management.`)}</p>
-      </section>
-
-      <section className="report-section">
-        <h2>{t('Dettaglio costi sul periodo', 'Cost details over the period', 'Detalle de costes del periodo', 'Kostendetails über den Zeitraum')}</h2>
-        <table>
-          <thead><tr><th>{t('Voce', 'Item', 'Concepto', 'Position')}</th><th>{t('As-Is', 'As-Is', 'As-Is', 'As-Is')}</th><th>HMC</th><th>{t('Delta', 'Delta', 'Delta', 'Delta')}</th></tr></thead>
-          <tbody>
-            {model.tableRows.map((row) => (<tr key={row.key}><td>{rowLabels[row.key]}</td><td>{eur(row.asIs, lang)}</td><td>{eur(row.hmc, lang)}</td><td>{eur(row.delta, lang)}</td></tr>))}
-            <tr className="report-total"><td>{t(`Totale progetto (${model.projectYears} anni)`, `Project total (${model.projectYears} years)`, `Total del proyecto (${model.projectYears} años)`, `Projektsumme (${model.projectYears} Jahre)`)}</td><td>{eur(model.totalAsIs, lang)}</td><td>{eur(model.totalHmc, lang)}</td><td>{eur(model.projectDelta, lang)}</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </article>
-  );
+function ScenarioReport({ lang, state, model, rowLabels, opportunityModel }) {
+  const t = wording(lang);
+  return <article className="print-report"><header className="report-hero"><h1>New Business ROI</h1><p>{t('Profilo progetto', 'Project profile')}: {model.projectYears} {t('anni', 'years')} · HMC {eur(state.profile.hmcPricePerUserPerMonth, lang)} / {t('utente/mese', 'user/month')} · {t('Migrazione e interventi', 'Migration and implementation')}: {eur(model.migrationCostOneTime, lang)}</p><p>{(opportunityModel.complete && opportunityModel.baselineComplete) ? t('Scenario completato', 'Scenario complete') : t('SIMULAZIONE PARZIALE — assessment o obiettivi incompleti', 'PARTIAL SIMULATION — assessment or targets incomplete')}</p></header><OpportunityTable model={opportunityModel} lang={lang} /><h2>{t('Confronto economico sul periodo', 'Economic comparison over term')}</h2><table><thead><tr><th>{t('Voce', 'Item')}</th><th>As-Is</th><th>HMC</th><th>Delta</th></tr></thead><tbody>{model.tableRows.map((row) => <tr key={row.key}><td>{rowLabels[row.key]}</td><td>{eur(row.asIs, lang)}</td><td>{eur(row.hmc, lang)}</td><td>{eur(row.delta, lang)}</td></tr>)}<tr className="report-total"><td>{t('Totale', 'Total')}</td><td>{eur(model.totalAsIs, lang)}</td><td>{eur(model.totalHmc, lang)}</td><td>{eur(model.projectDelta, lang)}</td></tr></tbody></table></article>;
 }
-
-
-const average = (values) => {
-  const validValues = values.filter((value) => Number.isFinite(value));
-  return validValues.length ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length : 0;
-};
-
-const getFeatureAdoption = (renewal, feature) => {
-  const catalogAdoption = feature.adoption?.[feature.id] ?? {};
-  const stateAdoption = renewal.adoption?.[feature.id] ?? {};
-  return {
-    currentAdopted: false,
-    currentAdoptionPct: 0,
-    targetAdoptable: false,
-    potentialAdoptionPct: 0,
-    manualAnnualSaving: 0,
-    ...catalogAdoption,
-    ...stateAdoption,
-  };
-};
-
-const getRenewalFeatureSavingModel = (feature, renewal, adoption) => {
-  const { profile, tech, cost } = renewal;
-  const renewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
-  const numberLicenses = Math.max(Number(profile.numberLicenses) || 0, 0);
-  const numberPc = Math.max(Number(tech.numberPc) || 0, 0);
-  const remoteUsers = numberLicenses * (Math.min(Math.max(Number(tech.pctRemoteHybridUsers) || 0, 0), 100) / 100);
-  const totalCores = Math.max(Number(tech.numberHosts) || 0, 0) * Math.max(Number(tech.coresPerHost) || 0, 0);
-  const accessAppliancePurchaseCost = Math.max(Number(tech.numberVpnAdcAppliances) || 0, 0) * Math.max(Number(cost.costVpnAdcAppliance) || 0, 0);
-  const accessApplianceMaintenanceAnnual = accessAppliancePurchaseCost * ((Number(cost.applianceMaintenanceAnnualPct) || 0) / 100);
-  const replaceablePc = numberPc * (Math.min(Math.max(Number(tech.pctPcReplaceableWithThinClient) || 0, 0), 100) / 100);
-  const remainingPc = Math.max(numberPc - replaceablePc, 0);
-  const currentEndpointAnnualCost = numberPc * Math.max(Number(cost.costOnePc) || 0, 0) / Math.max(Number(tech.avgPcAgeYears) || 1, 1);
-  const optimizedEndpointAnnualCost =
-    remainingPc * Math.max(Number(cost.costOnePc) || 0, 0) / Math.max(Number(tech.lifecyclePcTargetYears) || 1, 1) +
-    replaceablePc * Math.max(Number(cost.costOneThinClient) || 0, 0) / 5;
-  const currentItEffortAnnualCost = (
-    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) +
-    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) +
-    Math.max(Number(tech.itDaysSupport) || 0, 0) +
-    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0)
-  ) * Math.max(Number(cost.costSysadminDay) || 0, 0);
-  const itEffortReductionNumerator =
-    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortEndpointPct) || 0, 0), 100) +
-    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortImagePct) || 0, 0), 100) +
-    Math.max(Number(tech.itDaysSupport) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortSupportPct) || 0, 0), 100) +
-    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0) * Math.min(Math.max(Number(cost.reductionEffortAccessPct) || 0, 0), 100);
-  const itEffortDays =
-    Math.max(Number(tech.itDaysEndpointMgmt) || 0, 0) +
-    Math.max(Number(tech.itDaysImageVdiMgmt) || 0, 0) +
-    Math.max(Number(tech.itDaysSupport) || 0, 0) +
-    Math.max(Number(tech.itDaysAccessMgmt) || 0, 0);
-  const averageReductionPct = itEffortDays > 0 ? itEffortReductionNumerator / itEffortDays / 100 : 0;
-  const manualAnnualSaving = Math.max(Number(adoption.manualAnnualSaving) || 0, 0);
-
-  const calculatedMaxSaving = {
-    xenserver: totalCores * Math.max(Number(cost.costHypervisorPerCoreYear) || 0, 0) * renewalYears,
-    netscaler: accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual * renewalYears,
-    uniconElux: Math.max(0, currentEndpointAnnualCost - optimizedEndpointAnnualCost) * renewalYears,
-    endpointLifecycle: Math.max(0, currentEndpointAnnualCost - optimizedEndpointAnnualCost) * renewalYears,
-    mfaZtna: (
-      numberLicenses * Math.max(Number(cost.costMfaUserMonth) || 0, 0) * 12 +
-      remoteUsers * Math.max(Number(cost.costZtnaUserMonth) || 0, 0) * 12
-    ) * renewalYears,
-    itEffort: currentItEffortAnnualCost * averageReductionPct * renewalYears,
-    securityOps: (
-      numberPc * Math.max(Number(cost.costEdrEndpointMonth) || 0, 0) * 12 +
-      numberPc * Math.max(Number(cost.costDevicePostureEndpointMonth) || 0, 0) * 12 +
-      Math.max(Number(cost.costSocMsspAnnual) || 0, 0) +
-      numberPc * Math.max(Number(cost.costRemediationPerEndpointYear) || 0, 0) +
-      Math.max(Number(tech.itDaysSecurityOps) || 0, 0) * Math.max(Number(cost.costSysadminDay) || 0, 0)
-    ) * renewalYears,
-  }[feature.calculationKey];
-
-  const isManualEstimate = feature.calculationKey?.startsWith('manual');
-  const maxSaving = isManualEstimate ? manualAnnualSaving * renewalYears : Math.max(Number(calculatedMaxSaving) || 0, 0);
-  return {
-    annualSaving: maxSaving / renewalYears,
-    maxSaving,
-    source: isManualEstimate ? 'manual' : 'automatic',
-  };
-};
 
 function ModeSelector({ mode, onChange, t }) {
   const options = [
+    { value: 'assessment', label: t('Assessment cliente', 'Customer assessment', 'Assessment cliente', 'Kunden-Assessment') },
     { value: 'newBusiness', label: 'New Business ROI' },
     { value: 'renewal', label: 'Renewal Value' },
   ];
@@ -701,490 +474,37 @@ function ModeSelector({ mode, onChange, t }) {
 }
 
 
-function RenewalScenarioReport({ lang, profile, featureRows, renewalValueModel, averageCurrentAdoptionPct, averagePotentialAdoptionPct }) {
-  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
-  const adoptedRows = featureRows.filter(({ adoption }) => adoption.currentAdopted);
-  const adoptableRows = featureRows.filter(({ adoption }) => adoption.targetAdoptable);
-  const featureList = (rows) => rows.length ? rows.map(({ feature }) => feature.label).join(', ') : t('Nessuna feature selezionata', 'No selected features', 'Ninguna funcionalidad seleccionada', 'Keine ausgewählten Funktionen');
-  const coverageValue = renewalValueModel.renewalCoverageRatio === null ? '—' : `${renewalValueModel.renewalCoverageRatio.toFixed(2)}x`;
-  const paybackValue = renewalValueModel.paybackMonths === null ? '—' : `${renewalValueModel.paybackMonths.toFixed(1)} ${t('mesi', 'months', 'meses', 'Monate')}`;
-  const antiChurnMessage = profile.renewalType === 'CPC'
-    ? t(
-      'Il rinnovo CPC va letto come una leva anti-churn per trasformare il rinnovo CVAD in un programma di ottimizzazione: XenServer riduce la dipendenza da hypervisor di terze parti, libera budget oggi assorbito da piattaforme sovrapposte e consente di valorizzare le funzionalità CVAD premium già incluse. L’adozione guidata riduce il rischio piattaforma, protegge la continuità del workspace e crea un percorso concreto di ottimizzazione infrastrutturale dopo il rinnovo.',
-      'The CPC renewal should be positioned as an anti-churn lever that turns the CVAD renewal into an optimization program: XenServer reduces dependence on third-party hypervisors, releases budget currently absorbed by overlapping platforms, and helps monetize included CVAD premium capabilities. Guided adoption reduces platform risk, protects workspace continuity, and creates a practical infrastructure-optimization path after renewal.',
-      'La renovación CPC debe leerse como una palanca anti-churn que convierte la renovación CVAD en un programa de optimización: XenServer reduce la dependencia de hypervisores de terceros, libera presupuesto absorbido por plataformas solapadas y permite valorizar las funcionalidades CVAD premium incluidas. La adopción guiada reduce el riesgo de plataforma, protege la continuidad del workspace y crea una ruta concreta de optimización infraestructural tras la renovación.',
-      'Das CPC-Renewal sollte als Anti-Churn-Hebel verstanden werden, der die CVAD-Verlängerung in ein Optimierungsprogramm verwandelt: XenServer reduziert die Abhängigkeit von Dritt-Hypervisoren, setzt Budget aus überlappenden Plattformen frei und erschließt den Wert enthaltener CVAD-Premium-Funktionen. Geführte Adoption reduziert Plattformrisiken, schützt die Workspace-Kontinuität und schafft einen konkreten Pfad zur Infrastruktur-Optimierung nach dem Renewal.'
-    )
-    : t(
-      'Il rinnovo HMC permette di spostare la conversazione dal solo prezzo alla riduzione strutturale dei costi: XenServer, NetScaler e Unicon/eLux creano un perimetro integrato per endpoint lifecycle, riduzione VPN/ADC, contenimento di MFA/ZTNA sovrapposti, minore effort IT e security cost optimization. Il messaggio anti-churn è quindi orientato a dimostrare che il rinnovo finanzia semplificazione operativa, razionalizzazione delle piattaforme e riduzione del rischio tecnico.',
-      'The HMC renewal shifts the conversation from price alone to structural cost reduction: XenServer, NetScaler, and Unicon/eLux create an integrated scope for endpoint lifecycle, VPN/ADC reduction, MFA/ZTNA overlap reduction, lower IT effort, and security cost optimization. The anti-churn message therefore shows that the renewal funds operational simplification, platform rationalization, and technical-risk reduction.',
-      'La renovación HMC permite mover la conversación desde el precio hacia la reducción estructural de costes: XenServer, NetScaler y Unicon/eLux crean un perímetro integrado para endpoint lifecycle, reducción de VPN/ADC, reducción de solapamientos MFA/ZTNA, menor esfuerzo TI y optimización de costes de seguridad. El mensaje anti-churn demuestra que la renovación financia simplificación operativa, racionalización de plataformas y reducción del riesgo técnico.',
-      'Das HMC-Renewal verschiebt die Diskussion vom reinen Preis hin zu struktureller Kostenreduktion: XenServer, NetScaler und Unicon/eLux schaffen einen integrierten Rahmen für Endpoint-Lifecycle, VPN/ADC-Reduktion, Reduktion überlappender MFA/ZTNA-Kosten, geringeren IT-Aufwand und Security Cost Optimization. Die Anti-Churn-Botschaft zeigt damit, dass das Renewal operative Vereinfachung, Plattform-Rationalisierung und technische Risikoreduktion finanziert.'
-    );
-
-  const rows = [
-    [t('Tipo rinnovo', 'Renewal type', 'Tipo renovación', 'Renewal-Typ'), profile.renewalType],
-    [t('Numero licenze', 'Number of licenses', 'Número de licencias', 'Anzahl Lizenzen'), Number(profile.numberLicenses).toLocaleString(localeByLanguage[lang] ?? 'en-US')],
-    [t('Durata', 'Duration', 'Duración', 'Laufzeit'), `${profile.renewalYears} ${t('anni', 'years', 'años', 'Jahre')}`],
-    [t('Prezzo rinnovo €/utente/anno', 'Renewal price €/user/year', 'Precio renovación €/usuario/año', 'Renewal-Preis €/Benutzer/Jahr'), eur(profile.renewalPricePerUserYear, lang, 1)],
-    [t('Costo rinnovo totale', 'Total renewal cost', 'Coste total renovación', 'Renewal-Gesamtkosten'), eur(renewalValueModel.renewalCost, lang)],
-  ];
-
-  return (
-    <SectionCard title={t('RenewalScenarioReport', 'RenewalScenarioReport', 'RenewalScenarioReport', 'RenewalScenarioReport')} subtitle={t('Report sintetico dello scenario di rinnovo, adoption e messaggio anti-churn.', 'Scenario report covering renewal profile, adoption, economics, and anti-churn messaging.', 'Informe sintético del escenario de renovación, adopción y mensaje anti-churn.', 'Szenariobericht zu Renewal-Profil, Adoption, Wirtschaftlichkeit und Anti-Churn-Botschaft.')}>
-      <div className="space-y-6 text-sm text-slate-700">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">1. {t('Profilo rinnovo', 'Renewal profile', 'Perfil renovación', 'Renewal-Profil')}</h4><dl className="mt-3 space-y-2">{rows.map(([label, value]) => <div key={label} className="flex justify-between gap-4"><dt>{label}</dt><dd className="font-semibold text-slate-950">{value}</dd></div>)}</dl></div>
-          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">2. {t('Adoption attuale', 'Current adoption', 'Adopción actual', 'Aktuelle Adoption')}</h4><p className="mt-3"><strong>{adoptedRows.length}</strong> {t('feature già adottate', 'already adopted features', 'funcionalidades ya adoptadas', 'bereits adoptierte Funktionen')}: {featureList(adoptedRows)}.</p><p className="mt-2">{t('Adoption media attuale', 'Average current adoption', 'Adopción media actual', 'Durchschnittliche aktuelle Adoption')}: <strong>{pct(averageCurrentAdoptionPct, 1)}</strong>.</p><p className="mt-2">{t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')}: <strong>{eur(renewalValueModel.alreadyRealizedSaving, lang)}</strong>.</p></div>
-          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">3. {t('Adoption potenziale', 'Potential adoption', 'Adopción potencial', 'Potenzielle Adoption')}</h4><p className="mt-3"><strong>{adoptableRows.length}</strong> {t('feature adottabili dopo rinnovo', 'features adoptable after renewal', 'funcionalidades adoptables tras renovación', 'nach Renewal adoptierbare Funktionen')}: {featureList(adoptableRows)}.</p><p className="mt-2">{t('Adoption media potenziale', 'Average potential adoption', 'Adopción media potencial', 'Durchschnittliche potenzielle Adoption')}: <strong>{pct(averagePotentialAdoptionPct, 1)}</strong>.</p><p className="mt-2">{t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')}: <strong>{eur(renewalValueModel.potentialSaving, lang)}</strong>. {t('Gap di adoption', 'Adoption gap', 'Gap de adopción', 'Adoptionslücke')}: <strong>{pct(renewalValueModel.adoptionGapPct, 1)}</strong>.</p></div>
-          <div className="rounded-2xl bg-slate-50 p-4"><h4 className="font-semibold text-slate-950">4. {t('Lettura economica', 'Economic reading', 'Lectura económica', 'Wirtschaftliche Lesart')}</h4><p className="mt-3">{t('Costo rinnovo', 'Renewal cost', 'Coste renovación', 'Renewal-Kosten')}: <strong>{eur(renewalValueModel.renewalCost, lang)}</strong>; {t('saving potenziale', 'potential saving', 'saving potencial', 'potenzielle Einsparung')}: <strong>{eur(renewalValueModel.potentialSaving, lang)}</strong>; {t('saving incrementale', 'incremental saving', 'saving incremental', 'inkrementelle Einsparung')}: <strong>{eur(renewalValueModel.incrementalSaving, lang)}</strong>.</p><p className="mt-2">{t('Renewal coverage ratio', 'Renewal coverage ratio', 'Renewal coverage ratio', 'Renewal Coverage Ratio')}: <strong>{coverageValue}</strong>; {t('valore netto rinnovo', 'net renewal value', 'valor neto renovación', 'Netto-Renewal-Wert')}: <strong>{eur(renewalValueModel.netRenewalValue, lang)}</strong>; payback: <strong>{paybackValue}</strong>.</p></div>
-        </div>
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-950"><h4 className="font-semibold">5. {t('Messaggio anti-churn', 'Anti-churn message', 'Mensaje anti-churn', 'Anti-Churn-Botschaft')}</h4><p className="mt-2 leading-6">{antiChurnMessage}</p></div>
-      </div>
-    </SectionCard>
-  );
-}
-
-function RenewalValueView({ lang, renewal, onRenewalProfileChange, onRenewalTechChange, onRenewalCostChange, onRenewalAdoptionChange }) {
-  const t = (itText, enText, esText, deText) => translate(lang, itText, enText, esText, deText);
-  const profile = renewal.profile;
-  const safeRenewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
-  const safeRenewalUsers = Math.max(Number(profile.numberLicenses) || 1, 1);
-  const safePreviousRenewalYears = Math.max(Number(profile.previousRenewalYears) || 1, 1);
-  const annualRenewalValue = profile.totalRenewalCost / safeRenewalYears;
-  const renewalPricePerUserYear = annualRenewalValue / safeRenewalUsers;
-  const previousRenewalAnnualCost = profile.previousRenewalCost / safePreviousRenewalYears;
-  const annualIncreasePct = previousRenewalAnnualCost > 0
-    ? ((annualRenewalValue - previousRenewalAnnualCost) / previousRenewalAnnualCost) * 100
-    : 0;
-  const visibleRenewalFeatures = RENEWAL_FEATURES.filter((feature) => feature.availableFor.includes(profile.renewalType));
-  const renewalValueModel = calculateRenewalValueModel(renewal, visibleRenewalFeatures);
-  const coveragePct = renewalValueModel.renewalCoverageRatio === null ? null : renewalValueModel.renewalCoverageRatio * 100;
-  const coverageInterpretation = coveragePct === null
-    ? t('Inserire un costo rinnovo per calcolare la copertura.', 'Enter a renewal cost to calculate coverage.', 'Introduce un coste de renovación para calcular la cobertura.', 'Renewal-Kosten eingeben, um die Abdeckung zu berechnen.')
-    : coveragePct < 100
-      ? t('Valore potenziale inferiore al costo rinnovo.', 'Potential value is lower than renewal cost.', 'El valor potencial es inferior al coste de renovación.', 'Der potenzielle Wert liegt unter den Renewal-Kosten.')
-      : coveragePct <= 150
-        ? t('Rinnovo coperto dal valore potenziale.', 'Renewal covered by potential value.', 'Renovación cubierta por el valor potencial.', 'Renewal durch potenziellen Wert abgedeckt.')
-        : t('Rinnovo fortemente giustificato.', 'Renewal strongly justified.', 'Renovación fuertemente justificada.', 'Renewal stark gerechtfertigt.');
-  const renewalFeatureRows = visibleRenewalFeatures.map((feature) => {
-    const adoption = getFeatureAdoption(renewal, feature);
-    const adoptionGapPct = Math.max(0, adoption.potentialAdoptionPct - adoption.currentAdoptionPct);
-    const savingModel = getRenewalFeatureSavingModel(feature, renewal, adoption);
-    const currentSaving = savingModel.maxSaving * (adoption.currentAdoptionPct / 100);
-    const potentialSaving = savingModel.maxSaving * (adoption.potentialAdoptionPct / 100);
-    return {
-      feature,
-      adoption,
-      adoptionGapPct,
-      savingModel,
-      currentSaving,
-      potentialSaving,
-      incrementalSaving: Math.max(0, potentialSaving - currentSaving),
-    };
-  });
-  const alreadyAdoptedFeaturesCount = renewalFeatureRows.filter(({ adoption }) => adoption.currentAdopted).length;
-  const adoptableFeaturesCount = renewalFeatureRows.filter(({ adoption }) => adoption.targetAdoptable).length;
-  const averageCurrentAdoptionPct = average(renewalFeatureRows.map(({ adoption }) => adoption.currentAdoptionPct));
-  const averagePotentialAdoptionPct = average(renewalFeatureRows.map(({ adoption }) => adoption.potentialAdoptionPct));
-
-  return (
-    <div className="space-y-6">
-      <SectionCard
-        title={t('Renewal Value', 'Renewal Value', 'Renewal Value', 'Renewal Value')}
-        subtitle={t(
-          'Vista dedicata alla valorizzazione dei rinnovi. Questa prima versione prepara lo spazio applicativo senza modificare il calcolatore New Business ROI esistente.',
-          'Dedicated view for renewal value. This first version prepares the application space without changing the existing New Business ROI calculator.',
-          'Vista dedicada al valor de renovación. Esta primera versión prepara el espacio aplicativo sin modificar la calculadora New Business ROI existente.',
-          'Dedizierte Ansicht für Renewal Value. Diese erste Version bereitet den Anwendungsbereich vor, ohne den bestehenden New Business ROI-Rechner zu ändern.'
-        )}
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Kpi title={t('Costo rinnovo', 'Renewal cost', 'Coste renovación', 'Renewal-Kosten')} value={eur(renewalValueModel.renewalCost, lang)} hint={t('renewalCost: costo totale del rinnovo inserito.', 'renewalCost: entered total renewal cost.', 'renewalCost: coste total de renovación introducido.', 'renewalCost: eingegebene Renewal-Gesamtkosten.')} />
-          <Kpi title={t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')} value={eur(renewalValueModel.alreadyRealizedSaving, lang)} hint={t('alreadyRealizedSaving: saving generato dall’adoption attuale.', 'alreadyRealizedSaving: saving generated by current adoption.', 'alreadyRealizedSaving: ahorro generado por la adopción actual.', 'alreadyRealizedSaving: Einsparung durch aktuelle Adoption.')} />
-          <Kpi title={t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')} value={eur(renewalValueModel.potentialSaving, lang)} hint={t('potentialSaving: valore massimo atteso con adoption potenziale.', 'potentialSaving: expected value with potential adoption.', 'potentialSaving: valor esperado con adopción potencial.', 'potentialSaving: erwarteter Wert bei potenzieller Adoption.')} />
-          <Kpi title={t('Saving incrementale', 'Incremental saving', 'Saving incremental', 'Inkrementelle Einsparung')} value={eur(renewalValueModel.incrementalSaving, lang)} hint={t('incrementalSaving: differenza tra saving potenziale e già realizzato.', 'incrementalSaving: difference between potential and already realized saving.', 'incrementalSaving: diferencia entre ahorro potencial y ya realizado.', 'incrementalSaving: Differenz zwischen potenzieller und bereits realisierter Einsparung.')} />
-          <Kpi title={t('Gap adoption medio', 'Average adoption gap', 'Gap adopción medio', 'Durchschnittliche Adoptionslücke')} value={pct(renewalValueModel.adoptionGapPct, 1)} hint={t('adoptionGapPct: gap medio tra adoption potenziale e attuale.', 'adoptionGapPct: average gap between potential and current adoption.', 'adoptionGapPct: brecha media entre adopción potencial y actual.', 'adoptionGapPct: durchschnittliche Lücke zwischen potenzieller und aktueller Adoption.')} />
-          <Kpi title={t('Coverage rinnovo', 'Renewal coverage', 'Cobertura renovación', 'Renewal-Abdeckung')} value={coveragePct === null ? '—' : pct(coveragePct, 1)} hint={coverageInterpretation} />
-          <Kpi title={t('Valore netto rinnovo', 'Net renewal value', 'Valor neto renovación', 'Netto-Renewal-Wert')} value={eur(renewalValueModel.netRenewalValue, lang)} hint={t('netRenewalValue: saving potenziale meno costo rinnovo.', 'netRenewalValue: potential saving minus renewal cost.', 'netRenewalValue: ahorro potencial menos coste de renovación.', 'netRenewalValue: potenzielle Einsparung minus Renewal-Kosten.')} />
-          <Kpi title={t('Payback', 'Payback', 'Payback', 'Payback')} value={renewalValueModel.paybackMonths === null ? '—' : `${renewalValueModel.paybackMonths.toFixed(1)} ${t('mesi', 'months', 'meses', 'Monate')}`} hint={t('paybackMonths: mesi stimati per coprire il rinnovo con saving incrementale.', 'paybackMonths: estimated months to cover renewal with incremental saving.', 'paybackMonths: meses estimados para cubrir la renovación con ahorro incremental.', 'paybackMonths: geschätzte Monate zur Deckung des Renewals mit inkrementeller Einsparung.')} />
-        </div>
-        <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-          <p className="font-semibold">{t('Interpretazione coverage rinnovo', 'Renewal coverage interpretation', 'Interpretación cobertura renovación', 'Interpretation der Renewal-Abdeckung')}</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>{t('< 100%: valore potenziale inferiore al costo rinnovo.', '< 100%: potential value is lower than renewal cost.', '< 100%: valor potencial inferior al coste de renovación.', '< 100%: potenzieller Wert unter den Renewal-Kosten.')}</li>
-            <li>{t('100% - 150%: rinnovo coperto dal valore potenziale.', '100% - 150%: renewal covered by potential value.', '100% - 150%: renovación cubierta por el valor potencial.', '100% - 150%: Renewal durch potenziellen Wert abgedeckt.')}</li>
-            <li>{t('> 150%: rinnovo fortemente giustificato.', '> 150%: renewal strongly justified.', '> 150%: renovación fuertemente justificada.', '> 150%: Renewal stark gerechtfertigt.')}</li>
-          </ul>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title={t('Profilo rinnovo', 'Renewal profile', 'Perfil de renovación', 'Renewal-Profil')}
-        subtitle={t(
-          'Input dedicati al modello renewal, con valore annuo calcolato dal costo totale inserito e confronto con il rinnovo precedente.',
-          'Dedicated renewal-model inputs, with the annual value calculated from the entered total cost and compared with the previous renewal.',
-          'Inputs dedicados al modelo de renovación, con valor anual calculado desde el coste total introducido y comparado con la renovación anterior.',
-          'Dedizierte Renewal-Modell-Eingaben mit Jahreswert aus den eingegebenen Gesamtkosten und Vergleich mit der vorherigen Verlängerung.'
-        )}
-      >
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Licenza rinnovata', 'Renewed license', 'Licencia renovada', 'Verlängerte Lizenz')}</span>
-            <select
-              value={profile.renewalType}
-              onChange={(e) => onRenewalProfileChange('renewalType', e.target.value)}
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
-            >
-              {['CPC', 'HMC'].map((type) => <option key={type} value={type}>{type}</option>)}
-            </select>
-          </label>
-          <Field label={t('Numero licenze', 'Number of licenses', 'Número de licencias', 'Anzahl Lizenzen')} value={profile.numberLicenses} onChange={(v) => onRenewalProfileChange('numberLicenses', v)} suffix={t('licenze', 'licenses', 'licencias', 'Lizenzen')} />
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Prezzo rinnovo per utente / anno', 'Renewal price per user / year', 'Precio renovación por usuario / año', 'Renewal-Preis pro Benutzer / Jahr')}</span>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
-              <input
-                type="number"
-                value={Number.isFinite(renewalPricePerUserYear) ? renewalPricePerUserYear : 0}
-                readOnly
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-8 pr-24 text-sm text-slate-600 outline-none"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">{t('/anno', '/year', '/año', '/Jahr')}</span>
-            </div>
-          </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo', 'Renewal years', 'Años renovación', 'Renewal-Jahre')}</span>
-            <select
-              value={profile.renewalYears}
-              onChange={(e) => onRenewalProfileChange('renewalYears', Number(e.target.value))}
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
-            >
-              {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
-          </label>
-          <Field label={t('Costo rinnovo totale proposto', 'Proposed total renewal cost', 'Coste total de renovación propuesto', 'Vorgeschlagene Renewal-Gesamtkosten')} value={profile.totalRenewalCost} onChange={(v) => onRenewalProfileChange('totalRenewalCost', v)} prefix="€" />
-        </div>
-        <div className="mt-6 border-t border-slate-100 pt-6">
-          <h4 className="text-sm font-semibold text-slate-900">{t('Confronto rinnovo precedente', 'Previous renewal comparison', 'Comparativa renovación anterior', 'Vergleich mit vorheriger Verlängerung')}</h4>
-          <div className="mt-4 grid gap-5 md:grid-cols-3">
-            <Field label={t('Costo rinnovo precedente', 'Previous renewal cost', 'Coste renovación anterior', 'Vorherige Renewal-Kosten')} value={profile.previousRenewalCost} onChange={(v) => onRenewalProfileChange('previousRenewalCost', v)} prefix="€" />
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-700">{t('Anni rinnovo precedente', 'Previous renewal years', 'Años renovación anterior', 'Vorherige Renewal-Jahre')}</span>
-              <select
-                value={profile.previousRenewalYears}
-                onChange={(e) => onRenewalProfileChange('previousRenewalYears', Number(e.target.value))}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
-              >
-                {[1, 3, 5].map((year) => <option key={year} value={year}>{year}</option>)}
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-700">{t('Aumento annuo vs rinnovo precedente', 'Annual increase vs previous renewal', 'Incremento anual vs renovación anterior', 'Jährliche Steigerung vs. vorherige Verlängerung')}</span>
-              <input
-                type="text"
-                value={pct(annualIncreasePct, 1)}
-                readOnly
-                className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold outline-none ${annualIncreasePct >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`}
-              />
-            </label>
-          </div>
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <Kpi title={t('Costo rinnovo inserito', 'Entered renewal cost', 'Coste renovación introducido', 'Eingegebene Renewal-Kosten')} value={eur(profile.totalRenewalCost, lang)} hint={t('Valore manuale usato come totale renewal inserito.', 'Manual value used as the entered renewal total.', 'Valor manual usado como total de renovación introducido.', 'Manueller Wert als eingegebene Renewal-Summe.')} />
-          <Kpi title={t('Valore annuo rinnovo', 'Annual renewal value', 'Valor anual renovación', 'Jährlicher Renewal-Wert')} value={eur(annualRenewalValue, lang)} hint={t('Costo rinnovo totale inserito diviso per gli anni di rinnovo.', 'Entered total renewal cost divided by renewal years.', 'Coste total de renovación introducido dividido por los años de renovación.', 'Eingegebene Renewal-Gesamtkosten geteilt durch Renewal-Jahre.')} />
-          <Kpi title={t('Valore annuo rinnovo precedente', 'Previous annual renewal value', 'Valor anual renovación anterior', 'Vorheriger jährlicher Renewal-Wert')} value={eur(previousRenewalAnnualCost, lang)} hint={t('Costo rinnovo precedente diviso per i relativi anni di rinnovo.', 'Previous renewal cost divided by its renewal years.', 'Coste de renovación anterior dividido por sus años de renovación.', 'Vorherige Renewal-Kosten geteilt durch die entsprechenden Renewal-Jahre.')} />
-        </div>
-      </SectionCard>
-
-      {profile.renewalType === 'CPC' ? (
-        <SectionCard
-          title={t('Assunzioni saving CPC', 'CPC saving assumptions', 'Supuestos de saving CPC', 'CPC-Saving-Annahmen')}
-          subtitle={t('XenServer è calcolato automaticamente da host, core e costo hypervisor. Le altre aree CPC usano stime manuali annue.', 'XenServer is calculated automatically from hosts, cores, and hypervisor cost. The other CPC areas use manual annual estimates.', 'XenServer se calcula automáticamente a partir de hosts, cores y coste de hypervisor. Las demás áreas CPC usan estimaciones manuales anuales.', 'XenServer wird automatisch aus Hosts, Cores und Hypervisor-Kosten berechnet. Die anderen CPC-Bereiche verwenden manuelle jährliche Schätzungen.')}
-        >
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            <Field label={t('Host XenServer', 'XenServer hosts', 'Hosts XenServer', 'XenServer-Hosts')} value={renewal.tech.numberHosts} onChange={(v) => onRenewalTechChange('numberHosts', v)} suffix="host" />
-            <Field label={t('Core per host', 'Cores per host', 'Cores por host', 'Cores pro Host')} value={renewal.tech.coresPerHost} onChange={(v) => onRenewalTechChange('coresPerHost', v)} suffix="core" />
-            <Field label={t('Costo hypervisor per core / anno', 'Hypervisor cost per core / year', 'Coste hypervisor por core / año', 'Hypervisor-Kosten pro Core / Jahr')} value={renewal.cost.costHypervisorPerCoreYear} onChange={(v) => onRenewalCostChange('costHypervisorPerCoreYear', v)} prefix="€" />
-            <Field label={t('Saving annuo manuale CVAD premium', 'Manual annual CVAD premium saving', 'Saving anual manual CVAD premium', 'Manuelles jährliches CVAD-Premium-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'cvadPremiumFeatures')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('cvadPremiumFeatures', 'manualAnnualSaving', v)} prefix="€" />
-            <Field label={t('Saving annuo manuale platform risk', 'Manual annual platform risk saving', 'Saving anual manual platform risk', 'Manuelles jährliches Platform-Risk-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'platformRiskReduction')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('platformRiskReduction', 'manualAnnualSaving', v)} prefix="€" />
-            <Field label={t('Saving annuo manuale infrastructure optimization', 'Manual annual infrastructure optimization saving', 'Saving anual manual infrastructure optimization', 'Manuelles jährliches Infrastructure-Optimization-Saving')} value={getFeatureAdoption(renewal, RENEWAL_FEATURES.find((feature) => feature.id === 'infrastructureOptimization')).manualAnnualSaving} onChange={(v) => onRenewalAdoptionChange('infrastructureOptimization', 'manualAnnualSaving', v)} prefix="€" />
-          </div>
-        </SectionCard>
-      ) : null}
-
-      {profile.renewalType === 'HMC' ? (
-        <SectionCard
-          title={t('Assunzioni saving HMC', 'HMC saving assumptions', 'Supuestos de saving HMC', 'HMC-Saving-Annahmen')}
-          subtitle={t(
-            'Parametri manuali usati per calcolare i saving massimi HMC. XenServer usa la stessa logica CPC; le altre leve usano input espliciti per NetScaler, Unicon/eLux, MFA/ZTNA, effort IT e security operations.',
-            'Manual parameters used to calculate HMC maximum savings. XenServer uses the same CPC logic; the other levers use explicit inputs for NetScaler, Unicon/eLux, MFA/ZTNA, IT effort, and security operations.',
-            'Parámetros manuales usados para calcular los savings máximos HMC. XenServer usa la misma lógica CPC; las demás palancas usan inputs explícitos para NetScaler, Unicon/eLux, MFA/ZTNA, esfuerzo TI y operaciones de seguridad.',
-            'Manuelle Parameter zur Berechnung maximaler HMC-Einsparungen. XenServer nutzt dieselbe CPC-Logik; die anderen Hebel verwenden explizite Eingaben für NetScaler, Unicon/eLux, MFA/ZTNA, IT-Aufwand und Security Operations.'
-          )}
-        >
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-semibold text-slate-900">{t('XenServer', 'XenServer', 'XenServer', 'XenServer')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label={t('Host XenServer', 'XenServer hosts', 'Hosts XenServer', 'XenServer-Hosts')} value={renewal.tech.numberHosts} onChange={(v) => onRenewalTechChange('numberHosts', v)} suffix="host" />
-                <Field label={t('Core per host', 'Cores per host', 'Cores por host', 'Cores pro Host')} value={renewal.tech.coresPerHost} onChange={(v) => onRenewalTechChange('coresPerHost', v)} suffix="core" />
-                <Field label={t('Costo hypervisor per core / anno', 'Hypervisor cost per core / year', 'Coste hypervisor por core / año', 'Hypervisor-Kosten pro Core / Jahr')} value={renewal.cost.costHypervisorPerCoreYear} onChange={(v) => onRenewalCostChange('costHypervisorPerCoreYear', v)} prefix="€" />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-sm font-semibold text-slate-900">{t('NetScaler / VPN / ADC', 'NetScaler / VPN / ADC', 'NetScaler / VPN / ADC', 'NetScaler / VPN / ADC')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label={t('Numero appliance VPN/ADC', 'VPN/ADC appliances', 'Appliances VPN/ADC', 'VPN/ADC-Appliances')} value={renewal.tech.numberVpnAdcAppliances} onChange={(v) => onRenewalTechChange('numberVpnAdcAppliances', v)} suffix="appliance" />
-                <Field label={t('Costo appliance VPN/ADC', 'VPN/ADC appliance cost', 'Coste appliance VPN/ADC', 'VPN/ADC-Appliance-Kosten')} value={renewal.cost.costVpnAdcAppliance} onChange={(v) => onRenewalCostChange('costVpnAdcAppliance', v)} prefix="€" />
-                <Field label={t('Manutenzione annua appliance', 'Annual appliance maintenance', 'Mantenimiento anual appliance', 'Jährliche Appliance-Wartung')} value={renewal.cost.applianceMaintenanceAnnualPct} onChange={(v) => onRenewalCostChange('applianceMaintenanceAnnualPct', v)} suffix="%" />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-sm font-semibold text-slate-900">{t('Unicon/eLux ed endpoint lifecycle', 'Unicon/eLux and endpoint lifecycle', 'Unicon/eLux y lifecycle endpoint', 'Unicon/eLux und Endpoint-Lifecycle')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label={t('Numero PC', 'Number of PCs', 'Número de PCs', 'Anzahl PCs')} value={renewal.tech.numberPc} onChange={(v) => onRenewalTechChange('numberPc', v)} suffix="PC" />
-                <Field label={t('Costo nuovo PC', 'New PC cost', 'Coste nuevo PC', 'Kosten neuer PC')} value={renewal.cost.costOnePc} onChange={(v) => onRenewalCostChange('costOnePc', v)} prefix="€" />
-                <Field label={t('Età media PC', 'Average PC age', 'Edad media PC', 'Durchschnittliches PC-Alter')} value={renewal.tech.avgPcAgeYears} onChange={(v) => onRenewalTechChange('avgPcAgeYears', v)} suffix={t('anni', 'years', 'años', 'Jahre')} />
-                <Field label={t('Lifecycle target PC', 'Target PC lifecycle', 'Lifecycle objetivo PC', 'Ziel-PC-Lifecycle')} value={renewal.tech.lifecyclePcTargetYears} onChange={(v) => onRenewalTechChange('lifecyclePcTargetYears', v)} suffix={t('anni', 'years', 'años', 'Jahre')} />
-                <Field label={t('PC sostituibili con thin client', 'PCs replaceable with thin clients', 'PCs sustituibles por thin clients', 'Durch Thin Clients ersetzbare PCs')} value={renewal.tech.pctPcReplaceableWithThinClient} onChange={(v) => onRenewalTechChange('pctPcReplaceableWithThinClient', v)} suffix="%" />
-                <Field label={t('Costo thin client', 'Thin client cost', 'Coste thin client', 'Thin-Client-Kosten')} value={renewal.cost.costOneThinClient} onChange={(v) => onRenewalCostChange('costOneThinClient', v)} prefix="€" />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-sm font-semibold text-slate-900">{t('MFA/ZTNA overlap', 'MFA/ZTNA overlap', 'Overlap MFA/ZTNA', 'MFA/ZTNA-Overlap')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label={t('Utenti remoti / hybrid', 'Remote / hybrid users', 'Usuarios remotos / híbridos', 'Remote-/Hybrid-Benutzer')} value={renewal.tech.pctRemoteHybridUsers} onChange={(v) => onRenewalTechChange('pctRemoteHybridUsers', v)} suffix="%" />
-                <Field label={t('Costo MFA / utente / mese', 'MFA cost / user / month', 'Coste MFA / usuario / mes', 'MFA-Kosten / Benutzer / Monat')} value={renewal.cost.costMfaUserMonth} onChange={(v) => onRenewalCostChange('costMfaUserMonth', v)} prefix="€" />
-                <Field label={t('Costo ZTNA / utente / mese', 'ZTNA cost / user / month', 'Coste ZTNA / usuario / mes', 'ZTNA-Kosten / Benutzer / Monat')} value={renewal.cost.costZtnaUserMonth} onChange={(v) => onRenewalCostChange('costZtnaUserMonth', v)} prefix="€" />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-sm font-semibold text-slate-900">{t('IT effort reduction', 'IT effort reduction', 'Reducción esfuerzo TI', 'IT-Aufwandsreduktion')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                <Field label={t('Giorni IT endpoint management', 'IT days endpoint management', 'Días TI gestión endpoint', 'IT-Tage Endpoint Management')} value={renewal.tech.itDaysEndpointMgmt} onChange={(v) => onRenewalTechChange('itDaysEndpointMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
-                <Field label={t('Riduzione endpoint', 'Endpoint reduction', 'Reducción endpoint', 'Endpoint-Reduktion')} value={renewal.cost.reductionEffortEndpointPct} onChange={(v) => onRenewalCostChange('reductionEffortEndpointPct', v)} suffix="%" />
-                <Field label={t('Giorni IT image/VDI', 'IT days image/VDI', 'Días TI imagen/VDI', 'IT-Tage Image/VDI')} value={renewal.tech.itDaysImageVdiMgmt} onChange={(v) => onRenewalTechChange('itDaysImageVdiMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
-                <Field label={t('Riduzione image/VDI', 'Image/VDI reduction', 'Reducción imagen/VDI', 'Image/VDI-Reduktion')} value={renewal.cost.reductionEffortImagePct} onChange={(v) => onRenewalCostChange('reductionEffortImagePct', v)} suffix="%" />
-                <Field label={t('Giorni IT support', 'IT days support', 'Días TI soporte', 'IT-Tage Support')} value={renewal.tech.itDaysSupport} onChange={(v) => onRenewalTechChange('itDaysSupport', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
-                <Field label={t('Riduzione support', 'Support reduction', 'Reducción soporte', 'Support-Reduktion')} value={renewal.cost.reductionEffortSupportPct} onChange={(v) => onRenewalCostChange('reductionEffortSupportPct', v)} suffix="%" />
-                <Field label={t('Giorni IT access management', 'IT days access management', 'Días TI gestión accesos', 'IT-Tage Access Management')} value={renewal.tech.itDaysAccessMgmt} onChange={(v) => onRenewalTechChange('itDaysAccessMgmt', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
-                <Field label={t('Riduzione access', 'Access reduction', 'Reducción accesos', 'Access-Reduktion')} value={renewal.cost.reductionEffortAccessPct} onChange={(v) => onRenewalCostChange('reductionEffortAccessPct', v)} suffix="%" />
-                <Field label={t('Costo giornata sysadmin', 'Sysadmin day cost', 'Coste día sysadmin', 'Sysadmin-Tagessatz')} value={renewal.cost.costSysadminDay} onChange={(v) => onRenewalCostChange('costSysadminDay', v)} prefix="€" />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-sm font-semibold text-slate-900">{t('EDR/Posture/SOC optimization', 'EDR/Posture/SOC optimization', 'Optimización EDR/Posture/SOC', 'EDR/Posture/SOC-Optimierung')}</h4>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <Field label={t('Costo EDR / endpoint / mese', 'EDR cost / endpoint / month', 'Coste EDR / endpoint / mes', 'EDR-Kosten / Endpoint / Monat')} value={renewal.cost.costEdrEndpointMonth} onChange={(v) => onRenewalCostChange('costEdrEndpointMonth', v)} prefix="€" />
-                <Field label={t('Costo posture / endpoint / mese', 'Posture cost / endpoint / month', 'Coste posture / endpoint / mes', 'Posture-Kosten / Endpoint / Monat')} value={renewal.cost.costDevicePostureEndpointMonth} onChange={(v) => onRenewalCostChange('costDevicePostureEndpointMonth', v)} prefix="€" />
-                <Field label={t('Costo SOC/MSSP annuo', 'Annual SOC/MSSP cost', 'Coste anual SOC/MSSP', 'Jährliche SOC/MSSP-Kosten')} value={renewal.cost.costSocMsspAnnual} onChange={(v) => onRenewalCostChange('costSocMsspAnnual', v)} prefix="€" />
-                <Field label={t('Remediation per endpoint / anno', 'Remediation per endpoint / year', 'Remediation por endpoint / año', 'Remediation pro Endpoint / Jahr')} value={renewal.cost.costRemediationPerEndpointYear} onChange={(v) => onRenewalCostChange('costRemediationPerEndpointYear', v)} prefix="€" />
-                <Field label={t('Giorni security operations', 'Security operations days', 'Días security operations', 'Security-Operations-Tage')} value={renewal.tech.itDaysSecurityOps} onChange={(v) => onRenewalTechChange('itDaysSecurityOps', v)} suffix={t('giorni/anno', 'days/year', 'días/año', 'Tage/Jahr')} />
-              </div>
-            </div>
-          </div>
-        </SectionCard>
-      ) : null}
-
-      <RenewalScenarioReport
-        lang={lang}
-        profile={profile}
-        featureRows={renewalFeatureRows}
-        renewalValueModel={renewalValueModel}
-        averageCurrentAdoptionPct={averageCurrentAdoptionPct}
-        averagePotentialAdoptionPct={averagePotentialAdoptionPct}
-      />
-
-      <SectionCard
-        title={t('Catalogo feature renewal', 'Renewal feature catalog', 'Catálogo de funcionalidades renewal', 'Renewal-Funktionskatalog')}
-        subtitle={t(
-          `Feature disponibili per il rinnovo ${profile.renewalType}, incluse quelle comuni a CPC e HMC.`,
-          `Features available for the ${profile.renewalType} renewal, including capabilities common to CPC and HMC.`,
-          `Funcionalidades disponibles para la renovación ${profile.renewalType}, incluidas las comunes a CPC y HMC.`,
-          `Für die ${profile.renewalType}-Verlängerung verfügbare Funktionen, einschließlich gemeinsamer CPC- und HMC-Funktionen.`
-        )}
-      >
-        <div className="mb-5 grid gap-4 md:grid-cols-4">
-          <Kpi title={t('Feature già adottate', 'Already adopted features', 'Funcionalidades ya adoptadas', 'Bereits adoptierte Funktionen')} value={`${alreadyAdoptedFeaturesCount}/${visibleRenewalFeatures.length}`} hint={t('Conteggio feature visibili con currentAdopted attivo.', 'Count of visible features with currentAdopted enabled.', 'Recuento de funcionalidades visibles con currentAdopted activo.', 'Anzahl sichtbarer Funktionen mit aktivem currentAdopted.')} />
-          <Kpi title={t('Feature adottabili', 'Adoptable features', 'Funcionalidades adoptables', 'Adoptierbare Funktionen')} value={`${adoptableFeaturesCount}/${visibleRenewalFeatures.length}`} hint={t('Conteggio feature visibili con targetAdoptable attivo.', 'Count of visible features with targetAdoptable enabled.', 'Recuento de funcionalidades visibles con targetAdoptable activo.', 'Anzahl sichtbarer Funktionen mit aktivem targetAdoptable.')} />
-          <Kpi title={t('Adoption attuale media', 'Average current adoption', 'Adopción actual media', 'Durchschnittliche aktuelle Adoption')} value={pct(averageCurrentAdoptionPct, 1)} hint={t('Media delle percentuali attuali delle feature rilevanti.', 'Average current percentage across relevant features.', 'Media de porcentajes actuales de las funcionalidades relevantes.', 'Durchschnitt aktueller Prozentwerte relevanter Funktionen.')} />
-          <Kpi title={t('Adoption potenziale media', 'Average potential adoption', 'Adopción potencial media', 'Durchschnittliche potenzielle Adoption')} value={pct(averagePotentialAdoptionPct, 1)} hint={t('Media delle percentuali potenziali delle feature rilevanti.', 'Average potential percentage across relevant features.', 'Media de porcentajes potenciales de las funcionalidades relevantes.', 'Durchschnitt potenzieller Prozentwerte relevanter Funktionen.')} />
-        </div>
-        <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">{t('Feature', 'Feature', 'Funcionalidad', 'Funktion')}</th>
-                <th className="px-4 py-3">{t('Categoria', 'Category', 'Categoría', 'Kategorie')}</th>
-                <th className="px-4 py-3">{t('Già adottata', 'Already adopted', 'Ya adoptada', 'Bereits adoptiert')}</th>
-                <th className="px-4 py-3">{t('Adoption attuale %', 'Current adoption %', 'Adopción actual %', 'Aktuelle Adoption %')}</th>
-                <th className="px-4 py-3">{t('Adottabile dopo rinnovo', 'Adoptable after renewal', 'Adoptable tras renovación', 'Nach Renewal adoptierbar')}</th>
-                <th className="px-4 py-3">{t('Adoption potenziale %', 'Potential adoption %', 'Adopción potencial %', 'Potenzielle Adoption %')}</th>
-                <th className="px-4 py-3">{t('Origine saving', 'Saving source', 'Origen saving', 'Saving-Quelle')}</th>
-                <th className="px-4 py-3">{t('Saving massimo periodo', 'Maximum period saving', 'Saving máximo periodo', 'Maximales Perioden-Saving')}</th>
-                <th className="px-4 py-3">{t('Gap adoption', 'Adoption gap', 'Gap adopción', 'Adoptionslücke')}</th>
-                <th className="px-4 py-3">{t('Saving già realizzato', 'Already realized saving', 'Saving ya realizado', 'Bereits realisierte Einsparung')}</th>
-                <th className="px-4 py-3">{t('Saving potenziale', 'Potential saving', 'Saving potencial', 'Potenzielle Einsparung')}</th>
-                <th className="px-4 py-3">{t('Saving incrementale', 'Incremental saving', 'Saving incremental', 'Inkrementelle Einsparung')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
-              {renewalFeatureRows.map(({ feature, adoption, adoptionGapPct, savingModel, currentSaving, potentialSaving, incrementalSaving }) => (
-                <tr key={feature.id}>
-                  <td className="px-4 py-3 font-semibold text-slate-950">{feature.label}</td>
-                  <td className="px-4 py-3">{feature.category}</td>
-                  <td className="px-4 py-3">{adoption.currentAdopted ? t('Sì', 'Yes', 'Sí', 'Ja') : t('No', 'No', 'No', 'Nein')}</td>
-                  <td className="px-4 py-3">{pct(adoption.currentAdoptionPct, 0)}</td>
-                  <td className="px-4 py-3">{adoption.targetAdoptable ? t('Sì', 'Yes', 'Sí', 'Ja') : t('No', 'No', 'No', 'Nein')}</td>
-                  <td className="px-4 py-3">{pct(adoption.potentialAdoptionPct, 0)}</td>
-                  <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${savingModel.source === 'automatic' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{savingModel.source === 'automatic' ? t('Automatico', 'Automatic', 'Automático', 'Automatisch') : t('Manuale stimato', 'Manual estimate', 'Estimación manual', 'Manuelle Schätzung')}</span></td>
-                  <td className="px-4 py-3">{eur(savingModel.maxSaving, lang)}</td>
-                  <td className="px-4 py-3 font-semibold text-blue-700">{pct(adoptionGapPct, 0)}</td>
-                  <td className="px-4 py-3">{eur(currentSaving, lang)}</td>
-                  <td className="px-4 py-3">{eur(potentialSaving, lang)}</td>
-                  <td className="px-4 py-3 font-semibold text-emerald-700">{eur(incrementalSaving, lang)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
-    </div>
-  );
-}
-
 export default function App() {
   const [state, setState] = useState(DEFAULTS);
-  const [renewalState, setRenewalState] = useState(RENEWAL_DEFAULTS);
+  const [renewalProfile, setRenewalProfile] = useState(DEFAULTS.renewal.profile);
+  const [renewalPlans, setRenewalPlans] = useState({});
+  const [businessPlans, setBusinessPlans] = useState({});
   const [lang, setLang] = useState(detectBrowserLanguage());
-  const [showCustomization, setShowCustomization] = useState(false);
-  const [customTab, setCustomTab] = useState('params');
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [view, setView] = useState('roi');
-  const [calculatorMode, setCalculatorMode] = useState('newBusiness');
+  const [calculatorMode, setCalculatorMode] = useState('assessment');
   const copy = LABELS[lang];
-  const t = (itText, enText, esText) => translate(lang, itText, enText, esText);
+  const t = (it, en, es, de) => translate(lang, it, en, es, de);
 
   const setProfile = (key, value) => setState((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
-  const setTech = (key, value) => setState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
-  const setCost = (key, value) => setState((s) => ({ ...s, cost: { ...s.cost, [key]: value } }));
-  const setResidual = (key, value) => setState((s) => ({ ...s, residuals: { ...s.residuals, [key]: value } }));
-  const setRenewalProfile = (key, value) => setRenewalState((s) => {
-    const profile = { ...s.profile, [key]: value };
-    const renewalYears = Math.max(Number(profile.renewalYears) || 1, 1);
-    const renewalUsers = Math.max(Number(profile.numberLicenses) || 1, 1);
-    profile.renewalPricePerUserYear = profile.totalRenewalCost / renewalYears / renewalUsers;
-    return { ...s, profile };
-  });
-  const setRenewalTech = (key, value) => setRenewalState((s) => ({ ...s, tech: { ...s.tech, [key]: value } }));
-  const setRenewalCost = (key, value) => setRenewalState((s) => ({ ...s, cost: { ...s.cost, [key]: value } }));
-  const setRenewalAdoption = (featureId, key, value) => setRenewalState((s) => ({
-    ...s,
-    adoption: {
-      ...s.adoption,
-      [featureId]: {
-        ...s.adoption?.[featureId],
-        [key]: value,
-      },
-    },
-  }));
+  const businessModel = useMemo(() => calculateCustomerScenario(state, businessPlans, 'HMC', state.profile.horizonYears), [state, businessPlans]);
 
   const model = useMemo(() => {
-    const { profile, tech, cost, residuals } = state;
+    const { tech } = state;
 
     const users = Math.max(tech.numberUsers, 0);
-    const remoteUsers = users * (tech.pctRemoteHybridUsers / 100);
+    const remoteUsers = Math.floor(users * (tech.pctRemoteHybridUsers / 100));
     const totalCores = tech.numberHosts * tech.coresPerHost;
-    const replaceablePc = tech.numberPc * (tech.pctPcReplaceableWithThinClient / 100);
-    const remainingPc = tech.numberPc - replaceablePc;
-    const accessAppliancePurchaseCost = tech.numberVpnAdcAppliances * cost.costVpnAdcAppliance;
-    const accessApplianceMaintenanceAnnual = accessAppliancePurchaseCost * (cost.applianceMaintenanceAnnualPct / 100);
-
-    const asIs = {
-      endpoint: (tech.numberPc * cost.costOnePc) / Math.max(tech.avgPcAgeYears, 1),
-      hypervisor: totalCores * cost.costHypervisorPerCoreYear,
-      access: accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual,
-      mfa: users * cost.costMfaUserMonth * 12,
-      ztna: remoteUsers * cost.costZtnaUserMonth * 12,
-      edr: tech.numberPc * cost.costEdrEndpointMonth * 12,
-      posture: tech.numberPc * cost.costDevicePostureEndpointMonth * 12,
-      securityServices: cost.costSocMsspAnnual + tech.numberPc * cost.costRemediationPerEndpointYear + tech.itDaysSecurityOps * cost.costSysadminDay,
-      opsEndpoint: tech.itDaysEndpointMgmt * cost.costSysadminDay,
-      opsImage: tech.itDaysImageVdiMgmt * cost.costSysadminDay,
-      opsSupport: tech.itDaysSupport * cost.costSysadminDay,
-      opsAccess: tech.itDaysAccessMgmt * cost.costSysadminDay,
-      hmcSubscription: 0,
-      residualHw: 0,
-      residualServices: 0,
-    };
-
-    const hmc = {
-      endpoint:
-        (remainingPc * cost.costOnePc) / Math.max(tech.lifecyclePcTargetYears, 1) +
-        (replaceablePc * cost.costOneThinClient) / 5,
-      hypervisor: asIs.hypervisor * (1 - Math.min(100, Math.max(0, tech.pctWorkloadsXenServerCompatible)) / 100),
-      access: 0,
-      mfa: 0,
-      ztna: 0,
-      edr: asIs.edr * (cost.residualEdrRatioWithHmc / 100),
-      posture: asIs.posture * (cost.residualDevicePostureRatioWithHmc / 100),
-      securityServices: asIs.securityServices * (cost.residualSecurityServicesRatioWithHmc / 100),
-      opsEndpoint: asIs.opsEndpoint * (1 - cost.reductionEffortEndpointPct / 100),
-      opsImage: asIs.opsImage * (1 - cost.reductionEffortImagePct / 100),
-      opsSupport: asIs.opsSupport * (1 - cost.reductionEffortSupportPct / 100),
-      opsAccess: asIs.opsAccess * (1 - cost.reductionEffortAccessPct / 100),
-      hmcSubscription: users * profile.hmcPricePerUserPerMonth * 12,
-      residualHw: residuals.residualHardwareInfra,
-      residualServices: residuals.residualServices,
-    };
-
-    const annualKeys = Object.keys(asIs);
-    const annualRows = annualKeys.map((key) => ({
-      key,
-      asIs: asIs[key],
-      hmc: hmc[key],
-      delta: asIs[key] - hmc[key],
-    }));
-
+    const { asIs, hmc, annualRows, tableRows, migrationCostOneTime, projectYears } = calculateNewBusinessCosts(state, businessModel);
     const totalAsIsAnnual = annualRows.reduce((sum, row) => sum + row.asIs, 0);
     const totalHmcAnnual = annualRows.reduce((sum, row) => sum + row.hmc, 0);
     const annualDelta = totalAsIsAnnual - totalHmcAnnual;
-    const projectYears = Math.min(5, Math.max(1, Number(profile.horizonYears) || 1));
-    const migrationCostOneTime = profile.initialMigrationCost;
-
-    const tableRows = annualRows
-      .map((row) => {
-        const projectAsIs = row.key === 'access'
-          ? accessAppliancePurchaseCost + accessApplianceMaintenanceAnnual * projectYears
-          : row.asIs * projectYears;
-        const projectHmc = row.hmc * projectYears;
-        return {
-          ...row,
-          asIs: projectAsIs,
-          hmc: projectHmc,
-          delta: projectAsIs - projectHmc,
-        };
-      })
-      .concat([
-        {
-          key: 'migrationProject',
-          asIs: 0,
-          hmc: migrationCostOneTime,
-          delta: -migrationCostOneTime,
-        },
-      ]);
 
     const totalAsIs = tableRows.reduce((sum, row) => sum + row.asIs, 0);
     const totalHmc = tableRows.reduce((sum, row) => sum + row.hmc, 0);
     const projectDelta = totalAsIs - totalHmc;
-    const grossAvoided = totalAsIs - (totalHmc - (hmc.hmcSubscription * projectYears) + migrationCostOneTime);
+    const grossAvoided = businessModel.periodSaving;
     const roiAnnual = totalHmc > 0 ? projectDelta / totalHmc : null;
 
     const asIsCostPerUserPerYear = users > 0 ? totalAsIs / projectYears / users : 0;
@@ -1197,10 +517,7 @@ export default function App() {
       warnings.push(
         copy.validationPcHigh
       );
-    if (tech.pctByodUsers + tech.pctPcReplaceableWithThinClient > 130)
-      warnings.push(
-        copy.validationByodIncoherent
-      );
+
 
     const chartRows = [
       { name: copy.chartCurrent, value: totalAsIs },
@@ -1237,10 +554,10 @@ export default function App() {
       chartRows,
       byDomain,
       retainedLegacyHypervisorAnnual: hmc.hypervisor,
-      migratableWorkloadPct: Math.min(100, Math.max(0, tech.pctWorkloadsXenServerCompatible)),
+      migratableWorkloadPct: tech.numberHosts > 0 ? (Number(businessPlans.xenserver?.target) || 0) / tech.numberHosts * 100 : 0,
       tableRows,
     };
-  }, [state, lang]);
+  }, [state, lang, businessModel, businessPlans]);
 
   const rowLabels = {
     endpoint: t('Endpoint (PC/thin client)', 'Endpoint (PC/thin client)', 'Endpoint (PC/thin client)', 'Endpoint (PC/Thin Client)'),
@@ -1413,7 +730,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      {calculatorMode === 'newBusiness' ? <ScenarioReport lang={lang} state={state} model={model} rowLabels={rowLabels} /> : null}
+      {calculatorMode === 'newBusiness' ? <ScenarioReport lang={lang} state={state} model={model} rowLabels={rowLabels} opportunityModel={businessModel} /> : null}
       <div className="app-shell mx-auto max-w-7xl p-4 md:p-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -1427,17 +744,14 @@ export default function App() {
                   <button onClick={() => setLang('de')} className={`rounded-xl border px-3 py-1 text-xs ${lang === 'de' ? 'bg-white/20' : ''}`}>DE</button>
                 </div>
               </div>
-              <h1 className="text-3xl font-semibold md:text-4xl">{calculatorMode === 'newBusiness' ? copy.title : t('Renewal Value', 'Renewal Value')}</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{calculatorMode === 'newBusiness' ? copy.subtitle : t('Vista dedicata alla valorizzazione dei rinnovi e delle opportunità di espansione.', 'Dedicated view for renewal value and expansion opportunities.')}</p>
-              {calculatorMode === 'newBusiness' ? <p className="mt-3 max-w-4xl rounded-xl border border-white/20 bg-white/10 p-3 text-sm">{copy.customizationIntro}</p> : null}
+              <h1 className="text-3xl font-semibold md:text-4xl">{calculatorMode === 'assessment' ? t('Assessment cliente', 'Customer assessment', 'Assessment cliente', 'Kunden-Assessment') : calculatorMode === 'newBusiness' ? 'New Business ROI' : 'Renewal Value'}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">{t('Un assessment condiviso, due percorsi: valutare un nuovo investimento o mitigare i costi del rinnovo completando l’adozione.', 'One shared assessment, two paths: evaluate a new investment or mitigate renewal costs by completing adoption.')}</p>
+
               {calculatorMode === 'newBusiness' ? <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={() => setShowCustomization((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-400">
-                  {showCustomization ? copy.hideScenario : copy.editScenario}
-                </button>
                 <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.print}
                 </button>
-                <button onClick={() => setState(DEFAULTS)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
+                <button onClick={() => { setProfile('horizonYears', DEFAULTS.profile.horizonYears); setProfile('hmcPricePerUserPerMonth', DEFAULTS.profile.hmcPricePerUserPerMonth); setProfile('initialMigrationCost', DEFAULTS.profile.initialMigrationCost); setBusinessPlans({}); }} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
                   {copy.reset}
                 </button>
                 <button onClick={() => setShowDisclaimer((v) => !v)} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm">
@@ -1463,132 +777,28 @@ export default function App() {
 
 
         <AppErrorBoundary>
-        {calculatorMode === 'renewal' ? (
-          <RenewalValueView lang={lang} renewal={renewalState} onRenewalProfileChange={setRenewalProfile} onRenewalTechChange={setRenewalTech} onRenewalCostChange={setRenewalCost} onRenewalAdoptionChange={setRenewalAdoption} />
+        {calculatorMode === 'assessment' ? (
+          <CustomerAssessment state={state} setState={setState} lang={lang} onNavigate={setCalculatorMode} onCompatibility={setView} />
+        ) : calculatorMode === 'renewal' ? (
+          <RenewalAssessmentView lang={lang} state={state} profile={renewalProfile} setProfile={setRenewalProfile} plans={renewalPlans} setPlans={setRenewalPlans} onEdit={() => setCalculatorMode('assessment')} />
         ) : (
           <>
-        {showCustomization && (
-          <div className="mb-6">
-            <div className="mb-3 flex flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
-              {[
-                ['params', copy.tabs[0]],
-                ['costs', copy.tabs[1]],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  onClick={() => setCustomTab(value)}
-                  className={`rounded-2xl px-4 py-2.5 text-sm font-medium ${customTab === value ? 'bg-slate-900 text-white ring-2 ring-blue-200' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {label}
-                </button>
-              ))}
+        <div className="mb-6 space-y-6">
+          <Card title={t('Profilo New Business', 'New Business profile')} subtitle={t('Investimento specifico del nuovo progetto. L’assessment e il profilo rinnovo restano separati.', 'Investment specific to the new project. Assessment and renewal profile remain separate.')}>
+            <div className="grid gap-5 md:grid-cols-3">
+              <label className="block space-y-2 text-sm font-medium text-slate-700">{copy.projectYears}<select className="block w-full rounded-xl border border-slate-300 p-2.5" value={state.profile.horizonYears} onChange={(e) => setProfile('horizonYears', Number(e.target.value))}>{[1,2,3,4,5].map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+              <Input label={t('Prezzo HMC per utente / mese', 'HMC price per user / month')} suffix="€" value={state.profile.hmcPricePerUserPerMonth} onChange={(v) => setProfile('hmcPricePerUserPerMonth', v)} />
+              <Input label={copy.initialProjectCost} suffix="€" value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} />
             </div>
-
-            {customTab === 'params' && (
-              <div className="space-y-4">
-                <SectionCard
-                  title={copy.section1Title}
-                  subtitle={copy.section1Subtitle}
-                >
-                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    <label className="block space-y-2">
-                      <span className="text-sm font-medium text-slate-700">{copy.projectYears} <Help text={copy.helpProjectYears} /></span>
-                      <select
-                        value={state.profile.horizonYears}
-                        onChange={(e) => setProfile('horizonYears', Number(e.target.value))}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm"
-                      >
-                        {[1, 2, 3, 4, 5].map((year) => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                </SectionCard>
-
-                <SectionCard
-                  title={copy.section2Title}
-                  subtitle={copy.section2Subtitle}
-                >
-                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    <Field label={copy.users} help={copy.helpUsers} value={state.tech.numberUsers} onChange={(v) => setTech('numberUsers', v)} suffix={copy.usersSuffix} />
-                    <RangeField label={copy.remote} help={copy.helpRemote} value={state.tech.pctRemoteHybridUsers} onChange={(v) => setTech('pctRemoteHybridUsers', v)} />
-                    <RangeField label={copy.byod} help={copy.helpByod} value={state.tech.pctByodUsers} onChange={(v) => setTech('pctByodUsers', v)} />
-                    <Field label={copy.pcCount} help={copy.helpPcCount} value={state.tech.numberPc} onChange={(v) => setTech('numberPc', v)} suffix="PC" />
-                    <Field label={copy.thinClients} help={copy.helpThinClients} value={state.tech.numberThinClient} onChange={(v) => setTech('numberThinClient', v)} suffix={copy.units} />
-                    <Field label={copy.avgPcAge} help={copy.helpAvgPcAge} value={state.tech.avgPcAgeYears} onChange={(v) => setTech('avgPcAgeYears', v)} suffix={copy.yearsSuffix} />
-                    <Field label={copy.lifecycle} help={copy.helpLifecycle} value={state.tech.lifecyclePcTargetYears} onChange={(v) => setTech('lifecyclePcTargetYears', v)} suffix={copy.yearsSuffix} />
-                    <RangeField label={copy.replaceable} help={copy.helpReplaceable} value={state.tech.pctPcReplaceableWithThinClient} onChange={(v) => setTech('pctPcReplaceableWithThinClient', v)} />
-                    <Field label={copy.vpnAdc} help={copy.helpVpnAdc} value={state.tech.numberVpnAdcAppliances} onChange={(v) => setTech('numberVpnAdcAppliances', v)} suffix={copy.appliances} />
-                    <Field label={copy.hosts} help={copy.helpHosts} value={state.tech.numberHosts} onChange={(v) => setTech('numberHosts', v)} suffix={copy.host} />
-                    <Field label={copy.cores} help={copy.helpCores} value={state.tech.coresPerHost} onChange={(v) => setTech('coresPerHost', v)} suffix={copy.core} />
-                    <RangeField label={t('% workload migrabili su XenServer', '% workloads migratable to XenServer')} help={t('Riduci questo valore se dalla verifica compatibilità emerge che alcuni workload devono restare sul virtualizzatore attuale: il modello mantiene una quota proporzionale dei costi hypervisor esistenti.', 'Lower this value if the compatibility check shows that some workloads must remain on the existing virtualizer: the model retains a proportional share of existing hypervisor costs.')} value={state.tech.pctWorkloadsXenServerCompatible} onChange={(v) => setTech('pctWorkloadsXenServerCompatible', v)} />
-                  </div>
-                </SectionCard>
-
-                <SectionCard
-                  title={copy.section3Title}
-                  subtitle={copy.section3Subtitle}
-                >
-                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    <Field label={copy.itDaysEndpoint} help={copy.helpItDaysEndpoint} value={state.tech.itDaysEndpointMgmt} onChange={(v) => setTech('itDaysEndpointMgmt', v)} suffix={copy.daysYear} />
-                    <Field label={copy.itDaysImage} help={copy.helpItDaysImage} value={state.tech.itDaysImageVdiMgmt} onChange={(v) => setTech('itDaysImageVdiMgmt', v)} suffix={copy.daysYear} />
-                    <Field label={copy.itDaysSupport} help={copy.helpItDaysSupport} value={state.tech.itDaysSupport} onChange={(v) => setTech('itDaysSupport', v)} suffix={copy.daysYear} />
-                    <Field label={copy.itDaysAccess} help={copy.helpItDaysAccess} value={state.tech.itDaysAccessMgmt} onChange={(v) => setTech('itDaysAccessMgmt', v)} suffix={copy.daysYear} />
-                    <Field label={copy.itDaysSecurity} help={copy.helpItDaysSecurity} value={state.tech.itDaysSecurityOps} onChange={(v) => setTech('itDaysSecurityOps', v)} suffix={copy.daysYear} />
-                    <Field label={copy.sysadminDayCost} help={copy.helpSysadminDayCost} value={state.cost.costSysadminDay} onChange={(v) => setCost('costSysadminDay', v)} prefix="€" suffix={copy.perDay} />
-                    <RangeField label={copy.reductionEndpoint} help={copy.helpReductionEndpoint} value={state.cost.reductionEffortEndpointPct} onChange={(v) => setCost('reductionEffortEndpointPct', v)} />
-                    <RangeField label={copy.reductionImage} help={copy.helpReductionImage} value={state.cost.reductionEffortImagePct} onChange={(v) => setCost('reductionEffortImagePct', v)} />
-                    <RangeField label={copy.reductionSupport} help={copy.helpReductionSupport} value={state.cost.reductionEffortSupportPct} onChange={(v) => setCost('reductionEffortSupportPct', v)} />
-                    <RangeField label={copy.reductionAccess} help={copy.helpReductionAccess} value={state.cost.reductionEffortAccessPct} onChange={(v) => setCost('reductionEffortAccessPct', v)} />
-                    <RangeField label={copy.residualEdr} help={copy.helpResidualEdr} value={state.cost.residualEdrRatioWithHmc} onChange={(v) => setCost('residualEdrRatioWithHmc', v)} />
-                    <RangeField label={copy.residualPosture} help={copy.helpResidualPosture} value={state.cost.residualDevicePostureRatioWithHmc} onChange={(v) => setCost('residualDevicePostureRatioWithHmc', v)} />
-                    <RangeField label={copy.residualSecurity} help={copy.helpResidualSecurity} value={state.cost.residualSecurityServicesRatioWithHmc} onChange={(v) => setCost('residualSecurityServicesRatioWithHmc', v)} />
-                  </div>
-                </SectionCard>
-              </div>
-            )}
-
-            {customTab === 'costs' && (
-              <SectionCard
-                title={copy.costAssumptions}
-                subtitle={copy.economicValues}
-              >
-                <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{copy.primaryParameter}</p>
-                  <div className="mt-2 text-sm font-bold text-blue-900">
-                    {copy.hmcCostUserMonth}
-                  </div>
-                  <div className="mt-3 max-w-xs">
-                    <Field label={copy.hmcPriceUserMonth} value={state.profile.hmcPricePerUserPerMonth} onChange={(v) => setProfile('hmcPricePerUserPerMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
-                  </div>
-                  <div className="mt-4 text-sm font-bold text-blue-900">
-                    {copy.initialProjectCost}
-                  </div>
-                  <div className="mt-3 max-w-xs">
-                    <Field label={copy.initialProjectCost} value={state.profile.initialMigrationCost} onChange={(v) => setProfile('initialMigrationCost', v)} prefix="€" suffix={copy.year1Only} />
-                  </div>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  <Field label={copy.newPcCost} help={copy.helpNewPcCost} value={state.cost.costOnePc} onChange={(v) => setCost('costOnePc', v)} prefix="€" suffix={copy.perUnit} />
-                  <Field label={copy.newThinCost} help={copy.helpNewThinCost} value={state.cost.costOneThinClient} onChange={(v) => setCost('costOneThinClient', v)} prefix="€" suffix={copy.perUnit} />
-                  <Field label={copy.hypervisorCostCoreYear} help={copy.helpHypervisorCost} value={state.cost.costHypervisorPerCoreYear} onChange={(v) => setCost('costHypervisorPerCoreYear', v)} prefix="€" suffix={copy.perCoreYear} />
-                  <Field label={copy.vpnApplianceCost} help={copy.helpVpnApplianceCost} value={state.cost.costVpnAdcAppliance} onChange={(v) => setCost('costVpnAdcAppliance', v)} prefix="€" suffix={copy.perAppliance} />
-                  <RangeField label={copy.applianceMaintenance} help={copy.helpApplianceMaintenance} value={state.cost.applianceMaintenanceAnnualPct} onChange={(v) => setCost('applianceMaintenanceAnnualPct', v)} />
-                  <Field label={copy.mfaCost} help={copy.helpMfaCost} value={state.cost.costMfaUserMonth} onChange={(v) => setCost('costMfaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
-                  <Field label={copy.ztnaCost} help={copy.helpZtnaCost} value={state.cost.costZtnaUserMonth} onChange={(v) => setCost('costZtnaUserMonth', v)} prefix="€" step="0.1" suffix={copy.perUserMonth} />
-                  <Field label={copy.edrCost} help={copy.helpEdrCost} value={state.cost.costEdrEndpointMonth} onChange={(v) => setCost('costEdrEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
-                  <Field label={copy.postureCost} help={copy.helpPostureCost} value={state.cost.costDevicePostureEndpointMonth} onChange={(v) => setCost('costDevicePostureEndpointMonth', v)} prefix="€" step="0.1" suffix={copy.perEndpointMonth} />
-                  <Field label={copy.socCost} help={copy.helpSocCost} value={state.cost.costSocMsspAnnual} onChange={(v) => setCost('costSocMsspAnnual', v)} prefix="€" suffix={copy.perYear} />
-                  <Field label={copy.remediationCost} help={copy.helpRemediationCost} value={state.cost.costRemediationPerEndpointYear} onChange={(v) => setCost('costRemediationPerEndpointYear', v)} prefix="€" suffix={copy.perEndpointYear} />
-                  <Field label={copy.residualHardware} help={copy.helpResidualHardware} value={state.residuals.residualHardwareInfra} onChange={(v) => setResidual('residualHardwareInfra', v)} prefix="€" suffix={copy.perYear} />
-                  <Field label={copy.residualServices} help={copy.helpResidualServices} value={state.residuals.residualServices} onChange={(v) => setResidual('residualServices', v)} prefix="€" suffix={copy.perYear} />
-                </div>
-              </SectionCard>
-            )}
-          </div>
-        )}
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <Input label={copy.residualHardware} value={state.residuals.residualHardwareInfra} suffix={copy.perYear} onChange={(v) => setState((s) => ({ ...s, residuals: { ...s.residuals, residualHardwareInfra: v } }))} />
+              <Input label={copy.residualServices} value={state.residuals.residualServices} suffix={copy.perYear} onChange={(v) => setState((s) => ({ ...s, residuals: { ...s.residuals, residualServices: v } }))} />
+            </div>
+          </Card>
+          <AssessmentSummary state={state} lang={lang} onEdit={() => setCalculatorMode('assessment')} />
+          <OpportunityPlanner state={state} plans={businessPlans} setPlans={setBusinessPlans} offer="HMC" years={state.profile.horizonYears} lang={lang} onEdit={() => setCalculatorMode('assessment')} newBusiness />
+          <Card title={t('Riepilogo adozione e saving', 'Adoption and savings summary')} subtitle={(businessModel.complete && businessModel.baselineComplete) ? t('Scenario completato', 'Scenario complete') : t('Simulazione parziale: completa assessment e obiettivi prima di usare il ROI. Le voci mancanti non generano saving e usano il costo di riferimento.', 'Partial simulation: complete assessment and targets before using ROI. Missing items generate no saving and use reference costs.')}><OpportunityTable model={businessModel} lang={lang} /></Card>
+        </div>
 
         {model.warnings.length > 0 && (
           <SectionCard
@@ -1626,7 +836,7 @@ export default function App() {
         <button onClick={() => setView('compatibility')} className="mt-4 w-full rounded-3xl border border-blue-200 bg-blue-50 p-5 text-left shadow-sm transition hover:border-blue-300 hover:bg-blue-100">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{t('Planning migrazione workload', 'Workload migration planning')}</p>
           <p className="mt-2 text-lg font-semibold text-slate-950">{t('Prima di migrare tutti gli host, verifica quali software sono compatibili con XenServer hypervisor.', 'Before migrating all hosts, verify which software is compatible with the XenServer hypervisor.')}</p>
-          <p className="mt-1 text-sm text-slate-600">{t(`Workload migrabili impostati al ${model.migratableWorkloadPct}%. Costo annuo del vecchio virtualizzatore mantenuto nello scenario HMC: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`, `Migratable workloads set to ${model.migratableWorkloadPct}%. Annual legacy virtualizer cost retained in the HMC scenario: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`)}</p>
+          <p className="mt-1 text-sm text-slate-600">{t(`Obiettivo host XenServer impostato al ${model.migratableWorkloadPct}%. Costo annuo del vecchio virtualizzatore mantenuto nello scenario HMC: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`, `XenServer host target set to ${model.migratableWorkloadPct}%. Annual legacy virtualizer cost retained in the HMC scenario: ${eur(model.retainedLegacyHypervisorAnnual, lang)}.`)}</p>
         </button>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
