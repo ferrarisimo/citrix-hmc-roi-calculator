@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useContext, useId, useState } from 'react';
+import { FieldHelp, WorkspaceLanguage } from './WorkspaceUI';
+import { workspaceText } from './workspaceLabels';
+import { assessmentGroups, groupStatus, groupFingerprint, groupComplete } from './assessmentFields';
 import { LABELS } from './i18n/labels';
 import { calculateCustomerScenario } from './models/customerAssessmentModel';
 import { NEW_BUSINESS_SERVICE_DEFAULTS } from './models/newBusinessDefaults';
@@ -9,8 +12,13 @@ export const buttonStyle = 'rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semi
 export function Card({ title, subtitle, children }) {
   return <section className="rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-6 py-5"><h2 className="text-lg font-semibold">{title}</h2>{subtitle && <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>}</div><div className="p-6">{children}</div></section>;
 }
-export function Input({ label, value, onChange, suffix, max, step = 'any', testId, placeholder = '—' }) {
-  return <label className="block space-y-2"><span className="block text-sm font-medium text-slate-700">{label}{suffix && <span className="ml-1 text-xs text-slate-500">({suffix})</span>}</span><input data-testid={testId} type="number" min="0" max={max} step={step} value={value ?? ''} placeholder={placeholder} onChange={(e) => onChange(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>;
+export function Input({ label, value, onChange, suffix, max, step = 'any', testId, placeholder = '—', help }) {
+  const id = useId();
+  const lang = useContext(WorkspaceLanguage);
+  const w = workspaceText(lang);
+  const [touched, setTouched] = useState(false);
+  const invalid = value !== '' && value != null && (!Number.isFinite(Number(value)) || Number(value) < 0 || (max != null && Number(value) > max) || (step === 1 && !Number.isInteger(Number(value))));
+  return <div className="input-field"><div className="field-heading"><label htmlFor={id}>{label}</label><FieldHelp label={label} text={help}/></div><div className="input-wrap"><input id={id} data-testid={testId} type="number" inputMode="decimal" min="0" max={max} step={step} value={value ?? ''} placeholder={placeholder} onBlur={() => setTouched(true)} aria-invalid={touched && invalid ? true : undefined} aria-describedby={touched && invalid ? `${id}-error` : undefined} onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))} />{suffix && <span className="input-unit">{suffix}</span>}</div>{touched && invalid && <p className="field-error" id={`${id}-error`}>{w('invalid')} {max != null ? `(0–${max})` : '(≥ 0)'}{step === 1 ? ' · 0, 1, 2…' : ''}</p>}</div>;
 }
 export function Metric({ label, value, hint, testId }) {
   return <div data-testid={testId} className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-xl font-semibold text-slate-950">{value}</p>{hint && <p className="mt-2 text-xs leading-5 text-slate-500">{hint}</p>}</div>;
@@ -36,29 +44,41 @@ export function AssessmentSummary({ state, lang, onEdit }) {
   </Card>;
 }
 
-export function CustomerAssessment({ state, setState, lang, onNavigate, onCompatibility }) {
+export function CustomerAssessment({ state, setState, lang, onNavigate, onCompatibility, group = 'users', setGroup, reviews = {}, setReviews }) {
   const t = wording(lang);
+  const w = workspaceText(lang);
   const c = LABELS[lang];
-  const update = (section, key, value) => setState((s) => ({ ...s, [section]: { ...s[section], [key]: value } }));
-  const fields = (section, entries) => <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{entries.map(([key, label, suffix, max]) => <Input key={key} label={label} suffix={suffix} max={max} value={state[section][key]} onChange={(v) => update(section, key, v)} testId={`assessment-${key}`} />)}</div>;
-  return <div className="space-y-6" data-testid="customer-assessment">
-    <Card title={t('1. Perimetro complessivo', '1. Overall scope')} subtitle={t('Inserisci il perimetro complessivo As-Is: gli stessi totali saranno disponibili nel New Business e nel Renewal. I valori iniziali sono esempi modificabili.', 'Enter the full As-Is scope: the same totals will be available in New Business and Renewal. Initial values are editable examples.')}>
-      {fields('tech', [['numberUsers', c.users], ['pctRemoteHybridUsers', c.remote, '%', 100], ['pctByodUsers', c.byod, '%', 100], ['numberPc', c.pcCount], ['numberThinClient', c.thinClients], ['avgPcAgeYears', t('Ciclo di rinnovo PC di riferimento', 'Baseline PC replacement cycle'), c.yearsSuffix], ['numberHosts', c.hosts], ['coresPerHost', c.cores], ['numberVpnAdcAppliances', c.vpnAdc]])}
-    </Card>
-    <Card title={t('2. Costi e effort di riferimento', '2. Reference costs and effort')} subtitle={t('Costi unitari e giornate riferiti all’intero perimetro. Nel Renewal il modello sottrae la quota già implementata: non ridurre qui i totali.', 'Unit costs and days for the full scope. Renewal subtracts the already implemented share: do not reduce these totals.')}>
-      {fields('cost', [['costOnePc', c.newPcCost, '€'], ['costHypervisorPerCoreYear', c.hypervisorCostCoreYear, '€'], ['costVpnAdcAppliance', c.vpnApplianceCost, '€'], ['applianceMaintenanceAnnualPct', c.applianceMaintenance, '%', 100], ['costMfaUserMonth', c.mfaCost, '€'], ['costZtnaUserMonth', c.ztnaCost, '€'], ['costEdrEndpointMonth', c.edrCost, '€'], ['costDevicePostureEndpointMonth', c.postureCost, '€'], ['costSocMsspAnnual', c.socCost, '€'], ['costRemediationPerEndpointYear', c.remediationCost, '€'], ['costSysadminDay', c.sysadminDayCost, '€']])}
-      <div className="mt-6 border-t pt-6">{fields('tech', [['itDaysEndpointMgmt', c.itDaysEndpoint, c.daysYear], ['itDaysImageVdiMgmt', c.itDaysImage, c.daysYear], ['itDaysSupport', c.itDaysSupport, c.daysYear], ['itDaysAccessMgmt', c.itDaysAccess, c.daysYear], ['itDaysSecurityOps', c.itDaysSecurity, c.daysYear]])}</div>
-      <details className="mt-6 rounded-xl bg-slate-50 p-4"><summary className="cursor-pointer text-sm font-semibold">{t('Altre opportunità CPC · basi economiche documentate', 'Other CPC opportunities · documented cost baselines')}</summary><p className="my-3 text-sm text-slate-500">{t('Inserisci soltanto costi distinti dalle altre voci. Una riduzione del rischio non quantificata resta esclusa dal saving.', 'Only enter costs separate from the other items. Unquantified risk reduction is excluded from savings.')}</p><div className="grid gap-4 md:grid-cols-3">{['cvadPremium', 'platformRisk', 'infrastructure'].map((id) => <Input key={id} label={{ cvadPremium: 'CVAD Premium', platformRisk: 'Platform risk', infrastructure: 'Infrastructure optimization' }[id]} value={state.manualBaselines?.[id]} onChange={(v) => update('manualBaselines', id, v)} suffix="€/anno" />)}</div></details>
-    </Card>
-    <div className="flex flex-wrap gap-3"><button className={buttonStyle} onClick={() => onCompatibility('compatibility')}>XenServer compatibility</button><button className={buttonStyle} onClick={() => onCompatibility('endpointCompatibility')}>eLux compatibility</button></div>
-    <Card title={t('Scegli l’analisi economica', 'Choose the economic analysis')} subtitle={t('L’assessment rimane condiviso. Prezzi, costi di progetto e obiettivi sono specifici di ciascuno scenario.', 'The assessment stays shared. Pricing, project costs and targets are specific to each scenario.')}><div className="grid gap-4 md:grid-cols-2"><button className={buttonStyle} onClick={() => onNavigate('newBusiness')}>New Business ROI →</button><button className={buttonStyle} onClick={() => onNavigate('renewal')}>Renewal Value →</button></div></Card>
+  const [full, setFull] = useState(false);
+  const labels = { ...c, remote: t('Utenti remoti o ibridi', 'Remote or hybrid users', 'Usuarios remotos o híbridos', 'Remote- oder Hybridnutzer'), byod: t('Utenti con dispositivi personali', 'Users with personal devices', 'Usuarios con dispositivos personales', 'Nutzer mit privaten Geräten'), sysadminDayCost: t('Costo medio di una giornata IT', 'Average IT day cost', 'Coste medio de un día TI', 'Durchschnittliche Kosten pro IT-Tag'), pcCycle: t('Ciclo di sostituzione PC', 'PC replacement cycle', 'Ciclo de sustitución de PC', 'PC-Austauschzyklus'), cvadPremium: 'CVAD Premium', platformRisk: 'Platform risk', infrastructure: 'Infrastructure optimization' };
+  const activityLabels = { itDaysEndpoint: ['Gestione dispositivi', 'Device management', 'Gestión de dispositivos', 'Geräteverwaltung'], itDaysImage: ['Gestione immagini e VDI', 'Image and VDI management', 'Gestión de imágenes y VDI', 'Image- und VDI-Verwaltung'], itDaysSupport: ['Supporto utenti', 'User support', 'Soporte al usuario', 'Benutzersupport'], itDaysAccess: ['Gestione accessi', 'Access management', 'Gestión de accesos', 'Zugriffsverwaltung'], itDaysSecurity: ['Operazioni di sicurezza', 'Security operations', 'Operaciones de seguridad', 'Sicherheitsbetrieb'] };
+  for (const [key, values] of Object.entries(activityLabels)) labels[key] = t(...values);
+  const update = (section, key, value) => setState(s => ({ ...s, [section]: { ...s[section], [key]: value } }));
+  const currentIndex = assessmentGroups.findIndex(g => g.id === group);
+  return <div data-testid="customer-assessment" className="assessment-workspace">
+    <div className="section-heading"><div><p className="eyebrow">01 / {w('data')}</p><h2>{t('Conosciamo il punto di partenza', 'Establish your baseline', 'Define el punto de partida', 'Ausgangslage erfassen')}</h2></div><button className="secondary-button" aria-pressed={full} onClick={() => setFull(!full)}>{w(full ? 'focused' : 'all')}</button></div>
+    <p className="shared-note">{w('shared')}</p>
+    <nav className="group-tabs" aria-label={w('data')}>{assessmentGroups.map(g => <button key={g.id} aria-pressed={group === g.id && !full} className={group === g.id && !full ? 'active' : ''} onClick={() => { setGroup?.(g.id); setFull(false); }}>{w(g.id)}<span className={`tiny-dot ${groupStatus(g,state,reviews)}`}/></button>)}</nav>
+    <p className="muted-note mb-4">{w('unknown')}</p>
+    <div className="space-y-5">{assessmentGroups.filter(g => full || g.id === group).map(g => {
+      const status = groupStatus(g,state,reviews);
+      return <Card key={g.id} title={<span className="group-title">{w(g.id)}<span className={`status-badge ${status}`}>{w(status)}</span></span>} subtitle={g.optional ? t('Facoltativo. Inserisci solo costi documentati, distinti dalle altre voci.', 'Optional. Enter only documented costs, separate from other items.', 'Opcional. Solo costes documentados y separados.', 'Optional. Nur dokumentierte, getrennte Kosten eingeben.') : undefined}>
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">{g.fields.map(f => <Input key={f.key} label={labels[f.label]} help={c[f.help]} value={state[f.section]?.[f.key]} suffix={f.suffix === '€/anno' ? t('€/anno','€/year','€/año','€/Jahr') : c[f.suffix] ?? f.suffix} max={f.max} step={f.step} onChange={v => update(f.section,f.key,v)} testId={`assessment-${f.key}`}/>)}</div>
+        {g.id === 'operations' && <p className="muted-note mt-5">{t('Giornate-persona totali annue: 2 persone × 30 giornate = 60. Evita sovrapposizioni tra le attività.', 'Total person-days per year: 2 people × 30 days = 60. Avoid overlaps between activities.', 'Días-persona al año: 2 personas × 30 días = 60. Evita duplicidades.', 'Personentage pro Jahr: 2 Personen × 30 Tage = 60. Überschneidungen vermeiden.')}</p>}
+        <div className="group-footer">{g.compatibility ? <button className="text-action" onClick={() => onCompatibility(g.compatibility)}>{g.id === 'devices' ? 'eLux' : 'XenServer'} · {t('Compatibilità', 'Compatibility', 'Compatibilidad', 'Kompatibilität')} ↗</button> : <span/>}<button className="secondary-button" disabled={!groupComplete(g,state) || status === 'verified'} onClick={() => setReviews?.(r => ({ ...r, [g.id]: groupFingerprint(g,state) }))}>{w(status === 'verified' ? 'verified' : 'confirm')}</button></div>
+      </Card>;
+    })}</div>
+    <div className="assessment-actions"><button className="secondary-button" disabled={currentIndex <= 0 || full} onClick={() => setGroup?.(assessmentGroups[currentIndex - 1].id)}>{w('back')}</button>{!full && currentIndex < assessmentGroups.length - 1 ? <button className="primary-button" onClick={() => setGroup?.(assessmentGroups[currentIndex + 1].id)}>{w('next')} →</button> : <button className="primary-button" onClick={onNavigate}>{w('profile')} →</button>}</div>
   </div>;
 }
 
-export function OpportunityPlanner({ state, plans, setPlans, offer, years, lang, onEdit, newBusiness = false }) {
+export function OpportunityPlanner({ state, plans, setPlans, offer, years, lang, onEdit, onCompatibility, newBusiness = false }) {
   const t = wording(lang);
+  const [area, setArea] = useState('all');
+  const w = workspaceText(lang);
+  const rowArea = row => row.id.startsWith('ops') || row.id === 'securityOps' ? 'operations' : row.id === 'xenserver' ? 'infrastructure' : row.id === 'endpoint' ? 'devices' : ['cvadPremium','platformRisk','infrastructure'].includes(row.id) ? 'other' : 'security';
   const mode = newBusiness ? 'newBusiness' : 'renewal';
   const model = calculateCustomerScenario(state, plans, offer, years, 0, mode);
+  const activeArea = area === 'all' || model.rows.some(row => rowArea(row) === area) ? area : 'all';
   const update = (id, key, value) => setPlans((current) => ({ ...current, [id]: { ...current[id], [key]: value } }));
   const quantity = (value) => new Intl.NumberFormat(lang, { maximumFractionDigits: 2 }).format(value);
 
@@ -73,16 +93,17 @@ export function OpportunityPlanner({ state, plans, setPlans, offer, years, lang,
       {' '}<button className="font-semibold underline" onClick={onEdit}>{t('Modifica dati As-Is', 'Edit As-Is data')}</button>
     </div>
     {newBusiness && <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950" data-testid="service-defaults-note">
-      <h3 className="font-semibold">{t('Riduzioni IT e Security applicate automaticamente', 'IT and Security reductions applied automatically')}</h3>
+      <p className="font-semibold">{t('Riduzioni IT e Security iniziali da verificare. Non sono risparmi garantiti.', 'Verify initial IT and Security reductions. They are not guaranteed savings.', 'Verifica las reducciones TI y seguridad. No son ahorros garantizados.', 'Anfängliche IT- und Sicherheitsannahmen prüfen. Keine garantierten Einsparungen.')}</p><details className="mt-2"><summary className="cursor-pointer text-xs">{w('method')}</summary>
       <p>{t('I valori iniziali si applicano al perimetro As-Is e sono modificabili in ogni scheda. Non sono risparmi garantiti: i benchmark IDC 2024 derivano da sei organizzazioni e da uno studio sponsorizzato da Citrix; le altre percentuali sono ipotesi di modello. Adegua le riduzioni se il progetto copre solo parte del perimetro.', 'Starting values apply to the As-Is scope and can be edited in each card. Savings are not guaranteed: IDC 2024 benchmarks come from six organizations in a Citrix-sponsored study; other percentages are model assumptions. Adjust reductions if the project covers only part of the scope.')}</p>
       <p className="mt-2">{t('Le giornate risparmiate valorizzano capacità liberata. SOC e remediation richiedono costi effettivamente riducibili e separati dalle altre voci. Licenze EDR, posture, MFA e ZTNA restano allo 0% finché non definisci quali contratti sostituire.', 'Saved days value released capacity. SOC and remediation require genuinely reducible costs separate from other items. EDR, posture, MFA and ZTNA licenses stay at 0% until you define which contracts can be replaced.')}</p>
-    </div>}
-    <div className="space-y-4">{model.rows.map((row) => {
+    </details></div>}
+    <nav className="group-tabs" aria-label={w('adoption')}>{['all','infrastructure','devices','security','operations','other'].filter(key => key === 'all' || model.rows.some(row => rowArea(row) === key)).map(key => <button key={key} aria-pressed={activeArea === key} className={activeArea === key ? 'active' : ''} onClick={() => setArea(key)}>{w(key)}</button>)}</nav>
+    <div className="space-y-4">{model.rows.filter(row => activeArea === 'all' || rowArea(row) === activeArea).map((row) => {
       const p = row.parameters;
       const serviceDefault = newBusiness && NEW_BUSINESS_SERVICE_DEFAULTS[row.id];
       const percentageLabel = serviceDefault ? t('Riduzione prevista', 'Planned reduction') : t('Adozione prevista', 'Planned adoption');
       const status = row.excluded ? t('Escluso', 'Excluded') : !row.complete ? t('Dati da completare', 'Incomplete data') : newBusiness ? `${quantity(row.targetPct)}%` : `${quantity(row.currentPct)}% ${t('già adottato', 'already adopted')}`;
-      return <details key={row.id} className="rounded-2xl border border-slate-200" open={row.id === 'xenserver' ? true : undefined}>
+      return <details key={row.id} className="rounded-2xl border border-slate-200">
         <summary className="cursor-pointer p-4">
           <span className="font-semibold">{row.label}</span><span className="ml-3 text-xs text-slate-500">{status}</span>
           <span className="mt-2 flex flex-wrap justify-between gap-2 text-sm text-slate-600">
@@ -91,16 +112,17 @@ export function OpportunityPlanner({ state, plans, setPlans, offer, years, lang,
           </span>
         </summary>
         <div className="border-t border-slate-100 p-4">
+          {onCompatibility && ['xenserver','endpoint','netscaler'].includes(row.id) && <button className="text-action mb-4" onClick={() => onCompatibility({xenserver: 'compatibility', endpoint: 'endpointCompatibility', netscaler: 'netscalerDetail'}[row.id])}>{t('Verifica compatibilità e funzionalità', 'Check compatibility and capabilities', 'Verificar compatibilidad y funciones', 'Kompatibilität und Funktionen prüfen')} ↗</button>}
           {serviceDefault && <div className="mb-4 rounded-xl bg-slate-50 p-3"><ServiceDefaultNote id={row.id} lang={lang} /><button type="button" onClick={() => update(row.id, 'adoptionPct', serviceDefault.pct)} className="mt-2 text-xs font-semibold text-blue-700 underline">{t('Ripristina percentuale iniziale', 'Restore initial percentage')} ({serviceDefault.pct}%)</button></div>}
           <div className="grid items-start gap-4 md:grid-cols-3">
             {newBusiness ? <div>
-              <Input testId={`adoption-${row.id}`} label={percentageLabel} value={p.adoptionPct} max={100} suffix="%" onChange={(v) => update(row.id, 'adoptionPct', v)} />
+              <Input testId={`adoption-${row.id}`} label={percentageLabel} help={serviceDefault ? t('Quota di riduzione prevista sul totale annuo. Verifica il valore iniziale rispetto al perimetro del cliente.', 'Planned reduction of the annual total. Verify the initial value against the customer scope.') : t('Percentuale del perimetro totale coinvolta nel progetto. 0% non genera saving per questa leva.', 'Percentage of the total scope covered by the project. 0% generates no savings for this lever.')} value={p.adoptionPct} max={100} suffix="%" onChange={(v) => update(row.id, 'adoptionPct', v)} />
               <input aria-label={`${percentageLabel} ${row.label}`} type="range" min="0" max="100" step="1" value={p.adoptionPct || 0} onChange={(e) => update(row.id, 'adoptionPct', Number(e.target.value))} className="mt-3 w-full accent-blue-600" />
               <p className="text-xs text-slate-500">{serviceDefault ? t('Riduzione = totale As-Is × percentuale; applicata una sola volta.', 'Reduction = As-Is total × percentage; applied once.') : t('Copertura equivalente: totale × percentuale.', 'Equivalent coverage: total × percentage.')}</p>
-            </div> : <Input testId={`current-${row.id}`} label={t('Già implementato / risparmiato', 'Already implemented / saved')} value={p.current} max={row.total} suffix={unitLabel(row.unit, t)} onChange={(v) => update(row.id, 'current', v)} />}
+            </div> : <Input testId={`current-${row.id}`} label={t('Già implementato / risparmiato', 'Already implemented / saved')} help={t('Quantità già adottata nel perimetro totale. Inserisci 0 se non ancora implementata; lascia vuoto se sconosciuta.', 'Quantity already adopted within the total scope. Enter 0 if not yet implemented; leave empty if unknown.')} value={p.current} max={row.total} suffix={unitLabel(row.unit, t)} onChange={(v) => update(row.id, 'current', v)} />}
             {newBusiness
               ? <Metric testId={`planned-quantity-${row.id}`} label={serviceDefault ? t('Riduzione annua prevista', 'Planned annual reduction') : t('Quantità equivalente prevista', 'Planned equivalent quantity')} value={row.targetValid ? `${quantity(row.target)} ${unitLabel(row.unit, t)}` : '—'} hint={serviceDefault && row.complete ? `${t('Residuo a regime dopo la quota eliminabile', 'Remaining at full operation after avoidable share')}: ${quantity(row.total - row.target * Number(p.avoidablePct) / 100)} ${unitLabel(row.unit, t)}` : undefined} />
-              : <Input testId={`target-${row.id}`} label={t('Obiettivo totale raggiungibile', 'Achievable total target')} value={p.target} max={row.total} suffix={unitLabel(row.unit, t)} onChange={(v) => update(row.id, 'target', v)} />}
+              : <Input testId={`target-${row.id}`} label={t('Obiettivo totale raggiungibile', 'Achievable total target')} help={t('Obiettivo totale finale, comprensivo della quota già adottata. Non inserire soltanto il residuo.', 'Final total target, including existing adoption. Do not enter only the remaining quantity.')} value={p.target} max={row.total} suffix={unitLabel(row.unit, t)} onChange={(v) => update(row.id, 'target', v)} />}
             <Input testId={`activation-${row.id}`} label={newBusiness ? t('Costo intervento aggiuntivo al progetto base', 'Implementation cost beyond base project') : t('Costo completamento una tantum', 'One-time completion cost')} suffix="€" value={p.activationCost} onChange={(v) => update(row.id, 'activationCost', v)} />
           </div>
           {row.id === 'endpoint' && <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -116,7 +138,7 @@ export function OpportunityPlanner({ state, plans, setPlans, offer, years, lang,
           {!row.complete && <p role="alert" className="mt-3 text-sm text-amber-700">{newBusiness
             ? t('Verifica i dati As-Is e una percentuale tra 0 e 100. Durate e costi devono essere validi.', 'Check As-Is data and a percentage between 0 and 100. Durations and costs must be valid.')
             : t('Inserisci la quantità già implementata, anche 0. Deve valere: già implementato ≤ obiettivo ≤ totale As-Is. Host, utenti e dispositivi devono essere interi.', 'Enter existing quantity, including 0. Existing quantity ≤ target ≤ As-Is total. Hosts, users and devices must be whole numbers.')}</p>}
-          <details className="mt-4 rounded-xl bg-slate-50 p-3"><summary className="cursor-pointer text-sm font-medium">{t('Ipotesi di calcolo e tempi', 'Calculation assumptions and timing')}</summary>
+          <details className="mt-4 rounded-xl bg-slate-50 p-3"><summary className="cursor-pointer text-sm font-medium">{t('Ipotesi di calcolo e tempi', 'Calculation assumptions and timing')}<span className="mt-1 block text-xs font-normal text-slate-500">{p.avoidablePct}% · {p.months} {t('mesi prima dell’attivazione', 'months before activation')} · {money(p.activationCost, lang)}</span></summary>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Input testId={`avoidable-${row.id}`} label={t('Quota di costo eliminabile sulla parte adottata', 'Avoidable cost share on adopted scope')} suffix="%" value={p.avoidablePct} max={100} onChange={(v) => update(row.id, 'avoidablePct', v)} />
               <Input testId={`months-${row.id}`} label={t('Mesi prima dell’attivazione saving', 'Months before savings start')} value={p.months} max={years * 12} onChange={(v) => update(row.id, 'months', v)} />

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { AssessmentSummary, Card, Input, Metric, OpportunityPlanner, OpportunityTable, buttonStyle, money, wording } from './AssessmentWorkflow';
 import { calculateCustomerScenario, calculateRenewalComparison } from './models/customerAssessmentModel';
 
-export default function RenewalAssessmentView({ lang, state, profile, setProfile, plans, setPlans, onEdit, onReport }) {
+export default function RenewalAssessmentView({ stage = 'profile', onCompatibility, lang, state, profile, setProfile, plans, setPlans, onEdit, onReport }) {
   const t = wording(lang);
   const years = Number(profile.renewalYears) || 1;
   const renewalCost = Number(profile.totalRenewalCost) || 0;
@@ -37,20 +37,20 @@ export default function RenewalAssessmentView({ lang, state, profile, setProfile
   return <>
 
     <div className="space-y-6" data-testid="renewal-assessment-view">
-      <Card title={t('Profilo rinnovo', 'Renewal profile', 'Perfil de renovación', 'Renewal-Profil')} subtitle={t('Dati economici del rinnovo e confronto con il contratto precedente.', 'Renewal financial data and comparison with the previous contract.')}>
+      <div hidden={stage !== 'profile'}><Card title={t('Profilo rinnovo', 'Renewal profile', 'Perfil de renovación', 'Renewal-Profil')} subtitle={t('Dati economici del rinnovo e confronto con il contratto precedente.', 'Renewal financial data and comparison with the previous contract.')}>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <label className="block space-y-2 text-sm font-medium text-slate-700">{t('Licenza rinnovata', 'Renewed license')}<select data-testid="renewal-type" value={profile.renewalType} onChange={(e) => update('renewalType', e.target.value)} className="block w-full rounded-xl border border-slate-300 p-2.5"><option>CPC</option><option>HMC</option></select></label>
           <Input label={t('Numero licenze', 'Number of licenses')} value={profile.numberLicenses} onChange={(v) => update('numberLicenses', v)} />
           <Metric label={t('Prezzo rinnovo per utente / anno', 'Renewal price per user / year')} value={profile.numberLicenses > 0 ? money(annual / profile.numberLicenses, lang) : '—'} />
           {yearSelect('renewalYears', t('Anni rinnovo', 'Renewal years'))}
-          <Input label={t('Costo rinnovo totale proposto', 'Proposed total renewal cost')} suffix="€" value={profile.totalRenewalCost} onChange={(v) => update('totalRenewalCost', v)} />
+          <Input help={t('Importo complessivo per tutti gli anni del rinnovo, non il canone annuo. Il modello calcola il valore annuo dalla durata.', 'Total amount for all renewal years, not the annual fee. The model annualizes it using the duration.')} label={t('Costo rinnovo totale proposto', 'Proposed total renewal cost')} suffix="€" value={profile.totalRenewalCost} onChange={(v) => update('totalRenewalCost', v)} />
         </div>
-        <div className="mt-6 border-t pt-6"><h3 className="mb-4 text-sm font-semibold">{t('Confronto rinnovo precedente', 'Previous renewal comparison')}</h3><div className="grid gap-5 md:grid-cols-3"><Input label={t('Costo rinnovo precedente', 'Previous renewal cost')} suffix="€" value={profile.previousRenewalCost} onChange={(v) => update('previousRenewalCost', v)} />{yearSelect('previousRenewalYears', t('Anni rinnovo precedente', 'Previous renewal years'))}<Metric label={t('Aumento annuo vs precedente', 'Annual increase vs previous')} value={percent(increase)} /></div></div>
+        <div className="mt-6 border-t pt-6"><h3 className="mb-4 text-sm font-semibold">{t('Confronto rinnovo precedente', 'Previous renewal comparison')}</h3><div className="grid gap-5 md:grid-cols-3"><Input help={t('Totale del contratto precedente sulla sua intera durata. Lascia vuoto se non disponibile: non equivale a zero.', 'Previous contract total over its full duration. Leave empty if unavailable; this is not zero.')} label={t('Costo rinnovo precedente', 'Previous renewal cost')} suffix="€" value={profile.previousRenewalCost} onChange={(v) => update('previousRenewalCost', v)} />{yearSelect('previousRenewalYears', t('Anni rinnovo precedente', 'Previous renewal years'))}<Metric label={t('Aumento annuo vs precedente', 'Annual increase vs previous')} value={percent(increase)} /></div></div>
         <div className="mt-5 grid gap-4 md:grid-cols-3"><Metric label={t('Costo rinnovo totale', 'Total renewal cost')} value={money(renewalCost, lang)} /><Metric label={t('Valore annuo rinnovo', 'Annual renewal value')} value={money(annual, lang)} /><Metric label={t('Valore annuo rinnovo precedente', 'Previous annual renewal value')} value={previousAnnual === null ? '—' : money(previousAnnual, lang)} /></div>
       </Card>
-      <AssessmentSummary state={state} lang={lang} onEdit={onEdit} />
-      <OpportunityPlanner state={state} plans={plans} setPlans={setPlans} offer={profile.renewalType} years={years} lang={lang} onEdit={onEdit} />
-      <Card title={t('Saving ancora ottenibile', 'Remaining savings opportunity')} subtitle={status}>
+      <AssessmentSummary state={state} lang={lang} onEdit={onEdit} /></div>
+      <div hidden={stage !== 'adoption'}><OpportunityPlanner onCompatibility={onCompatibility} state={state} plans={plans} setPlans={setPlans} offer={profile.renewalType} years={years} lang={lang} onEdit={onEdit} /></div>
+      <div hidden={stage !== 'results'}><Card title={t('Saving ancora ottenibile', 'Remaining savings opportunity')} subtitle={status}>
         {deltaSummary}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Metric label={t('Saving aggiuntivo annuo a regime', 'Additional annual saving at full operation')} value={money(model.annualSaving, lang)} />
@@ -65,7 +65,7 @@ export default function RenewalAssessmentView({ lang, state, profile, setProfile
         <p className="mt-5 text-sm leading-6 text-slate-500">{t('La copertura usa soltanto il saving aggiuntivo netto. Il beneficio stimato della quota già adottata è escluso dal nuovo saving. Le riduzioni di effort rappresentano capacità liberata, non necessariamente minori esborsi.', 'Coverage uses only additional net saving. Estimated benefits of existing adoption are excluded from new saving. Effort reductions represent released capacity, not necessarily cash reductions.')}</p>
         <div className="mt-5"><OpportunityTable model={model} lang={lang} /></div>
         <button className={`${buttonStyle} mt-5`} onClick={onReport}>{t('Report', 'Report', 'Informe', 'Bericht')}</button>
-      </Card>
+      </Card></div>
     </div>
   </>;
 }

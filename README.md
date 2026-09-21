@@ -108,8 +108,31 @@ L'adozione si configura nelle rispettive schede, indipendentemente:
   di vincoli tecnici. Quantità mancanti restano da compilare; 0 indica nessuna
   adozione. Host, utenti e dispositivi sono interi.
 
-I dati rimangono disponibili durante i cambi vista nella sessione; non sono
-salvati dopo un ricaricamento della pagina.
+I dati vengono salvati automaticamente nel browser (localStorage), con stato
+visibile in testata, e ripristinati dopo un ricaricamento. La bozza comprende
+assessment condiviso, profili, piani indipendenti, lingua, percorso e verifiche.
+Non viene sincronizzata tra browser o dispositivi. Se il browser impedisce il
+salvataggio, un messaggio invita a mantenere aperta la pagina.
+
+### Percorso guidato e nuova area di lavoro
+
+Al primo accesso il wizard propone obiettivo, dati propri o esempio, area da cui
+iniziare e durata. I dati propri partono vuoti; gli esempi sono sempre indicati
+come da verificare. Il pulsante “Guida iniziale” riapre il wizard e consente di
+riprendere la bozza o sostituirla con un nuovo scenario.
+
+La navigazione separa Dati cliente, Profilo economico, Adozione e interventi e
+Risultati. L’assessment è diviso in sei gruppi, disponibili anche in vista
+completa. I filtri delle aree modificano soltanto la visualizzazione, mai i
+calcoli. La conferma di un gruppo è invalidata quando cambiano i suoi valori;
+la presenza di valori di esempio non implica una verifica. Vuoto e zero restano
+distinti. Le icone di aiuto si aprono con clic/tocco o tastiera e si chiudono
+con Escape o clic esterno.
+
+Compatibilità e report conservano i dati e la posizione di scorrimento al
+ritorno. Le formule economiche e il contenuto dei report restano invariati.
+Il salvataggio è versionato e valida la struttura prima del ripristino; bozze
+corrotte o incompatibili riportano al wizard senza causare errori applicativi.
 
 ### Formule e ipotesi visibili
 
