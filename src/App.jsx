@@ -19,8 +19,8 @@ import { NewBusinessReport, RenewalReport } from './ScenarioReports';
 
 import { WorkspaceLanguage, WelcomeWizard, WorkspaceNav, ReviewSummary } from './WorkspaceUI';
 import { workspaceText } from './workspaceLabels';
-import { readDraft, writeDraft, blankAssessment } from './workspaceDraft';
-import { ArrowRight, Layers3, FileText, CircleHelp } from 'lucide-react';
+import { DRAFT_KEY, readDraft, writeDraft, blankAssessment } from './workspaceDraft';
+import { ArrowRight, Layers3, FileText, RotateCcw } from 'lucide-react';
 
 const localeByLanguage = { it: 'it-IT', en: 'en-US', es: 'es-ES', de: 'de-DE' };
 
@@ -486,6 +486,34 @@ export default function App() {
     window.addEventListener('pagehide', save);
     return () => { window.clearTimeout(timer); window.removeEventListener('pagehide', save); };
   }, [state, renewalProfile, renewalPlans, businessPlans, lang, calculatorMode, analysisMode, stage, group, reviews, origin, started]);
+  const startNewAssessment = () => {
+    if (!window.confirm(w('resetConfirm'))) return;
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      window.alert(w('resetError'));
+      return;
+    }
+    setStarted(false);
+    setState(structuredClone(DEFAULTS));
+    setRenewalProfile({...DEFAULTS.renewal.profile});
+    setBusinessPlans({});
+    setRenewalPlans({});
+    setReviews({});
+    setOrigin('blank');
+    setCalculatorMode('assessment');
+    setAnalysisMode('newBusiness');
+    setStage('profile');
+    setGroup('users');
+    setReportOpen(false);
+    setShowDisclaimer(false);
+    setHoveredRowKey(null);
+    setView('roi');
+    setSaveStatus('saved');
+    scrollPosition.current = 0;
+    setWelcome(true);
+    window.scrollTo(0, 0);
+  };
   const changeMode = mode => { setCalculatorMode(mode); if (mode !== 'assessment') setAnalysisMode(mode); setStage('profile'); };
   const finishWelcome = ({goal, source, group: firstGroup, years}) => {
     const next = source === 'blank' ? blankAssessment(DEFAULTS) : structuredClone(DEFAULTS);
@@ -749,11 +777,11 @@ export default function App() {
       <div className={`app-shell mx-auto max-w-7xl p-4 md:p-8 ${reportOpen || view !== 'roi' ? 'hidden' : ''}`}>
         <header className="workspace-header">
           <div className="workspace-brand"><Layers3 size={24}/><span>Citrix <strong>Value Studio</strong></span></div>
-          <div className="header-utilities"><span className={`save-state ${saveStatus === 'saveError' ? 'error' : ''}`} role="status">{w(saveStatus)}</span>{localeSelect}<button className="icon-button" aria-label={w('newAnalysis')} onClick={() => setWelcome(true)}><CircleHelp size={19}/></button></div>
+          <div className="header-utilities"><span className={`save-state ${saveStatus === 'saveError' ? 'error' : ''}`} role="status">{w(saveStatus)}</span>{localeSelect}<button type="button" className="secondary-button new-assessment-button" onClick={startNewAssessment}><RotateCcw size={16} aria-hidden="true"/>{w('newAssessment')}</button></div>
         </header>
         <div className="workspace-titlebar"><div><p className="eyebrow">{w('workspace')}</p><h1>{calculatorMode === 'assessment' ? w('data') : calculatorMode === 'newBusiness' ? 'New Business ROI' : 'Renewal Value'}</h1></div><div className="scenario-switch"><button aria-pressed={analysisMode === 'newBusiness'} className={analysisMode === 'newBusiness' ? 'selected' : ''} onClick={() => changeMode('newBusiness')}>New Business</button><button aria-pressed={analysisMode === 'renewal'} className={analysisMode === 'renewal' ? 'selected' : ''} onClick={() => changeMode('renewal')}>Renewal</button></div></div>
         <WorkspaceNav lang={lang} mode={calculatorMode} stage={stage} setStage={setStage} onData={() => setCalculatorMode('assessment')} onMode={() => setCalculatorMode(analysisMode)}/>
-        <div className="workspace-toolbar"><span>{w(origin === 'example' ? 'exampleBadge' : 'blankBadge')}</span><div>{calculatorMode !== 'assessment' && <button className="text-action" onClick={openReport}><FileText size={16}/>{copy.print}</button>}{calculatorMode === 'newBusiness' && <details className="actions-menu"><summary>••• <span className="sr-only">{w('method')}</span></summary><div><button onClick={() => setShowDisclaimer(v => !v)}>{w('method')}</button><button onClick={() => { if(window.confirm(w('resetConfirm'))) { setState(s => ({...s, profile: {...DEFAULTS.profile}})); setBusinessPlans({}); } }}>{w('reset')}</button></div></details>}</div></div>
+        <div className="workspace-toolbar"><span>{w(origin === 'example' ? 'exampleBadge' : 'blankBadge')}</span><div>{calculatorMode !== 'assessment' && <button className="text-action" onClick={openReport}><FileText size={16}/>{copy.print}</button>}{calculatorMode === 'newBusiness' && <details className="actions-menu"><summary>••• <span className="sr-only">{w('method')}</span></summary><div><button onClick={() => setShowDisclaimer(v => !v)}>{w('method')}</button></div></details>}</div></div>
         <div className="workspace-columns"><div className="workspace-main">
         {calculatorMode === 'newBusiness' && showDisclaimer && (
           <SectionCard
